@@ -1,13 +1,29 @@
-import InterviewList from '@/app/components/InterviewList'
-import {getInterviewMetadata} from '@/app/lib/api'
+import {Suspense} from 'react'
+import InterviewList from '@/components/InterviewList'
+import {getInterviewMetadata} from '@/lib/interviews'
+import {SearchResults} from '@/components/SearchResults'
+import {searchInterviews} from '@/lib/api'
 
-export default function Home() {
+export default function Home({
+  searchParams,
+}: {
+  searchParams: {search?: string}
+}) {
+  const searchQuery = searchParams.search || ''
   const interviewMetadata = getInterviewMetadata()
+  const searchResults = searchQuery
+    ? searchInterviews(interviewMetadata, searchQuery)
+    : []
 
   return (
     <main className='container mx-auto px-4 py-8'>
-      <h1 className='text-3xl font-bold mb-6'>Web Interview Q&A</h1>
-      <InterviewList interviews={interviewMetadata} />
+      <Suspense fallback={<div>Loading...</div>}>
+        {searchQuery ? (
+          <SearchResults results={searchResults} searchQuery={searchQuery} />
+        ) : (
+          <InterviewList interviews={interviewMetadata} />
+        )}
+      </Suspense>
     </main>
   )
 }

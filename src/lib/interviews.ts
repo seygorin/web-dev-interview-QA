@@ -10,10 +10,11 @@ export function getInterviewMetadata() {
     const slug = fileName.replace('.md', '')
     const filePath = path.join(interviewDirectory, fileName)
     const fileContents = fs.readFileSync(filePath, 'utf8')
-    const {data} = matter(fileContents)
+    const {data, content} = matter(fileContents)
     return {
       slug,
       title: data.title,
+      content: content,
     }
   })
 }
