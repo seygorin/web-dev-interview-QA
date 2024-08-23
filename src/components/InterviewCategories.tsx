@@ -21,7 +21,7 @@ export default function InterviewCategories({
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
       {Object.entries(categories).map(([category, titles]) => (
-        <div key={category} className='bg-white shadow-md rounded-lg p-6'>
+        <div key={category} className='bg-white dark:bg-gray-800 shadow-md rounded-lg p-6'>
           <h2 className='text-2xl font-bold mb-4'>{category}</h2>
           <div className='space-y-2'>
             {titles.map((title) => {
@@ -30,7 +30,7 @@ export default function InterviewCategories({
                 <Link
                   key={interview.slug}
                   href={`/interview/${interview.slug}`}
-                  className='block bg-gray-100 hover:bg-gray-200 rounded p-3 transition duration-300'
+                  className='block bg-gray-100 dark:bg-gray-400 hover:bg-gray-200 rounded p-3 transition duration-300'
                 >
                   {interview.title}
                 </Link>

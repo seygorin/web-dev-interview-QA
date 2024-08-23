@@ -3,6 +3,7 @@ import InterviewCategories from '@/components/InterviewCategories'
 import {getInterviewMetadata} from '@/lib/interviews'
 import {SearchResults} from '@/components/SearchResults'
 import {searchInterviews} from '@/lib/api'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 export default function Home({
   searchParams,
@@ -17,7 +18,7 @@ export default function Home({
 
   return (
     <main className='container mx-auto px-4 py-8'>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<LoadingSpinner />}>
         {searchQuery ? (
           <SearchResults results={searchResults} searchQuery={searchQuery} />
         ) : (

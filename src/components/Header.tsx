@@ -3,11 +3,13 @@
 import Link from 'next/link'
 import {useState, useEffect, useRef} from 'react'
 import {useRouter} from 'next/navigation'
+import {useTheme} from '@/contexts/ThemeContext'
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const router = useRouter()
   const headerRef = useRef<HTMLElement>(null)
+  const {theme, toggleTheme} = useTheme()
 
   useEffect(() => {
     if (headerRef.current) {
@@ -27,26 +29,36 @@ export default function Header() {
   }
 
   return (
-    <header ref={headerRef} className='bg-white shadow-md top-0 z-10'>
+    <header
+      ref={headerRef}
+      className='bg-white dark:bg-gray-800 shadow-md top-0 z-10'
+    >
       <div className='container mx-auto px-4 py-4 flex items-center justify-between'>
-        <Link href='/' className='text-2xl font-bold text-blue-600'>
+        <Link
+          href='/'
+          className='text-2xl font-bold text-blue-600 dark:text-blue-400'
+        >
           Web Interview Q&A
         </Link>
-        <form onSubmit={handleSearch} className='flex'>
-          <input
-            type='text'
-            placeholder='Search questions...'
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className='px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-          />
-          <button
-            type='submit'
-            className='px-4 py-2 bg-blue-500 text-white rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500'
-          >
-            🔍
-          </button>
-        </form>
+        <button onClick={toggleTheme}>{theme === 'light' ? '🌙' : '☀️'}</button>
+
+        <div className='flex items-center'>
+          <form onSubmit={handleSearch} className='flex mr-4'>
+            <input
+              type='text'
+              placeholder='Search questions...'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className='px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
+            />
+            <button
+              type='submit'
+              className='px-4 py-2 bg-blue-500 text-white rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            >
+              🔍
+            </button>
+          </form>
+        </div>
       </div>
     </header>
   )

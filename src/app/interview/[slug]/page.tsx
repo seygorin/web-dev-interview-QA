@@ -8,7 +8,7 @@ export default function InterviewPage({params}: {params: {slug: string}}) {
   return (
     <div className='container mx-auto px-4 py-8'>
       <h1 className='text-3xl text-center font-bold mb-6'>{title}</h1>
-      <div className='flex relative'>
+      <div>
         <TableOfContents content={content} />
         <div className='flex-grow'>
           <InterviewContent content={content} />
