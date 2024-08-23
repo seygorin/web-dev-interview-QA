@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer className='fixed bottom-4 right-4'>
+    <footer className='fixed bottom-2 right-2'>
       by {' '}
       <Link
         href='https://github.com/seygorin'

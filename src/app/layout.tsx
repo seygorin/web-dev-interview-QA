@@ -18,7 +18,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <html lang='en'>
       <body className={inter.className}>
         <Header />
-        <main className='min-h-screen pt-8 pb-4'>{children}</main>
+        <main className='min-h-[calc(100dvh-var(--header-height))] pt-8 pb-4'>{children}</main>
         <Footer />
       </body>
     </html>

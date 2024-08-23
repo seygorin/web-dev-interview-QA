@@ -1,5 +1,5 @@
 import {Suspense} from 'react'
-import InterviewList from '@/components/InterviewList'
+import InterviewCategories from '@/components/InterviewCategories'
 import {getInterviewMetadata} from '@/lib/interviews'
 import {SearchResults} from '@/components/SearchResults'
 import {searchInterviews} from '@/lib/api'
@@ -21,7 +21,7 @@ export default function Home({
         {searchQuery ? (
           <SearchResults results={searchResults} searchQuery={searchQuery} />
         ) : (
-          <InterviewList interviews={interviewMetadata} />
+          <InterviewCategories interviews={interviewMetadata} />
         )}
       </Suspense>
     </main>

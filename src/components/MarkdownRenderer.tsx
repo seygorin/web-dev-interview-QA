@@ -27,7 +27,7 @@ const MarkdownRenderer = forwardRef<HTMLDivElement, MarkdownRendererProps>(
 
     return (
       <div ref={ref}>
-        <MarkdownPreview source={contentWithAnchors} />
+        <MarkdownPreview className="p-8 pl-16" source={contentWithAnchors} />
       </div>
     )
   }

@@ -1,12 +1,23 @@
 'use client'
 
 import Link from 'next/link'
-import {useState} from 'react'
+import {useState, useEffect, useRef} from 'react'
 import {useRouter} from 'next/navigation'
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const router = useRouter()
+  const headerRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (headerRef.current) {
+      const headerHeight = headerRef.current.offsetHeight
+      document.documentElement.style.setProperty(
+        '--header-height',
+        `${headerHeight}px`
+      )
+    }
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -16,7 +27,7 @@ export default function Header() {
   }
 
   return (
-    <header className='bg-white shadow-md'>
+    <header ref={headerRef} className='bg-white shadow-md top-0 z-10'>
       <div className='container mx-auto px-4 py-4 flex items-center justify-between'>
         <Link href='/' className='text-2xl font-bold text-blue-600'>
           Web Interview Q&A
@@ -33,7 +44,7 @@ export default function Header() {
             type='submit'
             className='px-4 py-2 bg-blue-500 text-white rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500'
           >
-            Search
+            🔍
           </button>
         </form>
       </div>
