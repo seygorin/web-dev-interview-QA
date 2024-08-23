@@ -33,7 +33,7 @@ export default function Header() {
       ref={headerRef}
       className='bg-white dark:bg-gray-800 shadow-md top-0 z-10'
     >
-      <div className='container mx-auto px-4 py-4 flex items-center justify-between'>
+      <div className='container mx-auto px-4 py-4 flex flex-wrap items-center justify-between'>
         <Link
           href='/'
           className='text-2xl font-bold text-blue-600 dark:text-blue-400'
@@ -42,7 +42,7 @@ export default function Header() {
         </Link>
         <button onClick={toggleTheme}>{theme === 'light' ? '🌙' : '☀️'}</button>
 
-        <div className='flex items-center'>
+        <div>
           <form onSubmit={handleSearch} className='flex mr-4'>
             <input
               type='text'
