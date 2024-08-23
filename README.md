@@ -16,7 +16,6 @@ Web Interview Q&A is a Next.js application designed to create and display a coll
 - React 18
 - TypeScript
 - Tailwind CSS
-- gray-matter for frontmatter parsing
 - @uiw/react-markdown-preview for Markdown rendering
 
 ## Installation
@@ -57,14 +56,15 @@ npm run dev
 
 ## Project Structure
 
-- `pages/`: Contains the main pages of the application
+- `app/`: Contains the main pages of the application
 - `public/interview-data/`: Directory for storing .md files with interview data
-- `app/components/`: React components
-- `app/lib/`: Helper functions, including API for working with interview data
+- `src/components/`: React components
+- `src/lib/`: Helper functions, including API for working with interview data
+- `src/context`: App theme context
 
 ## Adding a New Interview
 
-To add a new interview, create a new .md file in the `public/interview-data/` directory with the following structure:
+To add a new interview, create a new .md and add categroies in `categories.ts` file in the `public/interview-data/` directory with the following structure:
 
 ```markdown
 ---
