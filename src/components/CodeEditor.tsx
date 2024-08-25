@@ -65,7 +65,7 @@ const CodeEditor: React.FC = () => {
   }
 
   const handleEditorChange = (value: string | undefined) => {
-    if (value) {
+    if (value !== undefined) {
       setCode(value)
     }
   }
@@ -149,11 +149,26 @@ const CodeEditor: React.FC = () => {
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data)
-        setOutput((prev) => prev + data.join(' ') + '\n')
-      } catch (error) {
-        console.error('Error parsing message:', error)
+      if (event.source === iframeRef.current?.contentWindow) {
+        try {
+          const data = JSON.parse(event.data)
+          setOutput(
+            (prev) =>
+              prev +
+              data
+                .map((item: any) => {
+                  if (typeof item === 'object') {
+                    return JSON.stringify(item, null, 2)
+                  }
+                  return String(item)
+                })
+                .join(' ') +
+              '\n'
+          )
+        } catch (error) {
+          console.error('Error processing message:', error)
+          setOutput((prev) => prev + 'Error processing output\n')
+        }
       }
     }
 
