@@ -44,7 +44,7 @@ export default function Header({openSandbox}: HeaderProps) {
         >
           Web Interview Q&A
         </Link>
-        <div className='flex items-center space-x-4'>
+        <div className='flex flex-wrap items-center space-x-4'>
           <button
             onClick={openSandbox}
             className='px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-800 focus:outline-none'
