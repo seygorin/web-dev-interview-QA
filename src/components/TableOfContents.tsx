@@ -45,7 +45,7 @@ export default function TableOfContents({content}: TableOfContentsProps) {
   }
   return (
     <nav
-      className={`bg-slate-100 dark:bg-slate-800 p-4 rounded-lg fixed top-2/4 -translate-y-1/2 ml-2 ${
+      className={`bg-white dark:bg-slate-800 p-4 rounded-lg fixed top-2/4 -translate-y-1/2 ml-2 ${
         isOpen ? 'w-72' : ''
       }`}
     >

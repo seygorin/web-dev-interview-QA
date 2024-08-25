@@ -28,7 +28,7 @@ export default function InterviewCategories({
                 <Link
                   key={interview.slug}
                   href={`/interview/${interview.slug}`}
-                  className='block bg-slate-100 dark:bg-slate-400 hover:bg-slate-200 rounded p-3 transition duration-300'
+                  className='block bg-slate-100 dark:bg-slate-600 hover:bg-slate-200 rounded p-3 transition duration-300'
                 >
                   {interview.title}
                 </Link>
