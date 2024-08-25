@@ -8,10 +8,6 @@ const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {ssr: false})
 
 type Language = 'javascript' | 'typescript' | 'jsx' | 'html' | 'css'
 
-interface CodeEditorProps {
-  openSandbox: () => void
-}
-
 const DEFAULT_CODE: Record<Language, string> = {
   javascript:
     '// Write your JavaScript code here\nconsole.log("Hello, World!");',
@@ -28,7 +24,7 @@ console.log('App rendered to #root');`,
   css: '/* Write your CSS code here */\nbody {\n  color: blue;\n}',
 }
 
-const CodeEditor: React.FC<CodeEditorProps> = () => {
+const CodeEditor: React.FC = () => {
   const {theme} = useTheme()
   const [language, setLanguage] = useState<Language>('javascript')
   const [code, setCode] = useState(DEFAULT_CODE[language])
