@@ -23,7 +23,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
       <body className={inter.className}>
         <ThemeProvider>
           <Header openSandbox={openSandbox} />
-          <main className='min-h-[calc(100dvh-var(--header-height))] pt-8 pb-4'>
+          <main className='min-h-[calc(100dvh-74px)] pt-8 pb-4'>
             {children}
             <Modal isOpen={isModalOpen} onClose={closeSandbox}>
               <CodeEditor />
