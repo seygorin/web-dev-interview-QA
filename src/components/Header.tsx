@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useTheme } from '@/contexts/ThemeContext'
+import { categories } from '../../public/interview-data/categories'
 
 interface HeaderProps {
   openSandbox: () => void
@@ -12,7 +13,9 @@ interface HeaderProps {
 export default function Header({ openSandbox }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isScrolled, setIsScrolled] = useState(false)
+  const [currentTitle, setCurrentTitle] = useState('')
   const router = useRouter()
+  const pathname = usePathname()
   const headerRef = useRef<HTMLElement>(null)
   const { theme, toggleTheme } = useTheme()
 
@@ -39,6 +42,12 @@ export default function Header({ openSandbox }: HeaderProps) {
     }
   }, [isScrolled])
 
+  useEffect(() => {
+    const slug = pathname.split('/').pop()
+    const title = Object.values(categories).flat().find(t => t.toLowerCase().replace(/[^\w]+/g, '-') === slug)
+    setCurrentTitle(title || '')
+  }, [pathname])
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
@@ -62,6 +71,13 @@ export default function Header({ openSandbox }: HeaderProps) {
         >
           Web Interview Q&A
         </Link>
+        {currentTitle && (
+          <h2 className={`text-slate-600 dark:text-slate-300 font-semibold transition-all duration-300 ${
+            isScrolled ? 'text-base' : 'text-lg'
+          }`}>
+            {currentTitle}
+          </h2>
+        )}
         <div className='flex flex-wrap items-center space-x-4'>
           <button
             onClick={openSandbox}
