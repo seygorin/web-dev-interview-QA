@@ -26,8 +26,22 @@ console.log('App rendered to #root');`,
 
 const CodeEditor: React.FC = () => {
   const {theme} = useTheme()
-  const [language, setLanguage] = useState<Language>('javascript')
-  const [code, setCode] = useState(DEFAULT_CODE[language])
+  const [language, setLanguage] = useState<Language>(() => {
+    if (typeof window !== 'undefined') {
+      return (
+        (localStorage.getItem('codeEditorLanguage') as Language) || 'javascript'
+      )
+    }
+    return 'javascript'
+  })
+  const [code, setCode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return (
+        localStorage.getItem(`codeEditor_${language}`) || DEFAULT_CODE[language]
+      )
+    }
+    return DEFAULT_CODE[language]
+  })
   const [output, setOutput] = useState('')
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [babel, setBabel] = useState<any>(null)
@@ -38,10 +52,16 @@ const CodeEditor: React.FC = () => {
     })
   }, [])
 
+  useEffect(() => {
+    localStorage.setItem('codeEditorLanguage', language)
+    localStorage.setItem(`codeEditor_${language}`, code)
+  }, [language, code])
+
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLanguage = e.target.value as Language
     setLanguage(newLanguage)
-    setCode(DEFAULT_CODE[newLanguage])
+    const savedCode = localStorage.getItem(`codeEditor_${newLanguage}`)
+    setCode(savedCode || DEFAULT_CODE[newLanguage])
   }
 
   const handleEditorChange = (value: string | undefined) => {
