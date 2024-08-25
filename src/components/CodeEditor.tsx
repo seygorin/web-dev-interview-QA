@@ -8,7 +8,9 @@ const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {ssr: false})
 
 type Language = 'javascript' | 'typescript' | 'jsx' | 'html' | 'css'
 
-interface CodeEditorProps {}
+interface CodeEditorProps {
+  openSandbox: () => void
+}
 
 const DEFAULT_CODE: Record<Language, string> = {
   javascript:
@@ -99,10 +101,15 @@ const CodeEditor: React.FC<CodeEditorProps> = () => {
                 }
               }
               console.log = function(...args) {
-                window.parent.postMessage(JSON.stringify(args), '*');
+                window.parent.postMessage(JSON.stringify(args.map(arg => {
+                  if (typeof arg === 'object' && arg !== null) {
+                    return JSON.stringify(arg, null, 2);
+                  }
+                  return String(arg);
+                })), '*');
               };
               console.error = function(...args) {
-                window.parent.postMessage(JSON.stringify(['Error:', ...args]), '*');
+                window.parent.postMessage(JSON.stringify(['Error:', ...args.map(String)]), '*');
               };
               window.onerror = function(message, source, lineno, colno, error) {
                 console.error('Runtime error:', message);
@@ -167,14 +174,14 @@ const CodeEditor: React.FC<CodeEditorProps> = () => {
       </div>
       <div className='h-96 w-full'>
         <MonacoEditor
-				    height="100%"
+          height='100%'
           language={language === 'jsx' ? 'javascript' : language}
           theme={theme === 'dark' ? 'vs-dark' : 'light'}
           value={code}
           onChange={handleEditorChange}
           options={{
             fontSize: 14,
-						scrollBeyondLastLine: false,
+            scrollBeyondLastLine: false,
           }}
         />
       </div>
