@@ -5,7 +5,11 @@ import {useState, useEffect, useRef} from 'react'
 import {useRouter} from 'next/navigation'
 import {useTheme} from '@/contexts/ThemeContext'
 
-export default function Header() {
+interface HeaderProps {
+  openSandbox: () => void
+}
+
+export default function Header({openSandbox}: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const router = useRouter()
   const headerRef = useRef<HTMLElement>(null)
@@ -31,29 +35,36 @@ export default function Header() {
   return (
     <header
       ref={headerRef}
-      className='bg-white dark:bg-gray-800 shadow-md top-0 z-10'
+      className='bg-white dark:bg-slate-800 shadow-md top-0 z-10'
     >
       <div className='container mx-auto px-4 py-4 flex flex-wrap items-center justify-between'>
         <Link
           href='/'
-          className='text-2xl font-bold text-blue-600 dark:text-blue-400'
+          className='text-2xl text-slate-700 dark:text-slate-400 font-bold text-slate-600 dark:text-slate-400'
         >
           Web Interview Q&A
         </Link>
-        <button onClick={toggleTheme}>{theme === 'light' ? '🌙' : '☀️'}</button>
-
-        <div>
-          <form onSubmit={handleSearch} className='flex mr-4'>
+        <div className='flex items-center space-x-4'>
+          <button
+            onClick={openSandbox}
+            className='px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-800 focus:outline-none'
+          >
+            Playground
+          </button>
+          <button onClick={toggleTheme} className='p-2'>
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
+          <form onSubmit={handleSearch} className='flex'>
             <input
               type='text'
               placeholder='Search questions...'
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className='px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
+              className='px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-l-md focus:outline-none dark:bg-slate-700 dark:text-white'
             />
             <button
               type='submit'
-              className='px-4 py-2 bg-blue-500 text-white rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500'
+              className='px-4 py-2 bg-sky-500 text-white rounded-r-md hover:bg-sky-600 dark:hover:bg-sky-800 dark:bg-sky-600 focus:outline-none'
             >
               🔍
             </button>

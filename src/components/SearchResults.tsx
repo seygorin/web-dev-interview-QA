@@ -17,7 +17,7 @@ interface SearchResultsProps {
 export function SearchResults({results, searchQuery}: SearchResultsProps) {
   return (
     <div>
-      <h2 className='text-2xl font-bold mb-4'>
+      <h2 className='text-2xl text-slate-700 dark:text-slate-400 font-bold mb-4'>
         Search Results for {searchQuery}
       </h2>
       {results.length === 0 ? (
@@ -35,12 +35,12 @@ export function SearchResults({results, searchQuery}: SearchResultsProps) {
                 )}#${encodeURIComponent(
                   result.header.toLowerCase().replace(/[^\w]+/g, '-')
                 )}`}
-                className='text-blue-600 hover:underline'
+                className='text-sky-600 hover:underline'
               >
                 <h3 className='text-xl font-semibold'>{result.title}</h3>
-                <p className='text-sm text-gray-500'>{result.header}</p>
+                <p className='text-sm text-slate-500'>{result.header}</p>
               </Link>
-              <p className='text-gray-600 mt-2'>...{result.snippet}...</p>
+              <p className='text-slate-600 mt-2'>...{result.snippet}...</p>
             </li>
           ))}
         </ul>

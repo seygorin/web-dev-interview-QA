@@ -8,7 +8,7 @@ export default function Footer() {
         href='https://github.com/seygorin'
         target='_blank'
         rel='noopener noreferrer'
-        className='text-gray-600 hover:text-blue-500 transition-colors'
+        className='text-slate-600 hover:text-sky-600 transition-colors'
       >
         seygorin
       </Link>

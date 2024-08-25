@@ -1,9 +1,8 @@
-import {Suspense} from 'react'
+import React from 'react'
 import InterviewCategories from '@/components/InterviewCategories'
-import {getInterviewMetadata} from '@/lib/interviews'
 import {SearchResults} from '@/components/SearchResults'
+import {getInterviewMetadata} from '@/lib/interviews'
 import {searchInterviews} from '@/lib/api'
-import LoadingSpinner from '@/components/LoadingSpinner'
 
 export default function Home({
   searchParams,
@@ -18,13 +17,15 @@ export default function Home({
 
   return (
     <main className='container mx-auto px-4 py-8'>
-      <Suspense fallback={<LoadingSpinner />}>
-        {searchQuery ? (
-          <SearchResults results={searchResults} searchQuery={searchQuery} />
-        ) : (
-          <InterviewCategories interviews={interviewMetadata} />
-        )}
-      </Suspense>
+      <h1 className='text-3xl text-slate-700 dark:text-slate-400 font-bold mb-6'>
+        Web Interview Q&A
+      </h1>
+
+      {searchQuery ? (
+        <SearchResults results={searchResults} searchQuery={searchQuery} />
+      ) : (
+        <InterviewCategories interviews={interviewMetadata} />
+      )}
     </main>
   )
 }

@@ -28,7 +28,7 @@ const MarkdownRenderer = forwardRef<HTMLDivElement, MarkdownRendererProps>(
     return (
       <div ref={ref}>
         <MarkdownPreview
-          className='dark:bg-gray-800 dark:text-gray-400 p-8 pl-16'
+          className='dark:bg-slate-800 dark:text-slate-400 p-8 pl-16'
           source={contentWithAnchors}
         />
       </div>

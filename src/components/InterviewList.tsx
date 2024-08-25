@@ -16,7 +16,7 @@ export default function InterviewList({interviews}: InterviewListProps) {
         <li key={interview.slug}>
           <Link
             href={`/interview/${interview.slug}`}
-            className='text-blue-600 hover:underline'
+            className='text-sky-600 hover:underline'
           >
             {interview.title}
           </Link>

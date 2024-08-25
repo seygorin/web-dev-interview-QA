@@ -45,7 +45,7 @@ export default function TableOfContents({content}: TableOfContentsProps) {
   }
   return (
     <nav
-      className={`bg-gray-100 dark:bg-gray-800 p-4 rounded-lg fixed top-2/4 -translate-y-1/2 ml-2 ${
+      className={`bg-slate-100 dark:bg-slate-800 p-4 rounded-lg fixed top-2/4 -translate-y-1/2 ml-2 ${
         isOpen ? 'w-72' : ''
       }`}
     >
@@ -62,7 +62,7 @@ export default function TableOfContents({content}: TableOfContentsProps) {
               <a
                 href={`#${item.id}`}
                 onClick={(e) => handleClick(e, item.id)}
-                className='hover:text-blue-500 cursor-pointer'
+                className='hover:text-sky-500 cursor-pointer'
               >
                 {item.title}
               </a>

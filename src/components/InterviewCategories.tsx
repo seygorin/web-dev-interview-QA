@@ -18,9 +18,9 @@ export default function InterviewCategories({
       {Object.entries(categories).map(([category, titles]) => (
         <div
           key={category}
-          className='bg-white dark:bg-gray-800 shadow-md rounded-lg p-6'
+          className='bg-white dark:bg-slate-800 shadow-md rounded-lg p-6'
         >
-          <h2 className='text-2xl font-bold mb-4'>{category}</h2>
+          <h2 className='text-2xl  text-slate-700 dark:text-slate-400 font-bold mb-4'>{category}</h2>
           <div className='space-y-2'>
             {titles.map((title) => {
               const interview = interviews.find((i) => i.title === title)
@@ -28,7 +28,7 @@ export default function InterviewCategories({
                 <Link
                   key={interview.slug}
                   href={`/interview/${interview.slug}`}
-                  className='block bg-gray-100 dark:bg-gray-400 hover:bg-gray-200 rounded p-3 transition duration-300'
+                  className='block bg-slate-100 dark:bg-slate-400 hover:bg-slate-200 rounded p-3 transition duration-300'
                 >
                   {interview.title}
                 </Link>
