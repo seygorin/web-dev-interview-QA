@@ -18,7 +18,7 @@ export default function Home({
   return (
     <main className='container mx-auto px-4 py-8'>
       <h1 className='text-3xl text-slate-700 dark:text-slate-400 font-bold mb-6'>
-        Web Interview Q&A
+        Questions & Answers
       </h1>
 
       {searchQuery ? (
