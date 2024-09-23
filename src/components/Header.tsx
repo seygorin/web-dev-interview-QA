@@ -12,7 +12,7 @@ interface HeaderProps {
 
 export default function Header({ openSandbox }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [isScrolled, setIsScrolled] = useState(false)
+  const [scrollPercentage, setScrollPercentage] = useState(0)
   const [currentTitle, setCurrentTitle] = useState('')
   const router = useRouter()
   const pathname = usePathname()
@@ -22,7 +22,9 @@ export default function Header({ openSandbox }: HeaderProps) {
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY
-      setIsScrolled(scrollPosition > 50)
+      const maxScroll = 100 // Максимальное значение прокрутки для эффекта
+      const percentage = Math.min(scrollPosition / maxScroll, 1)
+      setScrollPercentage(percentage)
     }
 
     window.addEventListener('scroll', handleScroll)
@@ -40,7 +42,7 @@ export default function Header({ openSandbox }: HeaderProps) {
         `${headerHeight}px`
       )
     }
-  }, [isScrolled])
+  }, [scrollPercentage])
 
   useEffect(() => {
     const slug = pathname.split('/').pop()
@@ -58,36 +60,50 @@ export default function Header({ openSandbox }: HeaderProps) {
   return (
     <header
       ref={headerRef}
-      className={`bg-white dark:bg-slate-800 sticky shadow-md top-0 z-10 transition-all duration-300 ${
-        isScrolled ? 'py-2' : 'py-4'
-      }`}
+      className="bg-white dark:bg-slate-800 sticky shadow-md top-0 z-10 transition-all duration-300"
+      style={{
+        '--scroll-percentage': scrollPercentage,
+        padding: `calc(1rem - 0.5rem * var(--scroll-percentage)) 1rem`,
+      } as React.CSSProperties}
     >
       <div className='container mx-auto px-4 flex flex-wrap items-center justify-between'>
         <Link
           href='/'
-          className={`text-slate-700 dark:text-slate-400 font-bold transition-all duration-300 ${
-            isScrolled ? 'text-xl' : 'text-2xl'
-          }`}
+          className="text-slate-700 dark:text-slate-400 font-bold transition-all duration-300"
+          style={{
+            fontSize: `calc(1.5rem - 0.25rem * var(--scroll-percentage))`,
+          }}
         >
           Web Interview Q&A
         </Link>
         {currentTitle && (
-          <h2 className={`text-slate-600 dark:text-slate-300 font-semibold transition-all duration-300 ${
-            isScrolled ? 'text-base' : 'text-lg'
-          }`}>
+          <h2 
+            className="text-slate-600 dark:text-slate-300 font-semibold transition-all duration-300"
+            style={{
+              fontSize: `calc(1.125rem - 0.125rem * var(--scroll-percentage))`,
+            }}
+          >
             {currentTitle}
           </h2>
         )}
         <div className='flex flex-wrap items-center space-x-4'>
           <button
             onClick={openSandbox}
-            className={`bg-sky-500 text-white rounded-md hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-800 focus:outline-none transition-all duration-300 ${
-              isScrolled ? 'px-3 py-1 text-sm' : 'px-4 py-2'
-            }`}
+            className="bg-sky-500 text-white rounded-md hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-800 focus:outline-none transition-all duration-300"
+            style={{
+              padding: `calc(0.5rem - 0.125rem * var(--scroll-percentage)) calc(1rem - 0.25rem * var(--scroll-percentage))`,
+              fontSize: `calc(1rem - 0.125rem * var(--scroll-percentage))`,
+            }}
           >
             Playground
           </button>
-          <button onClick={toggleTheme} className={`transition-all duration-300 ${isScrolled ? 'p-1' : 'p-2'}`}>
+          <button 
+            onClick={toggleTheme} 
+            className="transition-all duration-300"
+            style={{
+              padding: `calc(0.5rem - 0.125rem * var(--scroll-percentage))`,
+            }}
+          >
             {theme === 'light' ? '🌙' : '☀️'}
           </button>
           <form onSubmit={handleSearch} className='flex'>
@@ -96,15 +112,19 @@ export default function Header({ openSandbox }: HeaderProps) {
               placeholder='Search questions...'
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`border border-slate-300 dark:border-slate-600 rounded-l-md focus:outline-none dark:bg-slate-700 dark:text-white transition-all duration-300 ${
-                isScrolled ? 'px-3 py-1 text-sm' : 'px-4 py-2'
-              }`}
+              className="border border-slate-300 dark:border-slate-600 rounded-l-md focus:outline-none dark:bg-slate-700 dark:text-white transition-all duration-300"
+              style={{
+                padding: `calc(0.5rem - 0.125rem * var(--scroll-percentage)) calc(1rem - 0.25rem * var(--scroll-percentage))`,
+                fontSize: `calc(1rem - 0.125rem * var(--scroll-percentage))`,
+              }}
             />
             <button
               type='submit'
-              className={`bg-sky-500 text-white rounded-r-md hover:bg-sky-600 dark:hover:bg-sky-800 dark:bg-sky-600 focus:outline-none transition-all duration-300 ${
-                isScrolled ? 'px-3 py-1' : 'px-4 py-2'
-              }`}
+              className="bg-sky-500 text-white rounded-r-md hover:bg-sky-600 dark:hover:bg-sky-800 dark:bg-sky-600 focus:outline-none transition-all duration-300"
+              style={{
+                padding: `calc(0.5rem - 0.125rem * var(--scroll-percentage)) calc(1rem - 0.25rem * var(--scroll-percentage))`,
+                fontSize: `calc(1rem - 0.125rem * var(--scroll-percentage))`,
+              }}
             >
               🔍
             </button>

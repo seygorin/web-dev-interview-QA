@@ -33,7 +33,7 @@ export function SearchResults({results, searchQuery}: SearchResultsProps) {
                 href={`/interview/${result.slug}?highlight=${encodeURIComponent(
                   searchQuery
                 )}#${encodeURIComponent(
-                  result.header.toLowerCase().replace(/[^\w]+/g, '-')
+                  result.header.toLowerCase().replace(/[^\w]+/g, '-').replace(/-+$/, '')
                 )}`}
                 className='text-sky-600 hover:underline'
               >

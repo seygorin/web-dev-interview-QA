@@ -40,7 +40,22 @@ export default function TableOfContents({content}: TableOfContentsProps) {
     e.preventDefault()
     const element = document.getElementById(id)
     if (element) {
-      element.scrollIntoView({behavior: 'smooth'})
+      const header = document.querySelector('header')
+      const headerHeight = header ? header.offsetHeight : 0
+      const elementPosition =
+        element.getBoundingClientRect().top + window.pageYOffset
+      const offsetPosition = elementPosition - headerHeight - 20
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth',
+      })
+
+      element.style.scrollMarginTop = `${headerHeight + 20}px`
+
+      setTimeout(() => {
+        element.style.scrollMarginTop = ''
+      }, 1000)
     }
   }
   return (
