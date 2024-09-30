@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import {categories} from '../../public/interview-data/categories'
 
-interface Interview {
-  slug: string
-  title: string
-}
-
 interface InterviewCategoriesProps {
-  interviews: Interview[]
+  interviews: {
+    [key: string]: {
+      folder: string;
+      items: string[];
+    }
+  }
 }
 
 export default function InterviewCategories({
@@ -15,24 +15,24 @@ export default function InterviewCategories({
 }: InterviewCategoriesProps) {
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr'>
-      {Object.entries(categories).map(([category, titles]) => (
+      {Object.entries(interviews).map(([category, data]) => (
         <div
           key={category}
           className='bg-white dark:bg-slate-800 shadow-md rounded-lg p-6 flex flex-col'
         >
           <h2 className='text-2xl text-slate-700 dark:text-slate-400 font-bold mb-4'>{category}</h2>
           <div className='space-y-2 flex-grow overflow-auto'>
-            {titles.map((title) => {
-              const interview = interviews.find((i) => i.title === title)
-              return interview ? (
+            {data.items.map((title) => {
+              const slug = title.toLowerCase().replace(/ /g, '-')
+              return (
                 <Link
-                  key={interview.slug}
-                  href={`/interview/${interview.slug}`}
+                  key={slug}
+                  href={`/interview/${data.folder}/${slug}`}
                   className='block bg-slate-100 dark:bg-slate-600 hover:bg-slate-200 rounded p-3 transition duration-300'
                 >
-                  {interview.title}
+                  {title}
                 </Link>
-              ) : null
+              )
             })}
           </div>
         </div>

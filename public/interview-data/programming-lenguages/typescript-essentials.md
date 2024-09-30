@@ -1,5 +1,5 @@
 ---
-title: TypeScript
+title: TypeScript Essentials
 ---
 
 ## Writing efficient TypeScript using basic types, enums, interfaces, and generics:

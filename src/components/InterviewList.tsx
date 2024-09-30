@@ -1,25 +1,24 @@
 import Link from 'next/link'
+import { slugify } from '@/lib/interviews'
 
-interface Interview {
-  slug: string
-  title: string
-}
-
-interface InterviewListProps {
-  interviews: Interview[]
-}
-
-export default function InterviewList({interviews}: InterviewListProps) {
+export default function InterviewList({interviews}) {
   return (
-    <ul className='space-y-4'>
-      {interviews.map((interview) => (
-        <li key={interview.slug}>
-          <Link
-            href={`/interview/${interview.slug}`}
-            className='text-sky-600 hover:underline'
-          >
-            {interview.title}
-          </Link>
+    <ul>
+      {Object.entries(interviews).map(([category, data]) => (
+        <li key={category}>
+          <h2>{category}</h2>
+          <ul>
+            {data.items.map((item) => {
+              const slug = slugify(item)
+              return (
+                <li key={item}>
+                  <Link href={`/interview/${data.folder}/${slug}`}>
+                    {item}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
         </li>
       ))}
     </ul>

@@ -1,5 +1,5 @@
 ---
-title: JavaScript Core
+title: JavaScript Advanced Concepts
 ---
 
 # Modules in JavaScript

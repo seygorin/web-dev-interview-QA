@@ -7,7 +7,7 @@ import RootLayoutClient from './RootLayoutClient'
 const inter = Inter({subsets: ['latin']})
 
 export const metadata: Metadata = {
-  title: 'Web Interview Q&A',
+  title: 'Web Dev Interview Q&A',
   description:
     'A collection of web development interview questions and answers',
 }

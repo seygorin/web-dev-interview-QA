@@ -3,6 +3,7 @@ import InterviewCategories from '@/components/InterviewCategories'
 import {SearchResults} from '@/components/SearchResults'
 import {getInterviewMetadata} from '@/lib/interviews'
 import {searchInterviews} from '@/lib/api'
+import {categories} from '../../public/interview-data/categories'
 
 export default function Home({
   searchParams,
@@ -12,7 +13,7 @@ export default function Home({
   const searchQuery = searchParams.search || ''
   const interviewMetadata = getInterviewMetadata()
   const searchResults = searchQuery
-    ? searchInterviews(interviewMetadata, searchQuery)
+    ? searchInterviews(searchQuery)
     : []
 
   return (
@@ -24,7 +25,7 @@ export default function Home({
       {searchQuery ? (
         <SearchResults results={searchResults} searchQuery={searchQuery} />
       ) : (
-        <InterviewCategories interviews={interviewMetadata} />
+        <InterviewCategories interviews={categories} />
       )}
     </section>
   )

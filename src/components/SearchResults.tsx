@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { slugify } from '@/lib/interviews'
 
 interface SearchResult {
   slug: string
@@ -24,17 +25,13 @@ export function SearchResults({results, searchQuery}: SearchResultsProps) {
         <p>No results found.</p>
       ) : (
         <ul className='space-y-4'>
-          {results.map((result) => (
+          {results.map((result, index) => (
             <li
-              key={`${result.slug}-${result.position}`}
+              key={`${result.slug}-${index}`}
               className='border-b pb-4'
             >
               <Link
-                href={`/interview/${result.slug}?highlight=${encodeURIComponent(
-                  searchQuery
-                )}#${encodeURIComponent(
-                  result.header.toLowerCase().replace(/[^\w]+/g, '-').replace(/-+$/, '')
-                )}`}
+                href={`/interview/${result.slug}?highlight=${encodeURIComponent(searchQuery)}#${slugify(result.header)}`}
                 className='text-sky-600 hover:underline'
               >
                 <h3 className='text-xl font-semibold'>{result.title}</h3>

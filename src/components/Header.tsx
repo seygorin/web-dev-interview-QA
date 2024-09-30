@@ -22,7 +22,7 @@ export default function Header({ openSandbox }: HeaderProps) {
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY
-      const maxScroll = 100 // Максимальное значение прокрутки для эффекта
+      const maxScroll = 100
       const percentage = Math.min(scrollPosition / maxScroll, 1)
       setScrollPercentage(percentage)
     }
@@ -46,7 +46,17 @@ export default function Header({ openSandbox }: HeaderProps) {
 
   useEffect(() => {
     const slug = pathname.split('/').pop()
-    const title = Object.values(categories).flat().find(t => t.toLowerCase().replace(/[^\w]+/g, '-') === slug)
+    let title = ''
+    
+    Object.values(categories).forEach(category => {
+      const foundTitle = category.items.find(item => 
+        item.toLowerCase().replace(/[^\w]+/g, '-') === slug
+      )
+      if (foundTitle) {
+        title = foundTitle
+      }
+    })
+    
     setCurrentTitle(title || '')
   }, [pathname])
 
@@ -74,7 +84,7 @@ export default function Header({ openSandbox }: HeaderProps) {
             fontSize: `calc(1.5rem - 0.25rem * var(--scroll-percentage))`,
           }}
         >
-          Web Interview Q&A
+          Web Dev Interview Q&A
         </Link>
         {currentTitle && (
           <h2 

@@ -1,5 +1,5 @@
 ---
-title: Big O
+title: Big O Notation and Complexity Analysis
 ---
 
 ## What is Big-O Notation?

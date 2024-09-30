@@ -1,5 +1,5 @@
 ---
-title: JavaScript Basic
+title: JavaScript Fundamentals
 ---
 
 # Advanced Expressions

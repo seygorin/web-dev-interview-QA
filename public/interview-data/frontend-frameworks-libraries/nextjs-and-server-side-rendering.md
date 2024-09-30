@@ -1,5 +1,5 @@
 ---
-title: Next.js
+title: NextJS and Server-Side Rendering
 ---
 
 ## Next.js Interview Questions

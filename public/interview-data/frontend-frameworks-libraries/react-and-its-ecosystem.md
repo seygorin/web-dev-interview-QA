@@ -1,5 +1,5 @@
 ---
-title: React
+title: React and its Ecosystem
 ---
 
 ## JSX
