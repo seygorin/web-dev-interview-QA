@@ -1,7 +1,16 @@
 import Link from 'next/link'
 import { slugify } from '@/lib/interviews'
 
-export default function InterviewList({interviews}) {
+interface InterviewData {
+  folder: string;
+  items: string[];
+}
+
+interface InterviewsProps {
+  [category: string]: InterviewData;
+}
+
+export default function InterviewList({ interviews }: { interviews: InterviewsProps }) {
   return (
     <ul>
       {Object.entries(interviews).map(([category, data]) => (

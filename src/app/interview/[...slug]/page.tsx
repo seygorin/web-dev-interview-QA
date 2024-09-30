@@ -4,7 +4,7 @@ import TableOfContents from '@/components/TableOfContents'
 
 export async function generateStaticParams() {
   const interviews = getAllInterviews()
-  const paths = []
+  const paths: { slug: string[] }[] = []
 
   Object.entries(interviews).forEach(([category, data]) => {
     data.items.forEach((item) => {
@@ -17,7 +17,7 @@ export async function generateStaticParams() {
 }
 
 export default async function InterviewPage({params}: {params: {slug: string[]}}) {
-  const slug = slugify(params.slug[1])
+  const slug = params.slug[1]
   const {title, content} = await getInterviewContent(slug)
 
   if (title === 'Not Found') {

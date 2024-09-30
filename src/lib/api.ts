@@ -1,8 +1,17 @@
 import { categories } from '../../public/interview-data/categories'
 import { getInterviewContent, slugify } from './interviews'
 
-export function searchInterviews(searchTerm: string) {
-  const results = []
+interface SearchResult {
+  slug: string;
+  title: string;
+  content: string;
+  position: number;
+  snippet: string;
+  header: string;
+}
+
+export function searchInterviews(searchTerm: string): SearchResult[] {
+  const results: SearchResult[] = []
 
   Object.entries(categories).forEach(([category, data]) => {
     data.items.forEach((item) => {

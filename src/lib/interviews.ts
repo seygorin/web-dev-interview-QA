@@ -9,7 +9,33 @@ export function slugify(text: string): string {
   return text.toLowerCase().replace(/[.\s]+/g, '-')
 }
 
-export function getInterviewMetadata(id: string) {
+export function getInterviewMetadata(id?: string) {
+  if (!id) {
+    const allMetadata = [];
+    for (const [category, data] of Object.entries(categories)) {
+      const folder = data.folder;
+      const items = data.items;
+      for (const item of items) {
+        const slug = slugify(item);
+        const fullPath = path.join(
+          process.cwd(),
+          'public',
+          'interview-data',
+          folder,
+          `${slug}.md`
+        );
+        const fileContents = fs.readFileSync(fullPath, 'utf8');
+        const { data, content } = matter(fileContents);
+        allMetadata.push({
+          id: slug,
+          title: data.title,
+          category,
+        });
+      }
+    }
+    return allMetadata;
+  }
+
   for (const [category, data] of Object.entries(categories)) {
     const folder = data.folder
     const items = data.items
