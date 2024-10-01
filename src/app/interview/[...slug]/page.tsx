@@ -1,10 +1,14 @@
-import {getInterviewContent, getAllInterviews, slugify} from '@/lib/interviews'
+import {
+  getInterviewContent,
+  getAllInterviews,
+  slugify,
+} from '@/lib/getInterviews'
 import InterviewContent from '@/components/InterviewContent'
 import TableOfContents from '@/components/TableOfContents'
 
 export async function generateStaticParams() {
   const interviews = getAllInterviews()
-  const paths: { slug: string[] }[] = []
+  const paths: {slug: string[]}[] = []
 
   Object.entries(interviews).forEach(([category, data]) => {
     data.items.forEach((item) => {
@@ -16,7 +20,11 @@ export async function generateStaticParams() {
   return paths
 }
 
-export default async function InterviewPage({params}: {params: {slug: string[]}}) {
+export default async function InterviewPage({
+  params,
+}: {
+  params: {slug: string[]}
+}) {
   const slug = params.slug[1]
   const {title, content} = await getInterviewContent(slug)
 

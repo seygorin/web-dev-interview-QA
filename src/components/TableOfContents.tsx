@@ -1,6 +1,8 @@
 'use client'
 
 import {useState, useEffect} from 'react'
+import {useRouter, usePathname} from 'next/navigation'
+import {slugify} from './../utils/slugify'
 
 interface TOCItem {
   id: string
@@ -14,21 +16,40 @@ interface TableOfContentsProps {
 
 export default function TableOfContents({content}: TableOfContentsProps) {
   const [toc, setToc] = useState<TOCItem[]>([])
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
+  const [headerHeight, setHeaderHeight] = useState(0)
+  const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     const headings = content.match(/^#{1,3}\s.+$/gm) || []
     const tocItems = headings.map((heading) => {
       const level = heading.match(/^#+/)?.[0].length || 0
       const title = heading.replace(/^#+\s/, '')
-      const id = title.toLowerCase().replace(/[^\w]+/g, '-')
+      const id = slugify(title)
       return {id, title, level}
     })
     setToc(tocItems)
 
+    const header = document.querySelector('header')
+    if (header) {
+      setHeaderHeight(header.offsetHeight)
+    }
+
     const contentElement = document.querySelector('.interview-content')
     if (contentElement) {
-      contentElement.classList.toggle('ml-80', isOpen)
+      contentElement.classList.toggle('md:ml-80', isOpen)
+    }
+
+    // Блокируем прокрутку body при открытом меню на мобильных устройствах
+    if (isOpen && window.innerWidth < 768) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+
+    return () => {
+      document.body.style.overflow = ''
     }
   }, [content, isOpen])
 
@@ -36,39 +57,36 @@ export default function TableOfContents({content}: TableOfContentsProps) {
     setIsOpen(!isOpen)
   }
 
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+  const handleClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    title: string
+  ) => {
     e.preventDefault()
-    const element = document.getElementById(id)
-    if (element) {
-      const header = document.querySelector('header')
-      const headerHeight = header ? header.offsetHeight : 0
-      const elementPosition =
-        element.getBoundingClientRect().top + window.pageYOffset
-      const offsetPosition = elementPosition - headerHeight - 20
+    const id = slugify(title)
+    const newUrl = `${pathname}#${id}`
+    router.push(newUrl)
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth',
-      })
-
-      element.style.scrollMarginTop = `${headerHeight + 20}px`
-
-      setTimeout(() => {
-        element.style.scrollMarginTop = ''
-      }, 1000)
+    if (window.innerWidth < 768) {
+      setIsOpen(false)
     }
   }
+
   return (
     <nav
-      className={`bg-white dark:bg-slate-800 p-4 rounded-lg fixed top-2/4 -translate-y-1/2 ml-2 ${
-        isOpen ? 'w-72' : ''
+      className={`bg-white dark:bg-slate-800 p-2 rounded-lg fixed transition-all duration-300 ease-in-out z-5        ${
+        isOpen ? 'md:w-72' : 'w-0 md:w-auto'
       }`}
     >
-      <button onClick={toggleOpen} className='font-bold'>
-        {isOpen ? '←' : '→'}
+      <button
+        onClick={toggleOpen}
+        className={`font-bold absolute top-4 ${
+          isOpen ? 'right-4' : 'left-4'
+        } md:static`}
+      >
+        {isOpen ? '✕' : '☰'}
       </button>
       {isOpen && (
-        <ul className='space-y-2 max-h-[75vh] overflow-y-auto'>
+        <ul className='space-y-2 mt-12 md:mt-0 max-h-[calc(100vh-20rem)]  overflow-y-auto'>
           {toc.map((item) => (
             <li
               key={item.id}
@@ -76,7 +94,7 @@ export default function TableOfContents({content}: TableOfContentsProps) {
             >
               <a
                 href={`#${item.id}`}
-                onClick={(e) => handleClick(e, item.id)}
+                onClick={(e) => handleClick(e, item.title)}
                 className='hover:text-sky-500 cursor-pointer'
               >
                 {item.title}

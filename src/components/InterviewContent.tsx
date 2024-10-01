@@ -38,7 +38,7 @@ export default function InterviewContent({content}: {content: string}) {
               behavior: 'smooth',
             })
           }
-        }, 2500)
+        }, 1500)
       }
     }
   }, [])

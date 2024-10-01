@@ -11,29 +11,29 @@ export function slugify(text: string): string {
 
 export function getInterviewMetadata(id?: string) {
   if (!id) {
-    const allMetadata = [];
+    const allMetadata = []
     for (const [category, data] of Object.entries(categories)) {
-      const folder = data.folder;
-      const items = data.items;
+      const folder = data.folder
+      const items = data.items
       for (const item of items) {
-        const slug = slugify(item);
+        const slug = slugify(item)
         const fullPath = path.join(
           process.cwd(),
           'public',
           'interview-data',
           folder,
           `${slug}.md`
-        );
-        const fileContents = fs.readFileSync(fullPath, 'utf8');
-        const { data, content } = matter(fileContents);
+        )
+        const fileContents = fs.readFileSync(fullPath, 'utf8')
+        const {data, content} = matter(fileContents)
         allMetadata.push({
           id: slug,
           title: data.title,
           category,
-        });
+        })
       }
     }
-    return allMetadata;
+    return allMetadata
   }
 
   for (const [category, data] of Object.entries(categories)) {
@@ -72,15 +72,15 @@ export function getInterviewContent(slug: string) {
       if (itemSlug === slug) {
         try {
           const files = fs.readdirSync(path.join(interviewDirectory, folder))
-          const mdFile = files.find(file => 
-            slugify(file.replace('.md', '')) === slug
+          const mdFile = files.find(
+            (file) => slugify(file.replace('.md', '')) === slug
           )
-          
+
           if (mdFile) {
             const filePath = path.join(interviewDirectory, folder, mdFile)
             const fileContents = fs.readFileSync(filePath, 'utf8')
             const {data, content} = matter(fileContents)
-            
+
             if (slugify(data.title) === slug) {
               return {
                 title: data.title,
@@ -95,7 +95,7 @@ export function getInterviewContent(slug: string) {
     }
   }
   console.warn(`No content found for slug: ${slug}`)
-  return { title: 'Not Found', content: 'The requested content was not found.' }
+  return {title: 'Not Found', content: 'The requested content was not found.'}
 }
 
 export function getAllInterviews() {

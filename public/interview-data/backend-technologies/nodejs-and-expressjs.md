@@ -1,5 +1,5 @@
 ---
-title: Node.js and Express.js
+title: NodeJS and ExpressJS
 ---
 
 ## What is Node.js and how does it differ from browser JavaScript?

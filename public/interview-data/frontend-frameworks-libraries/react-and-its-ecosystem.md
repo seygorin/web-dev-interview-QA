@@ -105,7 +105,7 @@ function App() {
 
 ## Components
 
-### Component Definition (Class-based, Functional)
+### Component Definition
 
 В React существует два основных способа определения компонентов: классовые и функциональные.
 

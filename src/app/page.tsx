@@ -1,8 +1,8 @@
 import React from 'react'
 import InterviewCategories from '@/components/InterviewCategories'
 import {SearchResults} from '@/components/SearchResults'
-import {getInterviewMetadata} from '@/lib/interviews'
-import {searchInterviews} from '@/lib/api'
+import {getInterviewMetadata} from '@/lib/getInterviews'
+import {searchInterviews} from '@/lib/searchInterviews'
 import {categories} from '../../public/interview-data/categories'
 
 export default function Home({
@@ -12,9 +12,7 @@ export default function Home({
 }) {
   const searchQuery = searchParams.search || ''
   const interviewMetadata = getInterviewMetadata()
-  const searchResults = searchQuery
-    ? searchInterviews(searchQuery)
-    : []
+  const searchResults = searchQuery ? searchInterviews(searchQuery) : []
 
   return (
     <section className='container mx-auto px-4 py-8'>
