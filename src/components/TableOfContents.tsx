@@ -41,7 +41,6 @@ export default function TableOfContents({content}: TableOfContentsProps) {
       contentElement.classList.toggle('md:ml-80', isOpen)
     }
 
-    // Блокируем прокрутку body при открытом меню на мобильных устройствах
     if (isOpen && window.innerWidth < 768) {
       document.body.style.overflow = 'hidden'
     } else {
@@ -72,37 +71,45 @@ export default function TableOfContents({content}: TableOfContentsProps) {
   }
 
   return (
-    <nav
-      className={`bg-white dark:bg-slate-800 p-2 rounded-lg fixed transition-all duration-300 ease-in-out z-5        ${
-        isOpen ? 'md:w-72' : 'w-0 md:w-auto'
-      }`}
-    >
-      <button
-        onClick={toggleOpen}
-        className={`font-bold absolute top-4 ${
-          isOpen ? 'right-4' : 'left-4'
-        } md:static`}
+    <>
+      <nav
+        className={`bg-white dark:bg-slate-800 mt-10  min-w-8 p-2 rounded-lg fixed transition-all duration-300 ease-in-out z-40
+          ${isOpen ? 'md:w-72' : 'w-0 md:w-auto'}`}
+        style={{top: `${headerHeight}px`}}
       >
-        {isOpen ? '✕' : '☰'}
-      </button>
-      {isOpen && (
-        <ul className='space-y-2 mt-12 md:mt-0 max-h-[calc(100vh-20rem)]  overflow-y-auto'>
-          {toc.map((item) => (
-            <li
-              key={item.id}
-              style={{marginLeft: `${(item.level - 1) * 24}px`}}
-            >
-              <a
-                href={`#${item.id}`}
-                onClick={(e) => handleClick(e, item.title)}
-                className='hover:text-sky-500 cursor-pointer'
+        <button
+          onClick={toggleOpen}
+          className={`font-bold  top-2 ${
+            isOpen ? 'right-2' : 'left-2'
+          } md:static`}
+        >
+          {isOpen ? '✕' : '☰'}
+        </button>
+        {isOpen && (
+          <ul className='space-y-2 mt-12 md:mt-0 max-h-[calc(100vh-16rem)]  overflow-y-auto'>
+            {toc.map((item) => (
+              <li
+                key={item.id}
+                style={{marginLeft: `${(item.level - 1) * 24}px`}}
               >
-                {item.title}
-              </a>
-            </li>
-          ))}
-        </ul>
+                <a
+                  href={`#${item.id}`}
+                  onClick={(e) => handleClick(e, item.title)}
+                  className='hover:text-sky-500 cursor-pointer'
+                >
+                  {item.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </nav>
+      {isOpen && (
+        <div
+          className='fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden'
+          onClick={toggleOpen}
+        ></div>
       )}
-    </nav>
+    </>
   )
 }
