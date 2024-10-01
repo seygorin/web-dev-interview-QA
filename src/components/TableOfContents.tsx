@@ -74,8 +74,8 @@ export default function TableOfContents({content}: TableOfContentsProps) {
     <>
       <nav
         className={`bg-white dark:bg-slate-800 mt-10  min-w-8 p-2 rounded-lg fixed transition-all duration-300 ease-in-out z-40
-          ${isOpen ? 'md:w-72' : 'w-0 md:w-auto'}`}
-        style={{top: `${headerHeight}px`}}
+          ${isOpen ? 'md:w-72' : 'w-0'}`}
+        style={{top: `${headerHeight}px`, right: `1rem`, left: `1rem`}}
       >
         <button
           onClick={toggleOpen}
