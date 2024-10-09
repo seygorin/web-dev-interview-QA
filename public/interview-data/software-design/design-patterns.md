@@ -2,42 +2,173 @@
 title: Design Patterns
 ---
 
-## What are design patterns and why are they important in software development?
+## Understanding and Applying KISS, DRY, and YAGNI Principles
 
-...
+Эти принципы являются фундаментальными в разработке программного обеспечения и помогают создавать более эффективный, поддерживаемый и понятный код.
 
-## Explain the Singleton pattern and its use cases
+**1. KISS (Keep It Simple, Stupid):**
 
-...
+Принцип KISS утверждает, что большинство систем работают лучше, если они остаются простыми, а не усложняются. В программировании это означает, что код должен быть настолько простым и понятным, насколько это возможно.
 
-## Describe the Factory pattern and when you would use it
+**Samples:**
 
-...
+```javascript
+// Сложно (не KISS)
+function getDayName(dayNumber) {
+  switch (dayNumber) {
+    case 1:
+      return 'Monday'
+    case 2:
+      return 'Tuesday'
+    case 3:
+      return 'Wednesday'
+    case 4:
+      return 'Thursday'
+    case 5:
+      return 'Friday'
+    case 6:
+      return 'Saturday'
+    case 7:
+      return 'Sunday'
+    default:
+      return 'Invalid day'
+  }
+}
 
-## What is the Observer pattern and how is it implemented?
+// Просто (KISS)
+function getDayName(dayNumber) {
+  const days = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ]
+  return days[dayNumber - 1] || 'Invalid day'
+}
+```
 
-...
+**Detailed analysis (Подробный анализ):**
 
-## Explain the Decorator pattern and its benefits
+1. **Complex version (Сложная версия):**
+   - Использует конструкцию `switch`, которая становится громоздкой при большом количестве случаев.
+   - Каждый случай требует отдельного `return` statement.
+   - Код длиннее и менее читаемый.
+   - Добавление нового дня недели потребует добавления нового `case`.
 
-...
+2. **Simple version (Простая версия):**
+   - Использует массив для хранения названий дней недели.
+   - Возвращает название дня по индексу (с учетом того, что нумерация дней начинается с 1, а индексы массива с 0).
+   - Использует короткое замыкание (`||`) для обработки некорректных значений.
+   - Код короче, более читаемый и легко расширяемый.
+   - Добавление нового дня недели требует только добавления элемента в массив.
 
-## What is the Strategy pattern and when is it useful?
+**Advantages of KISS (Преимущества KISS):**
+- Легче понять и поддерживать код.
+- Меньше шансов допустить ошибку.
+- Проще тестировать и отлаживать.
+- Часто приводит к более эффективному коду.
 
-...
+**2. DRY (Don't Repeat Yourself):**
 
-## Describe the Model-View-Controller (MVC) pattern
+Принцип DRY направлен на уменьшение повторения информации всех видов. В программировании это означает избегание дублирования кода путем абстрагирования общих частей в функции или модули.
 
-...
+**Samples:**
 
-## What is the Adapter pattern and how does it promote code reuse?
+```javascript
+// Не DRY
+function calculateAreaSquare(side) {
+  return side * side
+}
 
-...
+function calculateAreaRectangle(width, height) {
+  return width * height
+}
 
-## Explain the Composite pattern and its application in tree-like structures
+// DRY
+function calculateArea(width, height = width) {
+  return width * height
+}
+```
 
-...
+**Detailed analysis (Подробный анализ):**
 
-## How does the Command pattern separate concerns in an application?
+1. **Not DRY version (Не DRY версия):**
+   - Имеет две отдельные функции для вычисления площади квадрата и прямоугольника.
+   - Логика умножения повторяется в обеих функциях.
+   - При изменении логики вычисления площади нужно менять код в двух местах.
 
-...
+2. **DRY version (DRY версия):**
+   - Использует одну функцию для вычисления площади как квадрата, так и прямоугольника.
+   - Применяет параметр по умолчанию (`height = width`), что позволяет использовать функцию для квадратов, передавая только одно значение.
+   - При изменении логики вычисления площади нужно менять код только в одном месте.
+
+**Advantages of DRY (Преимущества DRY):**
+- Уменьшает дублирование кода.
+- Облегчает поддержку и обновление кода.
+- Снижает вероятность ошибок при обновлении (изменения нужно вносить только в одном месте).
+- Делает код более модульным и переиспользуемым.
+
+
+**3. YAGNI (You Aren't Gonna Need It):**
+
+Принцип YAGNI советует разработчикам не добавлять функциональность, пока она действительно не понадобится. Это помогает избежать избыточного кода и преждевременной оптимизации.
+
+**Samples:**
+
+```javascript
+// Не YAGNI (преждевременная оптимизация)
+class User {
+  constructor(name) {
+    this.name = name
+  }
+
+  getName() {
+    return this.name
+  }
+
+  setName(name) {
+    this.name = name
+  }
+
+  // Методы, которые могут не понадобиться
+  getNameUpperCase() {
+    return this.name.toUpperCase()
+  }
+
+  getNameLength() {
+    return this.name.length
+  }
+}
+
+// YAGNI
+class User {
+  constructor(name) {
+    this.name = name
+  }
+}
+```
+
+
+**Detailed analysis (Подробный анализ):**
+
+1. **Not YAGNI version (Не YAGNI версия):**
+   - Содержит методы `getName()` и `setName()`, которые просто обертывают прямой доступ к свойству.
+   - Включает дополнительные методы `getNameUpperCase()` и `getNameLength()`, которые могут никогда не понадобиться.
+   - Класс перегружен методами, которые не обязательно будут использоваться.
+
+2. **YAGNI version (YAGNI версия):**
+   - Содержит только необходимый минимум: конструктор для создания объекта с именем.
+   - Не включает дополнительные методы, пока в них нет явной необходимости.
+   - Если потребуется дополнительная функциональность, ее можно добавить позже.
+
+**Advantages of YAGNI (Преимущества YAGNI):**
+- Уменьшает сложность кода.
+- Экономит время разработки, фокусируясь только на необходимых функциях.
+- Предотвращает появление неиспользуемого кода.
+- Облегчает поддержку и тестирование, так как нет лишней функциональности.
+
+**Conclusion (Заключение):**
+Применение принципов KISS, DRY и YAGNI помогает создавать более чистый, эффективный и поддерживаемый код. KISS призывает к простоте, DRY - к устранению повторений, а YAGNI - к минимализму в функциональности. Вместе эти принципы способствуют созданию качественного программного обеспечения.
