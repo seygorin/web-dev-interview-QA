@@ -1,11 +1,18 @@
 'use client'
 
-import React, {useState} from 'react'
+import React, { useState } from 'react'
 import MainHeaderLinks from '@/components/MainHeaderLinks'
 import CodeEditor from '@/components/CodeEditor'
 import Modal from '@/components/Modal'
 
-const tasks = [
+interface Task {
+  title: string
+  description: string
+  codeTemplate: string
+  expectedOutput: string
+}
+
+const tasks: Task[] = [
   {
     title: 'Task 1: Reverse a String',
     description:
@@ -28,7 +35,7 @@ const tasks = [
 ]
 
 export default function CodingTasks() {
-  const [selectedTask, setSelectedTask] = useState(null)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   return (
     <section className='container mx-auto px-4 py-8'>
