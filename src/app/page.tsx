@@ -4,6 +4,7 @@ import {SearchResults} from '@/components/SearchResults'
 import {getInterviewMetadata} from '@/lib/getInterviews'
 import {searchInterviews} from '@/lib/searchInterviews'
 import {categories} from '../../public/interview-data/categories'
+import MainHeaderLinks from '@/components/MainHeaderLinks'
 
 export default function Home({
   searchParams,
@@ -16,14 +17,13 @@ export default function Home({
 
   return (
     <section className='container mx-auto px-4 py-8'>
-      <h1 className='text-3xl text-slate-700 dark:text-slate-400 font-bold mb-6'>
-        Questions & Answers
-      </h1>
-
       {searchQuery ? (
         <SearchResults results={searchResults} searchQuery={searchQuery} />
       ) : (
-        <InterviewCategories interviews={categories} />
+        <>
+          <MainHeaderLinks />
+          <InterviewCategories interviews={categories} />
+        </>
       )}
     </section>
   )

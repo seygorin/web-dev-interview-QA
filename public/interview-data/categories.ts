@@ -18,14 +18,14 @@ export const categories = {
       // 'Web Components', // future
     ],
   },
-  // 'Soft Skills': {
-  //   folder: 'soft-skills',
-  //   items: [
-  //     'Problem Solving', // future
-  //     'Communication', // future
-  //     'Teamwork', // future
-  //   ],
-  // },
+  'Soft Skills': {
+    folder: 'soft-skills',
+    items: [
+      // 'Problem Solving', // future
+      // 'Communication', // future
+      'Teamwork', // future
+    ],
+  },
   'Frontend Frameworks & Libraries': {
     folder: 'frontend-frameworks-libraries',
     items: [

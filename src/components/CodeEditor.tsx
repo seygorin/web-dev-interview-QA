@@ -8,6 +8,11 @@ const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {ssr: false})
 
 type Language = 'javascript' | 'typescript' | 'jsx' | 'html' | 'css'
 
+interface CodeEditorProps {
+  codeTemplate?: string
+  expectedOutput?: string
+}
+
 const DEFAULT_CODE: Record<Language, string> = {
   javascript:
     '// Write your JavaScript code here\nconsole.log("Hello, World!");',
@@ -24,7 +29,7 @@ console.log('App rendered to #root');`,
   css: '/* Write your CSS code here */\nbody {\n  color: blue;\n}',
 }
 
-const CodeEditor: React.FC = () => {
+const CodeEditor: React.FC<CodeEditorProps> = ({codeTemplate, expectedOutput}) => {
   const {theme} = useTheme()
   const [language, setLanguage] = useState<Language>(() => {
     if (typeof window !== 'undefined') {
@@ -35,6 +40,9 @@ const CodeEditor: React.FC = () => {
     return 'javascript'
   })
   const [code, setCode] = useState(() => {
+    if (codeTemplate) {
+      return codeTemplate
+    }
     if (typeof window !== 'undefined') {
       return (
         localStorage.getItem(`codeEditor_${language}`) || DEFAULT_CODE[language]
@@ -263,6 +271,26 @@ const CodeEditor: React.FC = () => {
         >
           {output || 'Run your code to see results.'}
         </pre>
+        {expectedOutput && (
+          <>
+            <h3
+              className={`text-sm font-semibold mt-4 ${
+                theme === 'dark' ? 'text-white' : 'text-slate-800'
+              }`}
+            >
+              Expected Output:
+            </h3>
+            <pre
+              className={`font-mono text-sm p-4 rounded overflow-auto max-h-40 ${
+                theme === 'dark'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-white text-slate-800'
+              }`}
+            >
+              {expectedOutput}
+            </pre>
+          </>
+        )}
       </div>
       <iframe
         ref={iframeRef}
