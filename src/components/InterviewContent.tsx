@@ -11,9 +11,10 @@ export default function InterviewContent({content}: {content: string}) {
 
   const addAnchorsToHeadings = (markdown: string) => {
     return markdown.replace(/^(#{1,3})\s+(.+)$/gm, (match, hashes, title) => {
-      const id = title.toLowerCase()
+      const id = title
+        .toLowerCase()
         .replace(/[^\w]+/g, '-')
-        .replace(/-+$/, ''); 
+        .replace(/-+$/, '')
       return `${hashes} ${title} <a id="${id}" style="scroll-margin-top: var(--header-height, 80px);"></a>`
     })
   }

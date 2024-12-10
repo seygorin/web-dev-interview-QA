@@ -12,7 +12,7 @@ interface HeaderProps {
 
 export default function Header({openSandbox}: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [scrollPercentage, setScrollPercentage] = useState(0)
+  const [isSticky, setIsSticky] = useState(false)
   const [currentTitle, setCurrentTitle] = useState('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const router = useRouter()
@@ -22,28 +22,16 @@ export default function Header({openSandbox}: HeaderProps) {
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY
-      const maxScroll = 100
-      const percentage = Math.min(scrollPosition / maxScroll, 1)
-      setScrollPercentage(percentage)
+      setIsSticky(window.scrollY > 200)
     }
 
     window.addEventListener('scroll', handleScroll)
+    handleScroll()
 
     return () => {
       window.removeEventListener('scroll', handleScroll)
     }
   }, [])
-
-  useEffect(() => {
-    if (headerRef.current) {
-      const headerHeight = headerRef.current.offsetHeight
-      document.documentElement.style.setProperty(
-        '--header-height',
-        `${headerHeight}px`
-      )
-    }
-  }, [scrollPercentage])
 
   useEffect(() => {
     const slug = pathname.split('/').pop()
@@ -76,30 +64,30 @@ export default function Header({openSandbox}: HeaderProps) {
   return (
     <header
       ref={headerRef}
-      className='bg-white dark:bg-slate-800 sticky shadow-md top-0 z-50 transition-all duration-300'
-      style={
-        {
-          '--scroll-percentage': scrollPercentage,
-          padding: `calc(1rem - 0.5rem * var(--scroll-percentage)) 1rem`,
-        } as React.CSSProperties
-      }
+      className={`
+        bg-white dark:bg-slate-800 sticky top-0 z-50 shadow-md
+        transition-all duration-500 ease-in-out
+        ${isSticky ? 'py-2' : 'py-4'}
+      `}
     >
-      <div className='container mx-auto px-4 flex flex-wrap items-center justify-between '>
+      <div className='container mx-auto px-4 flex flex-wrap items-center justify-between'>
         <Link
           href='/'
-          className='text-slate-700 dark:text-slate-400 font-bold transition-all duration-300'
-          style={{
-            fontSize: `calc(1.5rem - 0.25rem * var(--scroll-percentage))`,
-          }}
+          className={`
+            text-slate-700 dark:text-slate-400 font-bold
+            transition-all duration-500 ease-in-out
+            ${isSticky ? 'text-lg' : 'text-2xl'}
+          `}
         >
           Web Dev Interview Q&A
         </Link>
         {currentTitle && (
           <h2
-            className='text-slate-600 dark:text-slate-300 font-semibold transition-all duration-300 hidden md:block'
-            style={{
-              fontSize: `calc(1.125rem - 0.125rem * var(--scroll-percentage))`,
-            }}
+            className={`
+              text-slate-600 dark:text-slate-300 font-semibold hidden md:block
+              transition-all duration-500 ease-in-out
+              ${isSticky ? 'text-sm' : 'text-lg'}
+            `}
           >
             {currentTitle}
           </h2>
@@ -113,7 +101,7 @@ export default function Header({openSandbox}: HeaderProps) {
         <div
           className={`${
             isMenuOpen
-              ? 'fixed inset-0 bg-white dark:bg-slate-800 g p-10'
+              ? 'fixed inset-0 bg-white dark:bg-slate-800 p-10'
               : 'hidden'
           } md:flex md:flex-wrap md:items-center md:space-x-4`}
         >
@@ -130,11 +118,13 @@ export default function Header({openSandbox}: HeaderProps) {
               openSandbox()
               setIsMenuOpen(false)
             }}
-            className='bg-sky-500 text-white rounded-md hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-800 focus:outline-none transition-all duration-300 w-full md:w-auto mb-2 md:mb-0'
-            style={{
-              padding: `calc(0.5rem - 0.125rem * var(--scroll-percentage)) calc(1rem - 0.25rem * var(--scroll-percentage))`,
-              fontSize: `calc(1rem - 0.125rem * var(--scroll-percentage))`,
-            }}
+            className={`
+              bg-sky-500 text-white rounded-md hover:bg-sky-600 
+              dark:bg-sky-600 dark:hover:bg-sky-800 focus:outline-none 
+              w-full md:w-auto mb-2 md:mb-0
+              transition-all duration-500 ease-in-out
+              ${isSticky ? 'px-3 py-1 text-sm' : 'px-4 py-2 text-base'}
+            `}
           >
             Playground
           </button>
@@ -143,10 +133,11 @@ export default function Header({openSandbox}: HeaderProps) {
               toggleTheme()
               setIsMenuOpen(false)
             }}
-            className='transition-all duration-300 w-full md:w-auto mb-2 md:mb-0'
-            style={{
-              padding: `calc(0.5rem - 0.125rem * var(--scroll-percentage))`,
-            }}
+            className={`
+              w-full md:w-auto mb-2 md:mb-0
+              transition-all duration-500 ease-in-out
+              ${isSticky ? 'p-1' : 'p-2'}
+            `}
           >
             {theme === 'light' ? '🌙' : '☀️'}
           </button>
@@ -156,19 +147,21 @@ export default function Header({openSandbox}: HeaderProps) {
               placeholder='Search questions...'
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className='border border-slate-300 dark:border-slate-600 rounded-l-md focus:outline-none dark:bg-slate-700 dark:text-white transition-all duration-300 w-full'
-              style={{
-                padding: `calc(0.5rem - 0.125rem * var(--scroll-percentage)) calc(1rem - 0.25rem * var(--scroll-percentage))`,
-                fontSize: `calc(1rem - 0.125rem * var(--scroll-percentage))`,
-              }}
+              className={`
+                border border-slate-300 dark:border-slate-600 rounded-l-md 
+                focus:outline-none dark:bg-slate-700 dark:text-white w-full
+                transition-all duration-500 ease-in-out
+                ${isSticky ? 'px-3 py-1 text-sm' : 'px-4 py-2 text-base'}
+              `}
             />
             <button
               type='submit'
-              className='bg-sky-500 text-white rounded-r-md hover:bg-sky-600 dark:hover:bg-sky-800 dark:bg-sky-600 focus:outline-none transition-all duration-300'
-              style={{
-                padding: `calc(0.5rem - 0.125rem * var(--scroll-percentage)) calc(1rem - 0.25rem * var(--scroll-percentage))`,
-                fontSize: `calc(1rem - 0.125rem * var(--scroll-percentage))`,
-              }}
+              className={`
+                bg-sky-500 text-white rounded-r-md hover:bg-sky-600 
+                dark:hover:bg-sky-800 dark:bg-sky-600 focus:outline-none
+                transition-all duration-500 ease-in-out
+                ${isSticky ? 'px-3 py-1 text-sm' : 'px-4 py-2 text-base'}
+              `}
             >
               🔍
             </button>
