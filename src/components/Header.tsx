@@ -22,7 +22,7 @@ export default function Header({openSandbox}: HeaderProps) {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsSticky(window.scrollY > 200)
+      setIsSticky(window.scrollY > 100)
     }
 
     window.addEventListener('scroll', handleScroll)
