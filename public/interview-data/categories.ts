@@ -18,19 +18,20 @@ export const categories = {
       // 'Web Components', // future
     ],
   },
-  'Soft Skills': {
-    folder: 'soft-skills',
-    items: [
-      // 'Problem Solving', // future
-      // 'Communication', // future
-      'Teamwork', // future
-    ],
-  },
+  // 'Soft Skills': {
+  //   folder: 'soft-skills',
+  //   items: [
+  //     // 'Problem Solving', // future
+  //     // 'Communication', // future
+  //     'Teamwork', // future
+  //   ],
+  // },
   'Frontend Frameworks & Libraries': {
     folder: 'frontend-frameworks-libraries',
     items: [
       'React and its Ecosystem',
       'NextJS and Server-Side Rendering',
+      'Angular and its Ecosystem',
       // 'State Management', // future
       // 'UI Component Libraries', // future
     ],
@@ -88,9 +89,9 @@ export const categories = {
     folder: 'data-structures-algorithms',
     items: [
       'Big O Notation and Complexity Analysis',
-      'Fundamental Data Structures',
-      'Searching and Sorting Algorithms',
-      'Advanced Data Structures and Algorithms',
+      // 'Fundamental Data Structures',
+      // 'Searching and Sorting Algorithms',
+      // 'Advanced Data Structures and Algorithms',
     ],
   },
   'Software Design': {
