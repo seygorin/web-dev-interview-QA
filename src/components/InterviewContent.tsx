@@ -15,7 +15,7 @@ export default function InterviewContent({content}: {content: string}) {
         .toLowerCase()
         .replace(/[^\w]+/g, '-')
         .replace(/-+$/, '')
-      return `${hashes} ${title} <a id="${id}" style="scroll-margin-top: var(--header-height, 80px);"></a>`
+      return `${hashes} ${title} <a id="${id}" class="heading-anchor"></a>`
     })
   }
 
@@ -29,17 +29,17 @@ export default function InterviewContent({content}: {content: string}) {
           const element = document.getElementById(decodeURIComponent(hash))
           if (element) {
             const header = document.querySelector('header')
-            const headerHeight = header ? header.offsetHeight : 0
+            const headerHeight = header ? header.offsetHeight + 20 : 100
+
             const elementPosition =
               element.getBoundingClientRect().top + window.pageYOffset
-            const offsetPosition = elementPosition - headerHeight - 20
 
             window.scrollTo({
-              top: offsetPosition,
+              top: elementPosition - headerHeight,
               behavior: 'smooth',
             })
           }
-        }, 1500)
+        }, 300)
       }
     }
   }, [])

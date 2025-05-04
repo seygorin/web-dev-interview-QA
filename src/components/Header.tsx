@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import {useState, useEffect, useRef} from 'react'
+import {useState, useEffect, useRef, useCallback} from 'react'
 import {useRouter, usePathname} from 'next/navigation'
 import {useTheme} from '@/contexts/ThemeContext'
 import {categories} from '../../public/interview-data/categories'
@@ -20,18 +20,34 @@ export default function Header({openSandbox}: HeaderProps) {
   const headerRef = useRef<HTMLElement>(null)
   const {theme, toggleTheme} = useTheme()
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsSticky(window.scrollY > 100)
-    }
+  const lastSticky = useRef(false)
 
-    window.addEventListener('scroll', handleScroll)
-    handleScroll()
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
+  const handleScroll = useCallback(() => {
+    const scrollY = window.scrollY
+    if (!lastSticky.current && scrollY > 120) {
+      setIsSticky(true)
+      lastSticky.current = true
+    } else if (lastSticky.current && scrollY < 80) {
+      setIsSticky(false)
+      lastSticky.current = false
     }
   }, [])
+
+  useEffect(() => {
+    let ticking = false
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll()
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+    window.addEventListener('scroll', onScroll)
+    handleScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [handleScroll])
 
   useEffect(() => {
     const slug = pathname.split('/').pop()

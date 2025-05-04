@@ -28,6 +28,8 @@ export default async function InterviewPage({
   const slug = params.slug[1]
   const {title, content} = await getInterviewContent(slug)
 
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
   if (title === 'Not Found') {
     return (
       <div className='container mx-auto px-4 py-8'>

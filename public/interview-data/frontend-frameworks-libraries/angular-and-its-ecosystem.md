@@ -1790,4 +1790,1206 @@ export class AppComponent implements AfterViewInit {
 4. **Переиспользуемость**: динамические компоненты легко переиспользовать в разных частях приложения
 5. **Разделение ответственности**: логика создания компонентов может быть вынесена в сервисы
 
+
+## Angular Directives Concepts
+
+### 1. What are `Directives` in Angular, and what are they used for?
+
+Директивы в Angular — это классы, которые добавляют дополнительное поведение DOM-элементам. Они позволяют расширять и изменять HTML-элементы, их атрибуты и поведение.
+
+#### Назначение директив
+
+Директивы позволяют:
+
+- Манипулировать DOM-структурой (добавлять/удалять элементы)
+- Изменять внешний вид элементов
+- Изменять поведение элементов
+- Повторно использовать логику без дублирования кода
+- Создавать абстракции высокого уровня, скрывающие сложность
+
+#### Типы директив в Angular
+
+1. **Компонентные директивы** — специальный тип директив с шаблоном
+
+   - Компоненты (`@Component`) технически являются директивами с шаблоном
+   - Имеют собственный HTML и поведение
+
+2. **Структурные директивы** — изменяют структуру DOM
+
+   - Добавляют или удаляют элементы
+   - Обозначаются символом `*` перед названием
+   - Примеры: `*ngIf`, `*ngFor`, `*ngSwitch`
+
+3. **Атрибутные директивы** — изменяют внешний вид или поведение элемента
+   - Изменяют класс элемента, стили, атрибуты
+   - Используются как обычные атрибуты HTML
+   - Примеры: `ngClass`, `ngStyle`, `ngModel`
+
+#### Встроенные директивы Angular
+
+Angular предоставляет набор встроенных директив:
+
+**Структурные:**
+
+- `*ngIf` — условное отображение элемента
+- `*ngFor` — создание элементов на основе коллекции
+- `*ngSwitch` — условное отображение на основе выражения
+
+**Атрибутные:**
+
+- `ngClass` — динамическое добавление/удаление CSS-классов
+- `ngStyle` — динамическое изменение стилей
+- `ngModel` — двустороннее связывание данных (для форм)
+
+### 2. What is the difference between structural and attribute directives? Please provide examples.
+
+#### Структурные директивы
+
+**Определение**:
+Структурные директивы изменяют структуру DOM, добавляя, удаляя или модифицируя элементы.
+
+**Ключевые особенности**:
+
+- Обозначаются префиксом `*` (например, `*ngIf`)
+- Могут добавлять или удалять элементы из DOM
+- Работают с шаблонами (`<ng-template>`)
+- Могут использовать микросинтаксис (например, `let item of items`)
+
+**Примеры структурных директив**:
+
+1. **ngIf** — условное отображение элемента:
+
+   ```html
+   <div *ngIf="isVisible">Этот элемент будет отображен только если isVisible == true</div>
+   ```
+
+2. **ngFor** — создание элементов на основе коллекции:
+
+   ```html
+   <ul>
+     <li *ngFor="let item of items; let i = index">{{ i }}: {{ item.name }}</li>
+   </ul>
+   ```
+
+3. **ngSwitch** — условное отображение на основе выражения:
+   ```html
+   <div [ngSwitch]="status">
+     <div *ngSwitchCase="'success'">Успешно!</div>
+     <div *ngSwitchCase="'error'">Ошибка!</div>
+     <div *ngSwitchDefault>Загрузка...</div>
+   </div>
+   ```
+
+#### Атрибутные директивы
+
+**Определение**:
+Атрибутные директивы изменяют внешний вид или поведение существующего элемента.
+
+**Ключевые особенности**:
+
+- Используются как атрибуты HTML (без префикса `*`)
+- Не добавляют и не удаляют элементы из DOM
+- Изменяют свойства элемента, к которому применяются
+- Могут использовать привязку данных (например, `[ngClass]="expression"`)
+
+**Примеры атрибутных директив**:
+
+1. **ngClass** — динамическое управление CSS-классами:
+
+   ```html
+   <div [ngClass]="{'active': isActive, 'disabled': isDisabled}">Классы зависят от состояния</div>
+   ```
+
+2. **ngStyle** — динамическое управление CSS-стилями:
+
+   ```html
+   <div [ngStyle]="{'color': textColor, 'font-size': fontSize + 'px'}">Стилизованный текст</div>
+   ```
+
+3. **ngModel** — двустороннее связывание данных (для форм):
+   ```html
+   <input [(ngModel)]="name" placeholder="Введите имя" />
+   <p>Привет, {{ name }}!</p>
+   ```
+
+#### Сравнительная таблица
+
+| Характеристика | Структурные директивы            | Атрибутные директивы              |
+| -------------- | -------------------------------- | --------------------------------- |
+| Синтаксис      | Используют префикс `*`           | Используются как обычные атрибуты |
+| Влияние на DOM | Добавляют, удаляют элементы      | Изменяют существующие элементы    |
+| Шаблон         | Работают с `<ng-template>`       | Не используют шаблоны             |
+| Примеры        | `*ngIf`, `*ngFor`, `*ngSwitch`   | `ngClass`, `ngStyle`, `ngModel`   |
+| Создание       | Требуют реализации `TemplateRef` | Реализуются проще                 |
+
+### 3. How do you create and use a custom directive? Explain the use of the `@Directive` decorator.
+
+Создание собственных директив позволяет расширить функциональность HTML-элементов и повторно использовать бизнес-логику в приложении.
+
+#### Создание атрибутной директивы
+
+#### 1. Базовая структура
+
+```typescript
+import { Directive, ElementRef, HostListener, Input } from "@angular/core";
+
+@Directive({
+  selector: "[appHighlight]", // Селектор директивы в квадратных скобках для атрибутной директивы
+})
+export class HighlightDirective {
+  @Input() highlightColor: string = "yellow"; // Входной параметр
+
+  constructor(private el: ElementRef) {}
+
+  @HostListener("mouseenter") onMouseEnter() {
+    this.highlight(this.highlightColor);
+  }
+
+  @HostListener("mouseleave") onMouseLeave() {
+    this.highlight(null);
+  }
+
+  private highlight(color: string | null) {
+    this.el.nativeElement.style.backgroundColor = color;
+  }
+}
 ```
+
+#### 2. Регистрация директивы
+
+Если вы используете NgModule:
+
+```typescript
+@NgModule({
+  declarations: [HighlightDirective],
+  // ...
+})
+export class AppModule {}
+```
+
+Для standalone-подхода:
+
+```typescript
+@Component({
+  standalone: true,
+  imports: [CommonModule, HighlightDirective],
+  // ...
+})
+```
+
+#### 3. Использование директивы
+
+```html
+<!-- Базовое использование -->
+<p appHighlight>Наведите курсор на этот текст</p>
+
+<!-- С параметром -->
+<p appHighlight highlightColor="lightblue">Текст с другим цветом подсветки</p>
+
+<!-- С динамическим параметром -->
+<p [appHighlight]="true" [highlightColor]="color">Динамический цвет подсветки</p>
+```
+
+#### Создание структурной директивы
+
+#### 1. Базовая структура
+
+```typescript
+import { Directive, Input, TemplateRef, ViewContainerRef } from "@angular/core";
+
+@Directive({
+  selector: "[appUnless]", // Селектор для структурной директивы
+})
+export class UnlessDirective {
+  private hasView = false;
+
+  constructor(private templateRef: TemplateRef<any>, private viewContainer: ViewContainerRef) {}
+
+  @Input() set appUnless(condition: boolean) {
+    // Противоположная логика ngIf
+    if (!condition && !this.hasView) {
+      this.viewContainer.createEmbeddedView(this.templateRef);
+      this.hasView = true;
+    } else if (condition && this.hasView) {
+      this.viewContainer.clear();
+      this.hasView = false;
+    }
+  }
+}
+```
+
+#### 2. Использование структурной директивы
+
+```html
+<div *appUnless="condition">Этот блок отображается, когда condition равно false</div>
+```
+
+#### Декоратор `@Directive`
+
+Декоратор `@Directive` содержит метаданные для класса директивы:
+
+```typescript
+@Directive({
+  selector: '[appDirective]', // CSS-селектор, определяющий, где применяется директива
+  standalone: true,           // Для standalone-директив (Angular 14+)
+  providers: [...],           // Зависимости, доступные только в этой директиве
+  host: {                     // Альтернатива @HostBinding и @HostListener
+    '(click)': 'onClick()',
+    '[class.active]': 'isActive'
+  },
+  exportAs: 'exportName'      // Имя, которое можно использовать с #var="exportName"
+})
+```
+
+#### Ключевые параметры декоратора `@Directive`
+
+1. **selector** (обязательный) — CSS-селектор, определяющий, к каким элементам применяется директива:
+
+   - `'[appDirective]'` — как атрибут (атрибутная директива)
+   - `'.app-directive'` — как класс
+   - `'app-directive'` — как элемент (редко используется для директив)
+
+2. **standalone** (опциональный) — делает директиву независимой от NgModule (с Angular 14+)
+3. **providers** (опциональный) — массив провайдеров, доступных только внутри директивы
+
+4. **host** (опциональный) — объект, определяющий привязки к событиям и свойствам хост-элемента
+
+5. **exportAs** (опциональный) — имя, с которым директива может быть доступна через шаблонную переменную
+
+#### Дополнительные возможности директив
+
+#### Инъекция зависимостей
+
+Директивы могут получать любые зависимости через конструктор:
+
+```typescript
+@Directive({
+  selector: "[appLogger]",
+})
+export class LoggerDirective {
+  constructor(private el: ElementRef, private renderer: Renderer2, private loggingService: LoggingService) {
+    this.loggingService.log("Директива создана");
+  }
+}
+```
+
+#### Доступ к содержимому компонента
+
+```typescript
+@Directive({
+  selector: "[appContentAccess]",
+})
+export class ContentAccessDirective implements AfterContentInit {
+  @ContentChild(ChildComponent) childComponent: ChildComponent;
+
+  ngAfterContentInit() {
+    console.log("Дочерний компонент:", this.childComponent);
+  }
+}
+```
+
+## 4. Explain `ngIf` and `ngFor` and their usage.
+
+#### Директива ngIf
+
+**ngIf** — это структурная директива, которая добавляет или удаляет элемент из DOM в зависимости от значения выражения.
+
+#### Базовый синтаксис ngIf:
+
+```html
+<div *ngIf="condition">Содержимое отображается, если condition == true</div>
+```
+
+#### Расширенный синтаксис с else:
+
+```html
+<div *ngIf="condition; else elseBlock">Содержимое, если condition == true</div>
+<ng-template #elseBlock>Альтернативное содержимое</ng-template>
+```
+
+#### Синтаксис с then и else:
+
+```html
+<div *ngIf="condition; then thenBlock else elseBlock"></div>
+<ng-template #thenBlock>Содержимое, если condition == true</ng-template>
+<ng-template #elseBlock>Содержимое, если condition == false</ng-template>
+```
+
+#### Сохранение контекста с as:
+
+```html
+<div *ngIf="user$ | async as user; else loading">Привет, {{ user.name }}!</div>
+<ng-template #loading>Загрузка данных...</ng-template>
+```
+
+#### Особенности ngIf:
+
+1. **Полное удаление** — элемент и его потомки полностью удаляются из DOM
+2. **Создание/уничтожение** — компоненты внутри условия создаются и уничтожаются при изменении условия
+3. **Жизненный цикл** — при добавлении элемента в DOM вызываются соответствующие хуки жизненного цикла (ngOnInit и т.д.)
+4. **Производительность** — предотвращает ненужную отрисовку скрытых элементов
+
+#### Директива ngFor
+
+**ngFor** — это структурная директива, которая повторяет шаблон для каждого элемента в коллекции.
+
+#### Базовый синтаксис ngFor:
+
+```html
+<ul>
+  <li *ngFor="let item of items">{{ item.name }}</li>
+</ul>
+```
+
+#### Дополнительные переменные:
+
+```html
+<div
+  *ngFor="let item of items; 
+            let i = index; 
+            let first = first; 
+            let last = last; 
+            let even = even; 
+            let odd = odd"
+>
+  [{{ i }}] {{ item.name }}
+  <span *ngIf="first">(первый)</span>
+  <span *ngIf="last">(последний)</span>
+  <span *ngIf="even">(четный)</span>
+  <span *ngIf="odd">(нечетный)</span>
+</div>
+```
+
+#### Локальные переменные:
+
+1. **index** — индекс текущего элемента
+2. **first** — true, если элемент первый в коллекции
+3. **last** — true, если элемент последний в коллекции
+4. **even** — true, если элемент имеет четный индекс
+5. **odd** — true, если элемент имеет нечетный индекс
+6. **count** — общее количество элементов в коллекции (Angular 15+)
+
+#### Оптимизация с trackBy:
+
+```typescript
+@Component({
+  selector: "app-track-by-demo",
+  template: `
+    <ul>
+      <li *ngFor="let item of items; trackBy: trackByFn">{{ item.name }}</li>
+    </ul>
+  `,
+})
+export class TrackByDemoComponent {
+  items = [
+    { id: 1, name: "Элемент 1" },
+    { id: 2, name: "Элемент 2" },
+    { id: 3, name: "Элемент 3" },
+  ];
+
+  trackByFn(index: number, item: any): number {
+    return item.id; // Уникальный ключ для элемента
+  }
+}
+```
+
+#### Особенности ngFor:
+
+1. **Эффективность** — перерисовывает только измененные элементы при использовании trackBy
+2. **Итерируемые объекты** — работает с массивами, Maps, Sets и любыми другими итерируемыми объектами
+3. **Вложенность** — поддерживает вложенные циклы
+4. **Контекст** — предоставляет богатый контекст с дополнительными переменными
+
+#### Вложенные циклы ngFor:
+
+```html
+<div *ngFor="let group of groups">
+  <h3>{{ group.name }}</h3>
+  <ul>
+    <li *ngFor="let user of group.users">{{ user.name }}</li>
+  </ul>
+</div>
+```
+
+### 5. What is the difference between `*ngIf` and `[hidden]`?
+
+`*ngIf` и `[hidden]` — это два разных способа управления видимостью элементов в Angular, но они работают принципиально по-разному.
+
+##### Основные различия
+
+| Характеристика     | \*ngIf                                               | [hidden]                                          |
+| ------------------ | ---------------------------------------------------- | ------------------------------------------------- |
+| Механизм           | Структурная директива                                | Атрибутная директива                              |
+| Действие           | Удаляет/добавляет элемент в DOM                      | Изменяет CSS-свойство display                     |
+| DOM                | Элемент полностью отсутствует в DOM при false        | Элемент всегда присутствует в DOM                 |
+| Жизненный цикл     | Вызывает хуки жизненного цикла при каждом добавлении | Не влияет на жизненный цикл                       |
+| Производительность | Лучше для сложных компонентов                        | Лучше для частого переключения                    |
+| Обработка событий  | События не обрабатываются, когда элемент удален      | События могут обрабатываться даже при hidden=true |
+| CSS влияние        | Не зависит от CSS                                    | Можно переопределить через CSS                    |
+
+#### \*ngIf
+
+```html
+<div *ngIf="isVisible">Этот контент полностью удаляется из DOM, когда isVisible равно false</div>
+```
+
+**Как работает:**
+
+1. Если условие true, элемент добавляется в DOM
+2. Если условие false, элемент удаляется из DOM
+3. При изменении условия с false на true создается новый экземпляр компонента
+4. При изменении условия с true на false экземпляр компонента уничтожается
+
+**Преимущества:**
+
+- Экономит память и ресурсы для сложных компонентов
+- Предотвращает выполнение ненужных запросов к API
+- Избегает проблем с CSS-селекторами, которые могут затронуть скрытые элементы
+- Повышает безопасность (скрытые поля формы не отправляются)
+
+**Недостатки:**
+
+- Создание/уничтожение компонентов может быть затратным для производительности
+- Состояние компонента не сохраняется при удалении из DOM
+- Не подходит для частого переключения видимости
+
+#### [hidden]
+
+```html
+<div [hidden]="!isVisible">Этот контент остается в DOM, но скрывается через CSS, когда isVisible равно false</div>
+```
+
+**Как работает:**
+
+1. Применяет CSS `display: none` при hidden=true
+2. Элемент всегда присутствует в DOM
+3. Состояние компонента сохраняется при скрытии
+
+**Преимущества:**
+
+- Быстрее для частого переключения видимости
+- Сохраняет состояние компонента
+- Избегает повторной инициализации компонентов
+- Позволяет заранее загрузить компоненты для мгновенного отображения
+
+**Недостатки:**
+
+- Потенциально расходует больше памяти
+- Продолжают работать слушатели событий и подписки
+- CSS может переопределить значение, что приведет к непредсказуемым результатам
+- Скрытые элементы могут влиять на производительность страницы
+
+#### Когда что использовать?
+
+**Используйте \*ngIf:**
+
+- Для большинства случаев управления видимостью
+- Когда содержимое не нужно загружать заранее
+- Для условного рендеринга сложных компонентов с большим количеством DOM-элементов
+- Когда хотите гарантировать, что компонент полностью инициализируется при каждом появлении
+
+**Используйте [hidden]:**
+
+- Для часто переключаемых элементов (например, тоггл-меню)
+- Когда нужно сохранить состояние компонента при скрытии
+- Для элементов, которые требуют долгой инициализации
+- Для оптимизации производительности при частых переключениях
+
+#### Пример совместного использования
+
+```html
+<!-- Сначала проверяем, загружены ли данные -->
+<div *ngIf="dataLoaded">
+  <!-- Затем используем [hidden] для быстрого переключения вкладок -->
+  <div [hidden]="activeTab !== 'tab1'">Содержимое вкладки 1</div>
+  <div [hidden]="activeTab !== 'tab2'">Содержимое вкладки 2</div>
+  <div [hidden]="activeTab !== 'tab3'">Содержимое вкладки 3</div>
+</div>
+```
+
+### 6. What is the purpose of `ngSwitch`, `ngSwitchCase`, and `ngSwitchDefault`, and how do you use them?
+
+Директивы **ngSwitch** предоставляют функциональность, аналогичную оператору switch в JavaScript, позволяя отображать различный контент в зависимости от значения выражения.
+
+#### Назначение директив ngSwitch
+
+Директивы **ngSwitch** используются для:
+
+- Условного отображения одного из нескольких альтернативных блоков
+- Упрощения кода с множественными условиями по сравнению с вложенными \*ngIf
+- Повышения читаемости шаблона при наличии нескольких взаимоисключающих условий
+
+#### Структура и компоненты ngSwitch
+
+Система ngSwitch состоит из трех основных директив:
+
+1. **ngSwitch** — контейнерная директива, которая оценивает выражение
+2. **ngSwitchCase** — определяет блок, который отображается, когда значение совпадает
+3. **ngSwitchDefault** — определяет блок, который отображается, когда ни один ngSwitchCase не совпадает
+
+#### Базовый синтаксис ngSwitch
+
+```html
+<div [ngSwitch]="expression">
+  <div *ngSwitchCase="value1">Отображается, когда expression === value1</div>
+  <div *ngSwitchCase="value2">Отображается, когда expression === value2</div>
+  <div *ngSwitchCase="value3">Отображается, когда expression === value3</div>
+  <div *ngSwitchDefault>Отображается, когда ни одно условие не совпадает</div>
+</div>
+```
+
+#### Примеры использования
+
+#### Пример 1: Отображение статуса
+
+```html
+<div [ngSwitch]="status">
+  <div *ngSwitchCase="'loading'" class="loading">
+    <loading-spinner></loading-spinner>
+    <p>Загрузка данных...</p>
+  </div>
+
+  <div *ngSwitchCase="'success'" class="success">
+    <i class="icon-success"></i>
+    <p>Данные успешно загружены!</p>
+  </div>
+
+  <div *ngSwitchCase="'error'" class="error">
+    <i class="icon-error"></i>
+    <p>Ошибка загрузки данных!</p>
+  </div>
+
+  <div *ngSwitchDefault class="default">
+    <p>Нажмите кнопку для загрузки данных</p>
+  </div>
+</div>
+```
+
+#### Пример 2: Выбор компонента в зависимости от роли пользователя
+
+```html
+<div [ngSwitch]="userRole">
+  <app-admin-dashboard *ngSwitchCase="'admin'"></app-admin-dashboard>
+  <app-manager-dashboard *ngSwitchCase="'manager'"></app-manager-dashboard>
+  <app-user-dashboard *ngSwitchCase="'user'"></app-user-dashboard>
+  <app-guest-view *ngSwitchDefault></app-guest-view>
+</div>
+```
+
+#### Пример 3: Использование с выражениями и несколькими условиями
+
+```html
+<div [ngSwitch]="true">
+  <div *ngSwitchCase="age < 18">Вы несовершеннолетний</div>
+  <div *ngSwitchCase="age >= 18 && age < 65">Вы взрослый</div>
+  <div *ngSwitchCase="age >= 65">Вы пенсионер</div>
+  <div *ngSwitchDefault>Не удалось определить возрастную группу</div>
+</div>
+```
+
+#### Особенности ngSwitch
+
+- **Взаимоисключающие блоки**: только один блок будет отображаться одновременно
+- **Строгое сравнение**: ngSwitch использует === (строгое сравнение) для проверки значений
+- **Несколько ngSwitchCase для одного значения**: можно использовать несколько блоков с одинаковым значением
+- **Производительность**: лучше, чем несколько отдельных \*ngIf, так как оценивается только одно выражение
+- **Структурные директивы**: ngSwitchCase и ngSwitchDefault являются структурными директивами (используют \*)
+
+#### Сравнение с \*ngIf
+
+| ngSwitch                                    | Несколько \*ngIf                                         |
+| ------------------------------------------- | -------------------------------------------------------- |
+| Оценивает выражение единожды                | Оценивает каждое условие отдельно                        |
+| Более эффективен для множественного выбора  | Менее оптимален при увеличении количества условий        |
+| Более читаемый код при множественном выборе | Может становиться сложным при большом количестве условий |
+| Поддерживает только строгое равенство       | Поддерживает любые логические выражения                  |
+
+#### Практические рекомендации
+
+1. Используйте **ngSwitch**, когда у вас есть 3 или более взаимоисключающих блока
+2. Всегда включайте **ngSwitchDefault** для обработки непредвиденных значений
+3. Для сложных сравнений можно использовать трюк с `[ngSwitch]="true"` и логическими выражениями в ngSwitchCase
+4. Помните, что ngSwitch не является заменой маршрутизации для основной навигации
+
+### 7. What is the difference between `ngStyle` and `ngClass`?
+
+**ngStyle** и **ngClass** — это атрибутные директивы Angular, которые позволяют динамически изменять стиль и классы элементов. Хотя они обе влияют на внешний вид элементов, они делают это разными способами и имеют различные случаи применения.
+
+#### ngStyle: динамическое управление inline-стилями
+
+`ngStyle` позволяет устанавливать несколько встроенных стилей одновременно, принимая объект, где ключи — названия CSS-свойств, а значения — значения этих свойств.
+
+#### Базовый синтаксис ngStyle:
+
+```html
+<div [ngStyle]="{'property': value}">Содержимое</div>
+```
+
+#### Примеры использования ngStyle:
+
+```html
+<!-- Простое использование с объектом -->
+<div [ngStyle]="{'color': textColor, 'font-size': fontSize + 'px'}">Динамически стилизованный текст</div>
+
+<!-- Использование с методом, возвращающим объект стилей -->
+<div [ngStyle]="getStyles()">Стилизованный текст</div>
+
+<!-- Условное применение стилей -->
+<div [ngStyle]="isImportant ? {'color': 'red', 'font-weight': 'bold'} : {}">Важный текст</div>
+```
+
+#### Компонент с ngStyle:
+
+```typescript
+@Component({
+  selector: "app-style-demo",
+  template: `
+    <div [ngStyle]="currentStyles">Этот текст будет стилизован динамически</div>
+    <button (click)="toggleImportance()">Переключить важность</button>
+  `,
+})
+export class StyleDemoComponent {
+  isImportant = false;
+
+  get currentStyles() {
+    return {
+      color: this.isImportant ? "red" : "black",
+      "font-weight": this.isImportant ? "bold" : "normal",
+      "font-size": this.isImportant ? "24px" : "16px",
+    };
+  }
+
+  toggleImportance() {
+    this.isImportant = !this.isImportant;
+  }
+}
+```
+
+#### ngClass: динамическое управление CSS-классами
+
+`ngClass` позволяет динамически добавлять и удалять CSS-классы в зависимости от логических условий. Он принимает разные типы выражений для гибкого применения классов.
+
+#### Базовый синтаксис ngClass:
+
+```html
+<div [ngClass]="expression">Содержимое</div>
+```
+
+#### Допустимые типы выражений для ngClass:
+
+1. **Строка** — список классов, разделенных пробелами:
+
+   ```html
+   <div [ngClass]="'active highlighted'">Содержимое</div>
+   ```
+
+2. **Массив** — список классов в виде массива строк:
+
+   ```html
+   <div [ngClass]="['active', 'highlighted']">Содержимое</div>
+   ```
+
+3. **Объект** — наиболее гибкий вариант, где ключи — имена классов, значения — булевы выражения:
+   ```html
+   <div [ngClass]="{'active': isActive, 'highlighted': isHighlighted}">Содержимое</div>
+   ```
+
+#### Примеры использования ngClass:
+
+```html
+<!-- С объектом условий -->
+<div
+  [ngClass]="{
+  'active': isActive,
+  'disabled': isDisabled,
+  'highlighted': isImportant && !isDisabled
+}"
+>
+  Динамические классы
+</div>
+
+<!-- С методом, возвращающим классы -->
+<div [ngClass]="getClasses()">Динамические классы</div>
+
+<!-- Комбинирование с фиксированными классами -->
+<div class="card" [ngClass]="{'card-success': isSuccess, 'card-error': isError}">Карточка с динамическими состояниями</div>
+```
+
+#### Компонент с ngClass:
+
+```typescript
+@Component({
+  selector: "app-class-demo",
+  template: `
+    <div [ngClass]="currentClasses">Этот элемент имеет динамические классы</div>
+    <button (click)="toggleState('active')">Активный</button>
+    <button (click)="toggleState('error')">Ошибка</button>
+    <button (click)="toggleState('special')">Специальный</button>
+  `,
+})
+export class ClassDemoComponent {
+  isActive = false;
+  hasError = false;
+  isSpecial = false;
+
+  get currentClasses() {
+    return {
+      active: this.isActive,
+      error: this.hasError,
+      special: this.isSpecial,
+    };
+  }
+
+  toggleState(state: string) {
+    if (state === "active") this.isActive = !this.isActive;
+    if (state === "error") this.hasError = !this.hasError;
+    if (state === "special") this.isSpecial = !this.isSpecial;
+  }
+}
+```
+
+#### Сравнение ngStyle и ngClass
+
+| Характеристика     | ngStyle                                | ngClass                                  |
+| ------------------ | -------------------------------------- | ---------------------------------------- |
+| Назначение         | Применяет inline-стили                 | Добавляет/удаляет CSS-классы             |
+| Типы выражений     | Объект со стилями                      | Строка, массив или объект                |
+| Специфичность CSS  | Высокая (inline-стили)                 | Ниже (классы)                            |
+| Переиспользование  | Нет (стили в шаблоне)                  | Да (классы в CSS-файлах)                 |
+| Читаемость         | Ниже при большом количестве стилей     | Выше с осмысленными именами классов      |
+| Производительность | Менее оптимально                       | Более оптимально                         |
+| Применение         | Для динамических стилей без повторения | Для переключения предопределенных стилей |
+
+#### Когда что использовать?
+
+**Используйте ngStyle, когда:**
+
+- Стиль вычисляется динамически (например, по пользовательскому вводу)
+- Необходимо применить стиль, который редко меняется или уникален
+- Стиль зависит от значений в компоненте (цвета, размеры, координаты)
+- Количество стилей невелико
+
+**Используйте ngClass, когда:**
+
+- Есть предопределенные наборы стилей
+- Переключаетесь между известными состояниями (активно/неактивно, ошибка/успех)
+- Работаете с темами или вариантами компонентов
+- Стили нужно переиспользовать в разных частях приложения
+
+**Совмещение обоих подходов:**
+
+```html
+<div class="card" [ngClass]="{'success': isSuccess, 'error': isError}" [ngStyle]="{'height': cardHeight + 'px'}">
+  <!-- Сочетание статических классов, динамических классов и динамических стилей -->
+</div>
+```
+
+### 8. What is `ngContainer` and what is it used for? Provide an example.
+
+`ngContainer` — это специальный элемент в Angular, который группирует элементы без добавления дополнительного узла в DOM.
+
+#### Назначение ngContainer
+
+1. **Группировка элементов** без создания лишнего DOM-элемента
+2. **Применение структурных директив** к группе элементов
+3. **Решение проблемы с множественными структурными директивами** на одном элементе
+4. **Группировка контента** без влияния на стили или макет
+
+#### Особенности ngContainer
+
+- **Не рендерится в DOM** — не создает дополнительного HTML-элемента
+- **Поддерживает структурные директивы** — *ngIf, *ngFor, \*ngSwitch и др.
+- **Не может иметь атрибуты или стили** — так как не создает DOM-элемент
+- **Доступен только во время компиляции** — используется только во время обработки шаблона
+
+#### Примеры использования ngContainer
+
+#### Пример 1: Группировка нескольких элементов с одним условием
+
+```html
+<!-- Без ngContainer -->
+<div *ngIf="isVisible">
+  <h2>Заголовок</h2>
+  <p>Параграф 1</p>
+  <p>Параграф 2</p>
+</div>
+
+<!-- С ngContainer - избегаем лишнего div -->
+<ng-container *ngIf="isVisible">
+  <h2>Заголовок</h2>
+  <p>Параграф 1</p>
+  <p>Параграф 2</p>
+</ng-container>
+```
+
+#### Пример 2: Применение нескольких структурных директив
+
+```html
+<!-- Ошибка: нельзя использовать две структурные директивы на одном элементе -->
+<div *ngIf="items.length > 0" *ngFor="let item of items">{{ item.name }}</div>
+
+<!-- Решение с ngContainer -->
+<ng-container *ngIf="items.length > 0">
+  <div *ngFor="let item of items">{{ item.name }}</div>
+</ng-container>
+```
+
+#### Пример 3: Использование с ngSwitch
+
+```html
+<div [ngSwitch]="selectedOption">
+  <ng-container *ngSwitchCase="'option1'">
+    <h2>Опция 1</h2>
+    <p>Описание опции 1</p>
+    <button>Действие для опции 1</button>
+  </ng-container>
+
+  <ng-container *ngSwitchCase="'option2'">
+    <h2>Опция 2</h2>
+    <p>Описание опции 2</p>
+    <button>Действие для опции 2</button>
+  </ng-container>
+
+  <ng-container *ngSwitchDefault>
+    <p>Выберите опцию</p>
+  </ng-container>
+</div>
+```
+
+#### Пример 4: Использование с элементами таблицы
+
+```html
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Имя</th>
+      <th>Статус</th>
+    </tr>
+  </thead>
+  <tbody>
+    <ng-container *ngFor="let user of users">
+      <!-- Группировка строк для одного пользователя без нарушения структуры таблицы -->
+      <tr>
+        <td rowspan="2">{{ user.id }}</td>
+        <td>{{ user.name }}</td>
+        <td>{{ user.status }}</td>
+      </tr>
+      <tr>
+        <td colspan="2">{{ user.description }}</td>
+      </tr>
+      <!-- Условное отображение дополнительной строки -->
+      <tr *ngIf="user.hasDetails">
+        <td colspan="3">{{ user.details }}</td>
+      </tr>
+    </ng-container>
+  </tbody>
+</table>
+```
+
+#### Пример 5: Комбинирование ngFor и фильтрации
+
+```html
+<ul>
+  <ng-container *ngFor="let item of items">
+    <li *ngIf="item.isVisible">{{ item.name }}</li>
+  </ng-container>
+</ul>
+```
+
+#### Сравнение с div и ng-template
+
+| Характеристика                  | ng-container               | div                           | ng-template                         |
+| ------------------------------- | -------------------------- | ----------------------------- | ----------------------------------- |
+| Рендерится в DOM                | Нет                        | Да                            | Нет                                 |
+| Применение структурных директив | Да                         | Да                            | Да                                  |
+| Применение атрибутных директив  | Нет                        | Да                            | Да, но не рендерится                |
+| Влияние на макет                | Нет                        | Да                            | Нет                                 |
+| Основное назначение             | Группировка без рендеринга | Структурирование и стилизация | Шаблон для повторного использования |
+
+#### Когда использовать ngContainer?
+
+1. Когда нужно применить структурную директиву к группе элементов без добавления лишнего элемента
+2. Когда требуется применить несколько структурных директив (*ngIf, *ngFor и т.д.) к одной группе элементов
+3. Когда добавление дополнительного DOM-элемента нарушило бы структуру или стили (например, в таблицах)
+4. Когда нужно условно отображать группу элементов без изменения макета или стилей
+
+### 9. How do you create custom structural directives using `ng-template`?
+
+Создание собственных структурных директив позволяет расширить возможности Angular и определить пользовательские шаблоны для повторного использования. В основе структурных директив лежит элемент `ng-template`.
+
+#### Анатомия структурной директивы
+
+Структурные директивы:
+
+1. Используют префикс `*` в шаблонах
+2. Преобразуются в элемент `<ng-template>` во время компиляции
+3. Управляют добавлением/удалением DOM-элементов
+4. Могут использовать микросинтаксис для передачи параметров
+
+#### Шаг 1: Понимание преобразования микросинтаксиса
+
+Когда вы используете структурную директиву, Angular преобразует ее в элемент `ng-template`:
+
+```html
+<!-- Исходный код с микросинтаксисом -->
+<div *appCustomIf="condition">Содержимое</div>
+
+<!-- Преобразованный код -->
+<ng-template [appCustomIf]="condition">
+  <div>Содержимое</div>
+</ng-template>
+```
+
+#### Шаг 2: Создание простой структурной директивы
+
+Рассмотрим пример создания директивы `appUnless`, которая действует противоположно `*ngIf` (отображает содержимое, если условие false):
+
+```typescript
+import { Directive, Input, TemplateRef, ViewContainerRef } from "@angular/core";
+
+@Directive({
+  selector: "[appUnless]",
+})
+export class UnlessDirective {
+  private hasView = false;
+
+  constructor(
+    private templateRef: TemplateRef<any>, // Ссылка на шаблон
+    private viewContainer: ViewContainerRef // Контейнер, куда будет вставлен шаблон
+  ) {}
+
+  @Input() set appUnless(condition: boolean) {
+    if (!condition && !this.hasView) {
+      // Добавляем шаблон, если условие false и его еще нет
+      this.viewContainer.createEmbeddedView(this.templateRef);
+      this.hasView = true;
+    } else if (condition && this.hasView) {
+      // Удаляем шаблон, если условие true и он уже есть
+      this.viewContainer.clear();
+      this.hasView = false;
+    }
+  }
+}
+```
+
+#### Шаг 3: Использование созданной директивы
+
+```html
+<div *appUnless="isLoggedIn">Пожалуйста, войдите в систему, чтобы получить доступ к контенту.</div>
+
+<div *appUnless="isAdmin">У вас нет прав администратора для этого действия.</div>
+```
+
+#### Шаг 4: Добавление контекста в структурную директиву
+
+Структурные директивы могут предоставлять контекст, аналогично тому, как `*ngFor` предоставляет переменные `index`, `first`, `last` и т.д.:
+
+```typescript
+import { Directive, Input, TemplateRef, ViewContainerRef } from "@angular/core";
+
+// Интерфейс контекста
+export interface RepeatContext {
+  $implicit: number; // Неявное значение (доступно как let i)
+  index: number; // Индекс текущей итерации
+  count: number; // Общее количество итераций
+  even: boolean; // True, если индекс четный
+  odd: boolean; // True, если индекс нечетный
+  first: boolean; // True, если это первая итерация
+  last: boolean; // True, если это последняя итерация
+}
+
+@Directive({
+  selector: "[appRepeatTimes]",
+})
+export class RepeatTimesDirective {
+  constructor(private templateRef: TemplateRef<any>, private viewContainer: ViewContainerRef) {}
+
+  @Input() set appRepeatTimes(count: number) {
+    // Очищаем контейнер
+    this.viewContainer.clear();
+
+    // Создаем указанное количество экземпляров
+    for (let i = 0; i < count; i++) {
+      // Создаем контекст для текущей итерации
+      const context: RepeatContext = {
+        $implicit: i,
+        index: i,
+        count: count,
+        even: i % 2 === 0,
+        odd: i % 2 !== 0,
+        first: i === 0,
+        last: i === count - 1,
+      };
+
+      // Создаем представление с контекстом
+      this.viewContainer.createEmbeddedView(this.templateRef, context);
+    }
+  }
+}
+```
+
+#### Шаг 5: Использование директивы с контекстом
+
+```html
+<div *appRepeatTimes="5; let i = $implicit; let isFirst = first; let isLast = last">
+  <p [class.first]="isFirst" [class.last]="isLast">Элемент {{ i }} из 5 ({{ isFirst ? 'первый' : isLast ? 'последний' : 'средний' }})</p>
+</div>
+```
+
+#### Шаг 6: Добавление дополнительных входных параметров
+
+```typescript
+@Directive({
+  selector: "[appListItem]",
+})
+export class ListItemDirective {
+  @Input() appListItemOf: any[]; // Коллекция для итерации
+  @Input() appListItemAs: string; // Имя переменной (необязательно)
+
+  constructor(private templateRef: TemplateRef<any>, private viewContainer: ViewContainerRef) {}
+
+  @Input() set appListItem(config: any) {
+    // Реализация директивы...
+  }
+}
+```
+
+#### Шаг 7: Создание сложной структурной директивы
+
+Пример директивы, которая отображает содержимое с задержкой:
+
+```typescript
+import { Directive, Input, TemplateRef, ViewContainerRef } from "@angular/core";
+
+@Directive({
+  selector: "[appDelayRender]",
+})
+export class DelayRenderDirective {
+  @Input() appDelayRenderTime: number = 1000; // Время задержки в мс
+
+  constructor(private templateRef: TemplateRef<any>, private viewContainer: ViewContainerRef) {}
+
+  @Input() set appDelayRender(shouldRender: boolean) {
+    this.viewContainer.clear();
+
+    if (shouldRender) {
+      // Создаем представление с задержкой
+      setTimeout(() => {
+        this.viewContainer.createEmbeddedView(this.templateRef);
+      }, this.appDelayRenderTime);
+    }
+  }
+}
+```
+
+Использование:
+
+```html
+<div *appDelayRender="true; time: 2000">Этот блок появится через 2 секунды</div>
+```
+
+#### Примеры практических структурных директив
+
+#### Пример 1: Директива для рендеринга в зависимости от прав доступа
+
+```typescript
+@Directive({
+  selector: "[appPermission]",
+})
+export class PermissionDirective {
+  constructor(
+    private templateRef: TemplateRef<any>,
+    private viewContainer: ViewContainerRef,
+    private authService: AuthService // Сервис для проверки прав
+  ) {}
+
+  @Input() set appPermission(requiredPermission: string) {
+    this.viewContainer.clear();
+
+    if (this.authService.hasPermission(requiredPermission)) {
+      this.viewContainer.createEmbeddedView(this.templateRef);
+    }
+  }
+}
+```
+
+Использование:
+
+```html
+<button *appPermission="'ADMIN'">Удалить пользователя</button>
+<div *appPermission="'EDIT_CONTENT'">Редактор содержимого</div>
+```
+
+#### Пример 2: Директива для обработки асинхронных данных
+
+```typescript
+@Directive({
+  selector: "[appLoader]",
+})
+export class LoaderDirective {
+  private isLoading = false;
+  private loadedTemplate: TemplateRef<any> | null = null;
+  private loadingTemplate: TemplateRef<any> | null = null;
+  private errorTemplate: TemplateRef<any> | null = null;
+
+  constructor(private templateRef: TemplateRef<any>, private viewContainer: ViewContainerRef) {
+    this.loadedTemplate = templateRef;
+  }
+
+  @Input() set appLoaderLoading(template: TemplateRef<any>) {
+    this.loadingTemplate = template;
+    this.updateView();
+  }
+
+  @Input() set appLoaderError(template: TemplateRef<any>) {
+    this.errorTemplate = template;
+    this.updateView();
+  }
+
+  @Input() set appLoader(state: "loading" | "loaded" | "error") {
+    this.isLoading = state === "loading";
+    this.updateView();
+  }
+
+  private updateView() {
+    this.viewContainer.clear();
+
+    if (this.isLoading && this.loadingTemplate) {
+      this.viewContainer.createEmbeddedView(this.loadingTemplate);
+    } else if (this.isLoading === false && this.loadedTemplate) {
+      this.viewContainer.createEmbeddedView(this.loadedTemplate);
+    } else if (this.errorTemplate) {
+      this.viewContainer.createEmbeddedView(this.errorTemplate);
+    }
+  }
+}
+```
+
+Использование:
+
+```html
+<ng-template #loading>
+  <div class="spinner">Загрузка...</div>
+</ng-template>
+
+<ng-template #error>
+  <div class="error">Произошла ошибка при загрузке данных</div>
+</ng-template>
+
+<div *appLoader="dataState; loading: loading; error: error">Данные успешно загружены!</div>
+```
+
+#### Заключение
+
+Создание собственных структурных директив требует понимания взаимодействия между `TemplateRef` и `ViewContainerRef`. Ключевые моменты:
+
+1. `TemplateRef` представляет содержимое директивы (то, что находится внутри элемента с директивой)
+2. `ViewContainerRef` — место, куда будет вставлен шаблон
+3. Метод `createEmbeddedView()` создает экземпляр шаблона и добавляет его в контейнер
+4. Метод `clear()` удаляет все представления из контейнера
+5. Входные параметры позволяют настраивать поведение директивы
+6. Контекст позволяет передавать данные из директивы в шаблон
+
+Собственные структурные директивы позволяют создавать мощные абстракции, упрощающие разработку и повышающие переиспользование кода в Angular-приложениях.
+
