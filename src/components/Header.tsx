@@ -86,7 +86,7 @@ export default function Header({openSandbox}: HeaderProps) {
         ${isSticky ? 'py-2' : 'py-4'}
       `}
     >
-      <div className='container mx-auto px-4 flex flex-wrap items-center justify-between'>
+      <div className='container mx-auto px-3 flex flex-wrap items-center justify-between'>
         <Link
           href='/'
           className={`
@@ -100,8 +100,10 @@ export default function Header({openSandbox}: HeaderProps) {
         {currentTitle && (
           <h2
             className={`
-              text-slate-600 dark:text-slate-300 font-semibold hidden md:block
-              transition-all duration-500 ease-in-out
+              text-slate-600 dark:text-slate-300 font-semibold 
+              transition-all duration-500 ease-in-out truncate
+              hidden lg:block
+             	max-w-[150px] lg:max-w-[100px] xl:max-w-[300px]
               ${isSticky ? 'text-sm' : 'text-lg'}
             `}
           >

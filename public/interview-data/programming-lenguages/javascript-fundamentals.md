@@ -4,6 +4,148 @@ title: JavaScript Fundamentals
 
 # Advanced Expressions
 
+## Data types: Primitives vs Objects
+
+В JavaScript все значения делятся на две большие категории: **примитивные типы** (primitives) и **объекты** (objects).
+
+### Primitives types
+
+К примитивам относятся:
+
+- **string** — строки (`'hello'`, `"world"`)
+- **number** — числа (`42`, `3.14`, `NaN`)
+- **bigint** — большие целые числа (`123n`)
+- **boolean** — булевы значения (`true`, `false`)
+- **undefined** — специальное значение, означающее "не определено"
+- **null** — специальное значение "ничего", "пусто"
+- **symbol** — уникальные идентификаторы (`Symbol('id')`)
+
+**Особенности:**
+
+- Примитивы неизменяемы (immutable): если вы меняете значение, вы создаёте новый примитив.
+- Примитивы сравниваются по значению.
+- Примитивы не имеют методов и свойств, но при обращении к ним временно создаётся объект-обёртка (например, `'abc'.toUpperCase()`).
+
+### Objects
+
+К объектам относятся:
+
+- Обычные объекты (`{}`), массивы (`[]`), функции, а также встроенные объекты (`Date`, `RegExp`, и др.)
+
+**Особенности:**
+
+- Объекты изменяемы (mutable): их свойства можно менять после создания.
+- Объекты сравниваются по ссылке, а не по значению.
+- Объекты могут содержать любые типы данных в качестве свойств.
+
+#### Examples:
+
+```javascript
+// Primitives
+let a = 5
+let b = a
+b = 10
+console.log(a) // 5 (a не изменился)
+
+// Объекты
+let obj1 = {value: 5}
+let obj2 = obj1
+obj2.value = 10
+console.log(obj1.value) // 10 (obj1 и obj2 ссылаются на один объект)
+```
+
+**Важно:**
+
+- Операции с примитивами всегда работают с копией значения.
+- Операции с объектами работают с ссылкой на объект.
+
+## Ternary, Nullish Coalescing, Optional Chaining, and Logical Operators
+
+### Ternary operator
+
+Тернарный оператор — это короткая форма записи условного выражения:
+
+```javascript
+const age = 18
+const status = age >= 18 ? 'adult' : 'minor'
+console.log(status) // 'adult'
+```
+
+### Nullish Coalescing `??`
+
+Возвращает правый операнд, если левый равен `null` или `undefined`:
+
+```javascript
+const name = null
+const displayName = name ?? 'Guest'
+console.log(displayName) // 'Guest'
+
+const value = 0
+console.log(value ?? 42) // 0 (в отличие от ||, 0 не считается "пустым")
+```
+
+### Optional Chaining `?.`
+
+Позволяет безопасно обращаться к вложенным свойствам объектов, не вызывая ошибку, если промежуточное значение `null` или `undefined`:
+
+```javascript
+const user = {profile: {name: 'Alice'}}
+console.log(user.profile?.name) // 'Alice'
+console.log(user.address?.city) // undefined (ошибки нет)
+```
+
+### Logical operators (`&&`, `||`, `!`)
+
+- `&&` (И): возвращает первый "ложный" операнд или последний, если все истинны.
+- `||` (ИЛИ): возвращает первый "истинный" операнд.
+- `!` (НЕ): инвертирует булево значение.
+
+**Примеры:**
+
+```javascript
+console.log(0 || 'default') // 'default'
+console.log('hello' && 123) // 123
+console.log(!false) // true
+```
+
+## Type conversions, == / ===
+
+### Implicit and explicit type conversions
+
+JavaScript автоматически преобразует типы в некоторых выражениях (coercion), но можно делать это явно:
+
+```javascript
+console.log(Number('42')) // 42
+console.log(String(123)) // '123'
+console.log(Boolean(0)) // false
+```
+
+**Неявные преобразования:**
+
+```javascript
+console.log('5' * 2) // 10 (строка '5' преобразуется в число)
+console.log('5' + 2) // '52' (число 2 преобразуется в строку)
+console.log(!!'hello') // true (строка преобразуется в boolean)
+```
+
+### Comparison operators: `==` vs `===`
+
+- `==` (нестрогое сравнение): приводит типы к одному и сравнивает значения.
+- `===` (строгое сравнение): сравнивает и тип, и значение.
+
+**Примеры:**
+
+```javascript
+console.log(0 == false) // true
+console.log(0 === false) // false
+
+console.log('' == 0) // true
+console.log('' === 0) // false
+
+console.log(null == undefined) // true
+console.log(null === undefined) // false
+```
+
 ## Understanding Object.is (optional)
 
 `Object.is()` — это метод в JavaScript, который предназначен для сравнения двух значений на строгое равенство. Хотя он работает схоже с оператором `===`, есть некоторые важные различия. `Object.is()` считает NaN равным NaN, что отличается от поведения `===`, который считает `NaN` не равным самому себе. Кроме того, `Object.is()` различает `-0` и `+0`, которые считаются равными при использовании `===`.

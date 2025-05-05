@@ -539,7 +539,7 @@ export class CounterComponent {
 5. **Сигналы**: Современный подход для реактивного программирования в Angular 16+
 6. **NgRx/Менеджеры состояний**: Для сложных приложений с множеством взаимосвязанных компонентов и состояний
 
-Выбор метода зависит от конкретного сценария, сложности приложения и отношений между компонентами.
+Выбор метода зависит от конкретного сценария, с#ложности приложения и отношений между компонентами.
 
 ## Angular Components Concepts
 
@@ -7132,7 +7132,7 @@ const routes: Routes = [
 
 При правильном использовании ленивой загрузки с соответствующими стратегиями предварительной загрузки вы можете достичь оптимального баланса между быстрым начальным запуском и отзывчивым пользовательским интерфейсом при дальнейшей навигации.
 
-## RxJS в Angular
+## RxJS in Angular
 
 ### 1. Define the concept of `RxJS` and its usage in Angular.
 
@@ -12046,3 +12046,11861 @@ export class UserService extends BaseDataService {
 - Обеспечивает корректную работу приложения в разных сетевых условиях
 
 Такой многоуровневый подход к обработке ошибок является ключом к созданию надежных и устойчивых Angular-приложений.
+
+## Dependency Injection in Angular
+
+### 1. What is `Dependency Injection`, and what are its objectives in Angular?
+
+Dependency Injection (DI) — это паттерн проектирования и механизм, который позволяет классам получать свои зависимости извне, а не создавать их самостоятельно. В Angular DI реализована как встроенная система, которая выполняет следующие цели:
+
+- **Повышение модульности** — компоненты делегируют создание зависимостей инжектору, что уменьшает связанность кода
+- **Улучшение тестируемости** — зависимости можно легко заменить моками при тестировании
+- **Управление жизненным циклом объектов** — система DI контролирует создание и уничтожение экземпляров сервисов
+- **Повторное использование служб** — один экземпляр сервиса может совместно использоваться несколькими компонентами
+- **Повышение гибкости приложения** — реализации сервисов можно заменять без изменения использующих их компонентов
+
+### 2. How do you create a service and use it in components for dependency injection?
+
+**Создание сервиса:**
+
+```typescript
+import { Injectable } from "@angular/core";
+
+@Injectable({
+  providedIn: "root",
+})
+export class DataService {
+  private data: string[] = [];
+
+  addData(item: string): void {
+    this.data.push(item);
+  }
+
+  getData(): string[] {
+    return this.data;
+  }
+}
+```
+
+**Использование сервиса в компоненте:**
+
+```typescript
+import { Component, OnInit } from "@angular/core";
+import { DataService } from "./data.service";
+
+@Component({
+  selector: "app-example",
+  template: `
+    <div>
+      <input #dataInput />
+      <button (click)="addData(dataInput.value)">Add</button>
+      <ul>
+        <li *ngFor="let item of items">{{ item }}</li>
+      </ul>
+    </div>
+  `,
+})
+export class ExampleComponent implements OnInit {
+  items: string[] = [];
+
+  constructor(private dataService: DataService) {}
+
+  ngOnInit(): void {
+    this.items = this.dataService.getData();
+  }
+
+  addData(data: string): void {
+    this.dataService.addData(data);
+    this.items = this.dataService.getData();
+  }
+}
+```
+
+### 3. What is the difference between providedIn: 'root', providedIn: 'any', and registering a provider in the "providers" section of NgModule?
+
+**providedIn: 'root'**:
+
+- Создается единственный экземпляр сервиса на уровне всего приложения
+- Доступен для всех компонентов и сервисов приложения
+- Оптимизируется механизмом tree-shaking (сервис включается в бандл только если используется)
+- Идеален для создания синглтон-сервисов
+
+**providedIn: 'any'**:
+
+- Создает по одному экземпляру для каждого модуля, использующего сервис
+- Особенно полезен для lazy-loaded модулей, которым нужны собственные экземпляры сервисов
+- Экземпляры сервиса изолированы между модулями, но общие в пределах одного модуля
+- Позволяет иметь разные состояния сервиса в разных частях приложения
+
+**Регистрация в providers NgModule**:
+
+- Создает экземпляр сервиса на уровне модуля
+- Все компоненты/директивы внутри модуля используют один и тот же экземпляр
+- Не оптимизируется tree-shaking (включается в бандл вместе с модулем)
+- Предоставляет гибкость в определении области видимости сервиса
+- Полезно, когда сервис должен быть доступен только внутри определенного модуля
+
+### 4. What are `useClass`, `useValue`, and `useFactory`? How are they used when creating providers?
+
+В Angular провайдеры определяют, как создавать и внедрять зависимости. Существуют различные способы конфигурации провайдеров:
+
+**useClass**:
+
+```typescript
+{ provide: Logger, useClass: ProductionLogger }
+```
+
+- Создает экземпляр указанного класса при запросе токена
+- Используется, когда нужно заменить реализацию сервиса альтернативной
+- Полезно для подмены сервисов в разных окружениях (разработка/продакшн)
+
+**useValue**:
+
+```typescript
+{ provide: API_URL, useValue: 'https://api.example.com' }
+```
+
+- Предоставляет готовое значение вместо создания экземпляра
+- Идеально для внедрения конфигурационных значений, констант
+- Используется для внедрения моков в тестах
+- Может использоваться для любого типа значений (объекты, строки, числа)
+
+**useFactory**:
+
+```typescript
+{
+  provide: AuthService,
+  useFactory: (http: HttpClient, config: AppConfig) => {
+    if (config.authType === 'jwt') {
+      return new JwtAuthService(http, config);
+    } else {
+      return new BasicAuthService(http, config);
+    }
+  },
+  deps: [HttpClient, AppConfig]
+}
+```
+
+- Использует фабричную функцию для создания экземпляра
+- Позволяет создавать зависимости динамически, на основе условий
+- Может зависеть от других сервисов через массив deps
+- Наиболее гибкий способ создания зависимостей
+
+### 5. Explain the concept of Injector and provider hierarchy.
+
+**Injector (Инжектор)** в Angular — это механизм, который ответственен за:
+
+- Создание экземпляров сервисов
+- Хранение созданных экземпляров
+- Внедрение этих экземпляров в компоненты/другие сервисы
+
+**Иерархия инжекторов**:
+Angular создает иерархию инжекторов, которая обычно соответствует иерархии компонентов DOM:
+
+1. **Root Injector (корневой инжектор)**:
+
+   - Создается при загрузке приложения
+   - Содержит сервисы с `providedIn: 'root'`
+   - Доступен для всего приложения
+
+2. **Module Injectors (инжекторы модулей)**:
+
+   - Создаются для каждого NgModule
+   - Наследуют от корневого инжектора
+   - Содержат сервисы, определенные в providers модуля
+
+3. **Component Injectors (инжекторы компонентов)**:
+   - Создаются для компонентов с providers в декораторе @Component
+   - Образуют иерархию, соответствующую дереву компонентов
+   - Могут переопределять провайдеры из родительских инжекторов
+
+**Процесс разрешения зависимостей**:
+
+1. Когда компонент запрашивает зависимость, Angular сначала проверяет инжектор этого компонента
+2. Если зависимость не найдена, запрос перенаправляется к инжектору родительского компонента
+3. Поиск продолжается вверх по дереву инжекторов до корневого
+4. Если зависимость не найдена нигде, генерируется ошибка (если не указано @Optional)
+
+### 6. What is a DI token, and how do you use it for dependency injection?
+
+**DI-токен** (токен внедрения зависимостей) — это уникальный идентификатор, который Angular использует для поиска и предоставления зависимостей. Токены могут быть:
+
+1. **Классы** (наиболее распространенный тип токена):
+
+```typescript
+@Injectable()
+class UserService {}
+
+// Внедрение
+constructor(private userService: UserService) {}
+```
+
+2. **Строки** (не рекомендуется из-за возможных конфликтов):
+
+```typescript
+{ provide: 'API_URL', useValue: 'https://api.example.com' }
+
+// Внедрение
+constructor(@Inject('API_URL') private apiUrl: string) {}
+```
+
+3. **InjectionToken** (рекомендуется для значений, не являющихся классами):
+
+```typescript
+// Создание токена
+export const API_URL = new InjectionToken<string>('api.url');
+
+// Регистрация провайдера
+providers: [
+  { provide: API_URL, useValue: 'https://api.example.com' }
+]
+
+// Внедрение
+constructor(@Inject(API_URL) private apiUrl: string) {}
+```
+
+**Преимущества InjectionToken**:
+
+- Типобезопасность
+- Предотвращение конфликтов имен
+- Лучшая документация через описание токена
+- Поддержка оптимизации через tree-shaking
+
+### 7. How do you use `@Optional`, `@Self`, and `@SkipSelf` decorators to control dependency injection and their handling?
+
+**@Optional**:
+
+```typescript
+constructor(@Optional() private logger: LoggerService) {
+  if (this.logger) {
+    this.logger.log('Service initialized');
+  }
+}
+```
+
+- Указывает, что зависимость необязательна
+- Если зависимость не найдена, внедряется null вместо ошибки
+- Позволяет компонентам работать даже при отсутствии некоторых сервисов
+
+**@Self**:
+
+```typescript
+constructor(@Self() private themeService: ThemeService) {}
+```
+
+- Ограничивает поиск зависимости только инжектором текущего компонента
+- Не проверяет родительские инжекторы
+- Генерирует ошибку, если зависимость не найдена в локальном инжекторе (если не @Optional)
+- Используется для обеспечения инкапсуляции и изоляции компонентов
+
+**@SkipSelf**:
+
+```typescript
+constructor(@SkipSelf() private dataService: DataService) {}
+```
+
+- Пропускает инжектор текущего компонента и начинает поиск с родительского инжектора
+- Полезно для доступа к родительским сервисам при переопределении провайдеров
+- Предотвращает циклические зависимости
+- Часто используется в сочетании с @Optional
+
+**Комбинации декораторов**:
+
+```typescript
+constructor(
+  @Optional() @Self() private localConfig: Config,
+  @Optional() @SkipSelf() private parentConfig: Config
+) {
+  this.config = localConfig || parentConfig || DEFAULT_CONFIG;
+}
+```
+
+- Позволяют создавать гибкие политики разрешения зависимостей
+- Обеспечивают возможности для продвинутых сценариев композиции сервисов
+
+### 8. How do you inject dependencies based on conditions or by different provided implementations?
+
+**Условное внедрение зависимостей** можно реализовать несколькими способами:
+
+**1. Использование useFactory**:
+
+```typescript
+providers: [
+  {
+    provide: AuthService,
+    useFactory: (config: AppConfig) => {
+      return config.environment === "production" ? new ProductionAuthService() : new DevelopmentAuthService();
+    },
+    deps: [AppConfig],
+  },
+];
+```
+
+**2. Использование токенов для нескольких реализаций**:
+
+```typescript
+const STORAGE_STRATEGY = new InjectionToken<StorageStrategy>('storage.strategy');
+
+// В модуле
+providers: [
+  {
+    provide: STORAGE_STRATEGY,
+    useClass: environment.isProd ? IndexedDbStorage : LocalStorage
+  }
+]
+
+// Использование
+constructor(@Inject(STORAGE_STRATEGY) private storage: StorageStrategy) {}
+```
+
+**3. Фабричные методы в сервисах**:
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class ApiClientFactory {
+  constructor(private http: HttpClient, private config: AppConfig) {}
+
+  createApiClient(): ApiClient {
+    if (this.config.useMockApi) {
+      return new MockApiClient();
+    } else {
+      return new RealApiClient(this.http, this.config.apiUrl);
+    }
+  }
+}
+
+// Использование
+constructor(private apiClientFactory: ApiClientFactory) {
+  this.apiClient = this.apiClientFactory.createApiClient();
+}
+```
+
+**4. Стратегия по умолчанию с возможностью переопределения**:
+
+```typescript
+// В корневом модуле
+providers: [{ provide: DataService, useClass: DefaultDataService }];
+
+// В функциональном модуле
+providers: [{ provide: DataService, useClass: SpecializedDataService }];
+```
+
+### 9. What is a multi-provider and how do you configure it?
+
+**Мульти-провайдер** позволяет зарегистрировать несколько значений для одного токена DI. Это полезно для создания расширяемых коллекций, когда разные части приложения вносят свой вклад в общую коллекцию.
+
+**Настройка мульти-провайдера**:
+
+```typescript
+// Определение токена
+export const VALIDATORS = new InjectionToken<Validator[]>("app.validators");
+
+// В одном модуле
+providers: [
+  { provide: VALIDATORS, useClass: EmailValidator, multi: true },
+  { provide: VALIDATORS, useClass: RequiredValidator, multi: true },
+];
+
+// В другом модуле
+providers: [{ provide: VALIDATORS, useClass: CreditCardValidator, multi: true }];
+```
+
+**Внедрение и использование**:
+
+```typescript
+constructor(@Inject(VALIDATORS) private validators: Validator[]) {
+  // validators содержит массив всех зарегистрированных валидаторов
+}
+
+validate(value: any): ValidationResult[] {
+  return this.validators.map(validator => validator.validate(value));
+}
+```
+
+**Ключевые аспекты мульти-провайдеров**:
+
+- Флаг `multi: true` обязателен для всех провайдеров с одним токеном
+- Angular собирает все значения в массив
+- Порядок элементов определяется порядком регистрации провайдеров
+- Работает на любом уровне инжектора (root, module, component)
+- Часто используется для HTTP-интерсепторов, роутинг-стратегий, плагинов приложения
+
+### 10. How do you implement dependency injection for standalone components?
+
+**Компонентный уровень DI** позволяет создавать экземпляры сервисов, область видимости которых ограничена компонентом и его дочерними элементами:
+
+**Определение провайдеров в компоненте**:
+
+```typescript
+@Component({
+  selector: "app-feature",
+  templateUrl: "./feature.component.html",
+  providers: [FeatureService, { provide: DataService, useClass: FeatureDataService }],
+})
+export class FeatureComponent {
+  constructor(private featureService: FeatureService) {}
+}
+```
+
+**Особенности компонентного DI**:
+
+- Каждый экземпляр компонента получает свой инжектор с уникальными экземплярами сервисов
+- Сервисы создаются при создании компонента и уничтожаются при его удалении
+- Дочерние компоненты могут внедрять эти сервисы через свои конструкторы
+- Компонентные провайдеры могут переопределять провайдеры из родительских инжекторов
+
+**Использование viewProviders**:
+
+```typescript
+@Component({
+  selector: "app-parent",
+  template: `
+    <div>Parent Content</div>
+    <ng-content></ng-content>
+    <app-child></app-child>
+  `,
+  viewProviders: [{ provide: DataService, useClass: SpecialDataService }],
+})
+export class ParentComponent {}
+```
+
+- `viewProviders` делают сервисы доступными только для шаблона компонента и его дочерних компонентов
+- Контент, проецируемый через `<ng-content>`, не имеет доступа к этим сервисам
+- Полезно для обеспечения инкапсуляции в компонентных библиотеках
+
+### 11. How can you reuse standalone components across different parts of your Angular application?
+
+**Повторное использование компонентов** в Angular может быть реализовано несколькими способами:
+
+**1. Модульная архитектура**:
+
+```typescript
+@NgModule({
+  declarations: [ReusableComponent],
+  exports: [ReusableComponent],
+  imports: [CommonModule],
+})
+export class SharedModule {}
+
+// Использование в других модулях
+@NgModule({
+  imports: [SharedModule],
+})
+export class FeatureModule {}
+```
+
+**2. Создание автономных (standalone) компонентов**:
+
+```typescript
+@Component({
+  selector: "app-reusable",
+  templateUrl: "./reusable.component.html",
+  standalone: true,
+  imports: [CommonModule],
+})
+export class ReusableComponent {}
+
+// Использование в другом standalone компоненте
+@Component({
+  selector: "app-feature",
+  templateUrl: "./feature.component.html",
+  standalone: true,
+  imports: [ReusableComponent],
+})
+export class FeatureComponent {}
+```
+
+**3. Использование инжекции зависимостей для конфигурации**:
+
+```typescript
+// Конфигурационный токен
+export const DATATABLE_CONFIG = new InjectionToken<DataTableConfig>("datatable.config");
+
+// Компонент
+@Component({
+  selector: "app-data-table",
+  templateUrl: "./data-table.component.html",
+})
+export class DataTableComponent {
+  constructor(@Optional() @Inject(DATATABLE_CONFIG) private config: DataTableConfig) {
+    this.config = config || DEFAULT_CONFIG;
+  }
+}
+
+// Использование с разной конфигурацией
+@Component({
+  selector: "app-users",
+  providers: [{ provide: DATATABLE_CONFIG, useValue: userTableConfig }],
+  template: `<app-data-table [data]="users"></app-data-table>`,
+})
+export class UsersComponent {}
+```
+
+**4. Паттерн композиции с @Input/@Output**:
+
+```typescript
+@Component({
+  selector: 'app-card',
+  template: `
+    <div class="card">
+      <div class="card-header" *ngIf="title">{{ title }}</div>
+      <div class="card-body">
+        <ng-content></ng-content>
+      </div>
+      <div class="card-footer" *ngIf="showFooter">
+        <ng-content select="[footer]"></ng-content>
+      </div>
+    </div>
+  `
+})
+export class CardComponent {
+  @Input() title?: string;
+  @Input() showFooter = false;
+}
+
+// Использование
+<app-card title="User Profile" [showFooter]="true">
+  <app-user-details [user]="currentUser"></app-user-details>
+  <div footer>
+    <button (click)="save()">Save</button>
+  </div>
+</app-card>
+```
+
+**5. Директивы для расширения функциональности**:
+
+```typescript
+@Directive({
+  selector: "[appHighlight]",
+})
+export class HighlightDirective {
+  @Input() highlightColor = "yellow";
+
+  constructor(private el: ElementRef, private renderer: Renderer2) {}
+
+  @HostListener("mouseenter")
+  onMouseEnter() {
+    this.renderer.setStyle(this.el.nativeElement, "background-color", this.highlightColor);
+  }
+
+  @HostListener("mouseleave")
+  onMouseLeave() {
+    this.renderer.removeStyle(this.el.nativeElement, "background-color");
+  }
+}
+
+// Использование на любом элементе
+<div appHighlight highlightColor="lightblue">
+  Наведите на меня
+</div>;
+```
+
+**Ключевые принципы повторного использования компонентов**:
+
+- Проектирование с учетом независимости от контекста
+- Четко определенный интерфейс с @Input и @Output
+- Поддержка настройки через DI и конфигурационные токены
+- Следование принципу единственной ответственности
+- Использование паттернов композиции вместо наследования
+
+## Forms in Angular
+
+### 1. What is the difference between `Template-driven` Forms and `Reactive` Forms?
+
+**Template-driven Forms**:
+
+- **Основаны на директивах** в HTML-шаблоне (ngModel, ngForm)
+- **Простота использования** — требуют минимального кода TypeScript
+- **Асинхронная валидация** — форма становится доступной с задержкой
+- **Импортируются через FormsModule**
+- **Состояние формы** создается автоматически Angular на основе шаблона
+- **Двустороннее связывание** с использованием [(ngModel)]
+- **Менее тестируемые**, так как логика встроена в шаблон
+- **Предпочтительны для** простых форм с минимальной логикой
+
+Пример:
+
+```html
+<form #loginForm="ngForm" (ngSubmit)="onSubmit(loginForm.value)">
+  <div>
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" [(ngModel)]="user.email" required email />
+  </div>
+  <div>
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" [(ngModel)]="user.password" required minlength="6" />
+  </div>
+  <button type="submit" [disabled]="!loginForm.valid">Login</button>
+</form>
+```
+
+**Reactive Forms**:
+
+- **Создаются программно** в TypeScript-коде
+- **Более гибкие** и мощные для сложных сценариев
+- **Синхронный доступ** к модели формы в момент создания
+- **Импортируются через ReactiveFormsModule**
+- **Состояние формы** явно определено в коде компонента
+- **Односторонняя связь** с использованием [formControl] и [formGroup]
+- **Легче тестируемые**, так как логика формы разделена от представления
+- **Предпочтительны для** сложных форм с условной логикой и динамическим поведением
+
+Пример:
+
+```typescript
+// Component class
+this.loginForm = this.fb.group({
+  email: ['', [Validators.required, Validators.email]],
+  password: ['', [Validators.required, Validators.minLength(6)]]
+});
+
+// Получение значений
+onSubmit() {
+  console.log(this.loginForm.value);
+}
+```
+
+```html
+<form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="email">Email</label>
+    <input type="email" id="email" formControlName="email" />
+    <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">Пожалуйста, введите корректный email</div>
+  </div>
+  <div>
+    <label for="password">Password</label>
+    <input type="password" id="password" formControlName="password" />
+    <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">Пароль должен содержать минимум 6 символов</div>
+  </div>
+  <button type="submit" [disabled]="loginForm.invalid">Login</button>
+</form>
+```
+
+### 2. What are `FormControl`, `FormGroup`, and `FormArray` in the context of Reactive Forms?
+
+**FormControl**:
+
+- Базовый строительный блок реактивных форм
+- Представляет отдельное поле ввода с его значением и состоянием
+- Отслеживает значение, статус валидации и взаимодействия пользователя с полем
+- Может использоваться как отдельно, так и в составе FormGroup/FormArray
+
+```typescript
+const nameControl = new FormControl("", [Validators.required, Validators.maxLength(50)]);
+
+// Получение значения
+console.log(nameControl.value); // ''
+
+// Задание значения
+nameControl.setValue("John Doe");
+
+// Проверка валидности
+console.log(nameControl.valid); // true
+
+// Подписка на изменения
+nameControl.valueChanges.subscribe((newValue) => {
+  console.log("Value changed:", newValue);
+});
+```
+
+**FormGroup**:
+
+- Группирует несколько FormControl в единый объект
+- Объединяет состояния и значения вложенных элементов управления
+- Считается валидным, только если все вложенные элементы валидны
+- Значение представляется как объект, где ключи соответствуют именам контролов
+
+```typescript
+const userForm = new FormGroup({
+  firstName: new FormControl("", Validators.required),
+  lastName: new FormControl("", Validators.required),
+  address: new FormGroup({
+    street: new FormControl(""),
+    city: new FormControl(""),
+    zipCode: new FormControl(""),
+  }),
+});
+
+// Получение значения всей формы
+console.log(userForm.value);
+// { firstName: '', lastName: '', address: { street: '', city: '', zipCode: '' } }
+
+// Получение значения вложенного контрола
+console.log(userForm.get("firstName")?.value); // ''
+console.log(userForm.get("address.city")?.value); // ''
+
+// Проверка состояния всей формы
+console.log(userForm.valid); // false
+```
+
+**FormArray**:
+
+- Управляет динамическим набором элементов формы
+- Хранит упорядоченный массив FormControl, FormGroup или других FormArray
+- Идеален для работы со списками (добавление/удаление элементов)
+- Значение представляется как массив значений вложенных элементов
+
+```typescript
+const skillsArray = new FormArray([new FormControl("Angular"), new FormControl("TypeScript")]);
+
+// Добавление нового контрола
+skillsArray.push(new FormControl("JavaScript"));
+
+// Удаление контрола
+skillsArray.removeAt(1);
+
+// Получение всех значений
+console.log(skillsArray.value); // ['Angular', 'JavaScript']
+
+// Получение количества элементов
+console.log(skillsArray.length); // 2
+
+// Итерация по элементам
+for (let i = 0; i < skillsArray.length; i++) {
+  console.log(skillsArray.at(i).value);
+}
+```
+
+### 3. What are the differences in working with validation for Template-driven Forms and Reactive Forms?
+
+**Template-driven Forms валидация**:
+
+1. **Директивы HTML**:
+   - Используются атрибуты HTML5 и директивы Angular
+   - Валидаторы привязываются через атрибуты (required, email, pattern и т.д.)
+   - Angular автоматически создает соответствующие объекты валидаторов
+
+```html
+<input type="email" name="email" [(ngModel)]="user.email" required email #emailInput="ngModel" />
+
+<div *ngIf="emailInput.invalid && emailInput.touched">
+  <div *ngIf="emailInput.errors?.required">Email обязателен</div>
+  <div *ngIf="emailInput.errors?.email">Введите корректный email</div>
+</div>
+```
+
+2. **Доступ к состоянию валидации**:
+
+   - Через шаблонные переменные (#emailInput="ngModel")
+   - Отложенное создание элементов управления формой
+   - Проверка валидности осуществляется через properties: valid, invalid, errors
+
+3. **Пользовательские валидаторы**:
+   - Необходимо создать директивы валидации
+   - Сложнее в реализации и настройке
+   - Требуют больше шаблонного кода
+
+**Reactive Forms валидация**:
+
+1. **Программное определение**:
+   - Валидаторы задаются в коде компонента
+   - Могут комбинироваться и создаваться динамически
+   - Валидаторы передаются как аргументы при создании FormControl
+
+```typescript
+this.registrationForm = new FormGroup(
+  {
+    email: new FormControl("", [Validators.required, Validators.email, this.customEmailDomainValidator]),
+    password: new FormControl("", [Validators.required, Validators.minLength(8), Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)]),
+    confirmPassword: new FormControl(""),
+  },
+  { validators: this.passwordMatchValidator }
+);
+```
+
+2. **Доступ к состоянию валидации**:
+   - Прямой программный доступ к состоянию валидации (синхронно)
+   - Более детальный контроль через методы: get(), getError(), hasError()
+   - Легче управлять сложной логикой валидации
+
+```html
+<div *ngIf="registrationForm.get('email')?.invalid && registrationForm.get('email')?.touched">
+  <div *ngIf="registrationForm.get('email')?.errors?.required">Email обязателен</div>
+  <div *ngIf="registrationForm.get('email')?.errors?.email">Введите корректный email</div>
+  <div *ngIf="registrationForm.get('email')?.errors?.invalidDomain">Разрешены только домены example.com и example.org</div>
+</div>
+```
+
+3. **Пользовательские валидаторы**:
+   - Реализуются как простые функции
+   - Легко тестировать и повторно использовать
+   - Могут применяться к отдельным контролам или целым группам
+
+### 4. How do you implement custom validators for forms?
+
+**Синхронный валидатор для Reactive Forms**:
+
+Валидатор — это функция, которая принимает AbstractControl и возвращает объект ошибок или null:
+
+```typescript
+// Валидатор для отдельного контрола
+function forbiddenNameValidator(forbiddenName: RegExp): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const forbidden = forbiddenName.test(control.value);
+    return forbidden ? { forbiddenName: { value: control.value } } : null;
+  };
+}
+
+// Применение в форме
+this.heroForm = new FormGroup({
+  name: new FormControl("", [Validators.required, Validators.minLength(4), forbiddenNameValidator(/admin/i)]),
+});
+```
+
+**Валидатор для FormGroup (перекрестная проверка полей)**:
+
+```typescript
+// Проверка совпадения пароля и его подтверждения
+function passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
+  const password = group.get("password")?.value;
+  const confirmPassword = group.get("confirmPassword")?.value;
+
+  return password === confirmPassword ? null : { passwordMismatch: true };
+}
+
+// Применение к форме целиком
+this.registrationForm = new FormGroup(
+  {
+    password: new FormControl("", [Validators.required]),
+    confirmPassword: new FormControl("", [Validators.required]),
+  },
+  { validators: passwordMatchValidator }
+);
+```
+
+**Асинхронный валидатор**:
+
+```typescript
+// Проверка уникальности имени пользователя
+function uniqueUsernameValidator(userService: UserService): AsyncValidatorFn {
+  return (control: AbstractControl): Observable<ValidationErrors | null> => {
+    return userService.checkUsernameExists(control.value).pipe(
+      map((exists) => (exists ? { usernameExists: true } : null)),
+      catchError(() => of(null))
+    );
+  };
+}
+
+// Применение в форме с асинхронным валидатором
+this.registrationForm = this.fb.group({
+  username: [
+    "",
+    {
+      validators: [Validators.required, Validators.minLength(3)],
+      asyncValidators: [uniqueUsernameValidator(this.userService)],
+      updateOn: "blur", // Валидация происходит после потери фокуса
+    },
+  ],
+});
+```
+
+**Собственная директива валидации для Template-driven Forms**:
+
+```typescript
+@Directive({
+  selector: '[appForbiddenName]',
+  providers: [{
+    provide: NG_VALIDATORS,
+    useExisting: ForbiddenNameDirective,
+    multi: true
+  }]
+})
+export class ForbiddenNameDirective implements Validator {
+  @Input('appForbiddenName') forbiddenName: string = '';
+
+  validate(control: AbstractControl): ValidationErrors | null {
+    if (this.forbiddenName && control.value === this.forbiddenName) {
+      return { forbiddenName: { value: control.value } };
+    }
+    return null;
+  }
+}
+
+// Использование в шаблоне
+<input type="text" name="heroName" [(ngModel)]="hero.name" appForbiddenName="admin">
+```
+
+### 5. How can you retrieve and process data from forms after submission?
+
+**Извлечение данных из Template-driven Forms**:
+
+1. **Через обработчик события отправки формы**:
+
+```html
+<form #contactForm="ngForm" (ngSubmit)="onSubmit(contactForm)">
+  <!-- поля формы -->
+  <button type="submit">Отправить</button>
+</form>
+```
+
+```typescript
+onSubmit(form: NgForm): void {
+  if (form.valid) {
+    // Доступ к полным данным формы
+    const formData = form.value;
+    console.log('Form data:', formData);
+
+    // Доступ к отдельным полям
+    console.log('Name:', formData.name);
+    console.log('Email:', formData.email);
+
+    // Отправка данных на сервер
+    this.userService.createUser(formData).subscribe({
+      next: (response) => {
+        console.log('Success:', response);
+        form.resetForm(); // Сброс формы после успешной отправки
+      },
+      error: (error) => console.error('Error:', error)
+    });
+  }
+}
+```
+
+2. **Через привязку с помощью NgModel**:
+
+```html
+<form (ngSubmit)="onSubmit()">
+  <input [(ngModel)]="user.name" name="name" required />
+  <input [(ngModel)]="user.email" name="email" required />
+  <button type="submit">Отправить</button>
+</form>
+```
+
+```typescript
+user = { name: '', email: '' };
+
+onSubmit(): void {
+  // Данные уже доступны через объект user
+  console.log('User data:', this.user);
+
+  this.userService.createUser(this.user).subscribe({
+    next: (response) => {
+      console.log('Success:', response);
+      this.user = { name: '', email: '' }; // Сброс данных
+    },
+    error: (error) => console.error('Error:', error)
+  });
+}
+```
+
+**Извлечение данных из Reactive Forms**:
+
+1. **Через обработчик события отправки формы**:
+
+```html
+<form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+  <!-- поля формы -->
+  <button type="submit" [disabled]="registrationForm.invalid">Зарегистрироваться</button>
+</form>
+```
+
+```typescript
+onSubmit(): void {
+  if (this.registrationForm.valid) {
+    // Доступ к полным данным формы
+    const formData = this.registrationForm.value;
+    console.log('Form data:', formData);
+
+    // Доступ к отдельным полям
+    console.log('Username:', formData.username);
+
+    // Доступ к вложенным полям
+    if (formData.address) {
+      console.log('City:', formData.address.city);
+    }
+
+    // Получение только части данных
+    const userData = {
+      username: this.registrationForm.get('username')?.value,
+      email: this.registrationForm.get('email')?.value
+    };
+
+    // Отправка данных на сервер
+    this.authService.register(formData).subscribe({
+      next: (response) => {
+        console.log('Registration successful:', response);
+        this.registrationForm.reset();
+      },
+      error: (error) => console.error('Registration failed:', error)
+    });
+  }
+}
+```
+
+2. **Частичный доступ к данным с помощью getRawValue() или value**:
+
+```typescript
+// Получение всех данных, включая отключенные поля
+const completeData = this.form.getRawValue();
+
+// Получение только активных полей
+const activeData = this.form.value;
+
+// Обработка данных из FormArray
+const skillsArray = this.form.get("skills") as FormArray;
+const skillsList = skillsArray.controls.map((control) => control.value);
+```
+
+3. **Преобразование данных перед отправкой**:
+
+```typescript
+onSubmit(): void {
+  if (this.profileForm.valid) {
+    const formData = this.profileForm.value;
+
+    // Преобразование даты в формат ISO
+    const transformedData = {
+      ...formData,
+      birthDate: formData.birthDate ? new Date(formData.birthDate).toISOString() : null,
+      fullName: `${formData.firstName} ${formData.lastName}`,
+      // Удаление ненужных полей
+      confirmPassword: undefined
+    };
+
+    this.userService.updateProfile(transformedData).subscribe(/* ... */);
+  }
+}
+```
+
+### 6. What is two-way data binding in the context of Template-driven Forms?
+
+**Двустороннее связывание данных (Two-way Data Binding)** в Angular — это механизм, который позволяет автоматически синхронизировать данные между моделью компонента и представлением (DOM). Особенно мощно этот механизм используется в Template-driven Forms.
+
+**Принцип работы**:
+
+- **Из модели в представление**: изменения в данных компонента автоматически отображаются в DOM
+- **Из представления в модель**: пользовательский ввод автоматически обновляет данные компонента
+
+**Реализация с помощью [(ngModel)]**:
+
+```html
+<input type="text" [(ngModel)]="username" name="username" />
+<p>Привет, {{ username }}!</p>
+```
+
+```typescript
+export class AppComponent {
+  username = "guest";
+}
+```
+
+**Под капотом [(ngModel)]**:
+
+- Синтаксис `[(ngModel)]` — это сокращение для комбинации односторонней привязки свойства `[ngModel]` и привязки события `(ngModelChange)`
+- Эквивалентная запись:
+
+```html
+<input type="text" [ngModel]="username" (ngModelChange)="username = $event" name="username" />
+```
+
+**Полная форма с двусторонним связыванием**:
+
+```html
+<form #userForm="ngForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="name">Имя:</label>
+    <input type="text" id="name" [(ngModel)]="user.name" name="name" required />
+  </div>
+
+  <div>
+    <label for="email">Email:</label>
+    <input type="email" id="email" [(ngModel)]="user.email" name="email" required email />
+  </div>
+
+  <div>
+    <label>Пол:</label>
+    <label> <input type="radio" [(ngModel)]="user.gender" name="gender" value="male" /> Мужской </label>
+    <label> <input type="radio" [(ngModel)]="user.gender" name="gender" value="female" /> Женский </label>
+  </div>
+
+  <div>
+    <label for="country">Страна:</label>
+    <select id="country" [(ngModel)]="user.country" name="country" required>
+      <option value="">-- Выберите страну --</option>
+      <option *ngFor="let country of countries" [value]="country.code">{{ country.name }}</option>
+    </select>
+  </div>
+
+  <div>
+    <label>
+      <input type="checkbox" [(ngModel)]="user.acceptTerms" name="acceptTerms" required />
+      Я принимаю условия пользовательского соглашения
+    </label>
+  </div>
+
+  <button type="submit" [disabled]="userForm.invalid">Отправить</button>
+</form>
+
+<div *ngIf="userForm.submitted">
+  <h3>Отправленные данные:</h3>
+  <pre>{{ user | json }}</pre>
+</div>
+```
+
+```typescript
+export class UserFormComponent {
+  user = {
+    name: "",
+    email: "",
+    gender: "",
+    country: "",
+    acceptTerms: false,
+  };
+
+  countries = [
+    { code: "us", name: "США" },
+    { code: "ca", name: "Канада" },
+    { code: "uk", name: "Великобритания" },
+    { code: "ru", name: "Россия" },
+  ];
+
+  onSubmit(): void {
+    console.log("Form submitted:", this.user);
+    // this.userService.saveUser(this.user).subscribe(/* ... */);
+  }
+}
+```
+
+**Особенности двустороннего связывания**:
+
+- **Простота использования** — минимальный шаблонный код
+- **Автоматическая синхронизация** — не требуется писать обработчики событий
+- **Работа с вложенными объектами** — `[(ngModel)]="user.address.city"`
+- **Валидация** — интеграция с системой валидации Angular
+- **Возможные проблемы производительности** при большом количестве полей с двусторонним связыванием
+
+### 7. How do you use FormBuilder to create reactive forms using convenient and shorter syntax notation?
+
+**FormBuilder** — это сервис, предоставляемый Angular, который упрощает создание сложных форм. Он позволяет использовать более компактный синтаксис для создания FormGroup, FormControl и FormArray.
+
+**Базовое использование**:
+
+```typescript
+import { Component, OnInit } from "@angular/core";
+import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+
+@Component({
+  selector: "app-user-profile",
+  templateUrl: "./user-profile.component.html",
+})
+export class UserProfileComponent implements OnInit {
+  profileForm: FormGroup;
+
+  constructor(private fb: FormBuilder) {}
+
+  ngOnInit(): void {
+    // Создание формы с помощью FormBuilder
+    this.profileForm = this.fb.group({
+      firstName: ["", [Validators.required, Validators.maxLength(50)]],
+      lastName: ["", [Validators.required, Validators.maxLength(50)]],
+      email: ["", [Validators.required, Validators.email]],
+      age: [null, [Validators.min(18), Validators.max(100)]],
+    });
+  }
+
+  onSubmit(): void {
+    if (this.profileForm.valid) {
+      console.log(this.profileForm.value);
+    }
+  }
+}
+```
+
+**Сравнение с традиционным подходом**:
+
+```typescript
+// Традиционный подход
+this.profileForm = new FormGroup({
+  firstName: new FormControl("", [Validators.required, Validators.maxLength(50)]),
+  lastName: new FormControl("", [Validators.required, Validators.maxLength(50)]),
+  email: new FormControl("", [Validators.required, Validators.email]),
+  age: new FormControl(null, [Validators.min(18), Validators.max(100)]),
+});
+
+// Использование FormBuilder
+this.profileForm = this.fb.group({
+  firstName: ["", [Validators.required, Validators.maxLength(50)]],
+  lastName: ["", [Validators.required, Validators.maxLength(50)]],
+  email: ["", [Validators.required, Validators.email]],
+  age: [null, [Validators.min(18), Validators.max(100)]],
+});
+```
+
+**Создание вложенных форм**:
+
+```typescript
+this.registrationForm = this.fb.group({
+  personalInfo: this.fb.group({
+    firstName: ["", Validators.required],
+    lastName: ["", Validators.required],
+    dob: [null, Validators.required],
+  }),
+  contactInfo: this.fb.group({
+    email: ["", [Validators.required, Validators.email]],
+    phone: ["", Validators.pattern(/^\d{10}$/)],
+    address: this.fb.group({
+      street: [""],
+      city: ["", Validators.required],
+      state: [""],
+      zip: ["", Validators.pattern(/^\d{5}$/)],
+    }),
+  }),
+  account: this.fb.group(
+    {
+      username: ["", Validators.required],
+      password: ["", [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ["", Validators.required],
+    },
+    { validators: this.passwordMatchValidator }
+  ),
+});
+```
+
+**Работа с динамическими формами (FormArray)**:
+
+```typescript
+this.productForm = this.fb.group({
+  name: ['', Validators.required],
+  description: [''],
+  price: [0, [Validators.required, Validators.min(0)]],
+  // Создание FormArray
+  variants: this.fb.array([])
+});
+
+// Получение доступа к FormArray
+get variants() {
+  return this.productForm.get('variants') as FormArray;
+}
+
+// Добавление нового элемента в FormArray
+addVariant() {
+  const variantForm = this.fb.group({
+    color: ['', Validators.required],
+    size: ['', Validators.required],
+    quantity: [1, [Validators.required, Validators.min(0)]]
+  });
+
+  this.variants.push(variantForm);
+}
+
+// Удаление элемента из FormArray
+removeVariant(index: number) {
+  this.variants.removeAt(index);
+}
+```
+
+**Использование с асинхронными валидаторами**:
+
+```typescript
+this.userForm = this.fb.group({
+  username: ['', {
+    validators: [Validators.required, Validators.minLength(3)],
+    asyncValidators: [this.usernameValidator()],
+    updateOn: 'blur'
+  }],
+  email: ['', {
+    validators: [Validators.required, Validators.email],
+    asyncValidators: [this.emailValidator()],
+    updateOn: 'blur'
+  }]
+});
+
+// Асинхронный валидатор
+usernameValidator(): AsyncValidatorFn {
+  return (control: AbstractControl): Observable<ValidationErrors | null> => {
+    return this.userService.checkUsernameExists(control.value).pipe(
+      map(exists => exists ? { usernameExists: true } : null),
+      catchError(() => of(null))
+    );
+  };
+}
+```
+
+**Обновление и сброс формы**:
+
+```typescript
+// Обновление всей формы
+this.profileForm.setValue({
+  firstName: "John",
+  lastName: "Doe",
+  email: "john.doe@example.com",
+  age: 30,
+});
+
+// Частичное обновление формы
+this.profileForm.patchValue({
+  firstName: "John",
+  lastName: "Doe",
+});
+
+// Сброс формы
+this.profileForm.reset();
+```
+
+### 8. ow do you track the change state of forms or form controls (e.g., touched, dirty)?
+
+Angular отслеживает несколько состояний для форм и элементов управления, что позволяет реагировать на различные стадии взаимодействия пользователя с формой.
+
+**Основные состояния элементов управления**:
+
+1. **pristine/dirty** — был ли изменен элемент:
+
+   - `pristine`: пользователь еще не изменял значение
+   - `dirty`: пользователь изменил значение элемента
+
+2. **untouched/touched** — был ли фокус на элементе:
+
+   - `untouched`: пользователь еще не взаимодействовал с элементом
+   - `touched`: пользователь взаимодействовал с элементом и снял фокус
+
+3. **valid/invalid** — состояние валидации:
+
+   - `valid`: элемент проходит все проверки валидации
+   - `invalid`: элемент не проходит хотя бы одну проверку валидации
+
+4. **pending** — ожидание результата асинхронной валидации:
+   - `true`: выполняется асинхронная валидация
+   - `false`: асинхронная валидация завершена или не инициирована
+
+**Отслеживание состояний в Template-driven Forms**:
+
+```html
+<form #loginForm="ngForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email"
+           [(ngModel)]="loginData.email"
+           required email
+           #emailControl="ngModel">
+
+    <div *ngIf="emailControl.invalid && (emailControl.dirty || emailControl.touched)">
+      <div *ngIf="emailControl.errors?.required">Email обязателен</div>
+      <div *ngIf="emailControl.errors?.email">Введите корректный email</div>
+    </div>
+  </div>
+
+<button type="button" [disabled]="loginForm.pristine" (click)="loginForm.resetForm()">Сбросить</button>
+  </div>
+</form>
+
+<!-- Отображение состояния формы для отладки -->
+<div>
+  <p>Form valid: {{ loginForm.valid }}</p>
+  <p>Form touched: {{ loginForm.touched }}</p>
+  <p>Form dirty: {{ loginForm.dirty }}</p>
+  <p>Form submitted: {{ loginForm.submitted }}</p>
+</div>
+```
+
+**Отслеживание состояний в Reactive Forms**:
+
+```html
+<form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="username">Имя пользователя</label>
+    <input type="text" id="username" formControlName="username" />
+
+    <div *ngIf="username.invalid && (username.dirty || username.touched)">
+      <div *ngIf="username.errors?.required">Имя пользователя обязательно</div>
+      <div *ngIf="username.errors?.minlength">Имя пользователя должно содержать минимум {{ username.errors?.minlength.requiredLength }} символов</div>
+    </div>
+  </div>
+
+  <div>
+    <button type="submit" [disabled]="registrationForm.invalid">Зарегистрироваться</button>
+    <button type="button" [disabled]="registrationForm.pristine" (click)="resetForm()">Сбросить</button>
+  </div>
+</form>
+```
+
+```typescript
+export class RegistrationComponent implements OnInit {
+  registrationForm: FormGroup;
+
+  constructor(private fb: FormBuilder) {}
+
+  ngOnInit(): void {
+    this.registrationForm = this.fb.group({
+      username: ["", [Validators.required, Validators.minLength(3)]],
+      email: ["", [Validators.required, Validators.email]],
+      password: ["", [Validators.required, Validators.minLength(8)]],
+    });
+
+    // Подписка на изменения состояния формы
+    this.registrationForm.statusChanges.subscribe((status) => {
+      console.log("Form status:", status); // 'VALID', 'INVALID', 'PENDING'
+    });
+  }
+
+  // Геттер для удобного доступа к контролу username
+  get username() {
+    return this.registrationForm.get("username");
+  }
+
+  // Программное управление состоянием
+  markFormAsTouched() {
+    this.registrationForm.markAllAsTouched();
+  }
+
+  resetForm() {
+    this.registrationForm.reset();
+  }
+
+  // Проверка определенных состояний
+  isFormDirtyAndInvalid(): boolean {
+    return this.registrationForm.dirty && this.registrationForm.invalid;
+  }
+
+  onSubmit() {
+    // Принудительная проверка всех полей перед отправкой
+    if (this.registrationForm.invalid) {
+      this.registrationForm.markAllAsTouched();
+      return;
+    }
+
+    // Форма валидна, обработка данных
+    console.log(this.registrationForm.value);
+  }
+}
+```
+
+**Программное управление состояниями**:
+
+```typescript
+// Для отдельного контрола
+this.registrationForm.get("email").markAsTouched();
+this.registrationForm.get("email").markAsDirty();
+this.registrationForm.get("email").markAsPristine();
+this.registrationForm.get("email").markAsUntouched();
+
+// Для всей формы
+this.registrationForm.markAllAsTouched();
+this.registrationForm.markAsDirty();
+this.registrationForm.markAsPristine();
+```
+
+**Отслеживание изменений значений и состояний**:
+
+```typescript
+ngOnInit() {
+  // Подписка на изменения значения
+  this.registrationForm.get('username').valueChanges.subscribe(value => {
+    console.log('Username changed:', value);
+  });
+
+  // Подписка на изменения состояния
+  this.registrationForm.get('email').statusChanges.subscribe(status => {
+    console.log('Email status changed:', status);
+  });
+
+  // Подписка на изменения всей формы
+  this.registrationForm.valueChanges.subscribe(formValues => {
+    console.log('Form values changed:', formValues);
+
+    // Сохранение в localStorage при изменении
+    localStorage.setItem('formDraft', JSON.stringify(formValues));
+  });
+}
+```
+
+**Использование статусов для условного форматирования**:
+
+```css
+.ng-valid[required],
+.ng-valid.required {
+  border-left: 5px solid #42a948; /* зеленый */
+}
+
+.ng-invalid:not(form) {
+  border-left: 5px solid #a94442; /* красный */
+}
+
+.ng-pending {
+  border-left: 5px solid #e8ac12; /* желтый */
+}
+```
+
+**Создание собственных индикаторов состояния**:
+
+```html
+<div class="form-field" [class.field-error]="username.invalid && username.touched" [class.field-success]="username.valid && username.touched" [class.field-pending]="username.pending">
+  <label for="username">Имя пользователя</label>
+  <input type="text" id="username" formControlName="username" />
+
+  <div class="validation-message" *ngIf="username.invalid && username.touched">
+    <!-- Сообщения об ошибках -->
+  </div>
+
+  <div class="validation-indicator">
+    <span *ngIf="username.pending" class="spinner">проверка...</span>
+    <span *ngIf="username.valid && username.touched" class="check">✓</span>
+    <span *ngIf="username.invalid && username.touched" class="error">✗</span>
+  </div>
+</div>
+```
+
+### 9. How do you handle asynchronous validation?
+
+Асинхронная валидация позволяет проверять данные формы через API или выполнять другие асинхронные операции (например, проверять уникальность имени пользователя или email).
+
+**Создание асинхронного валидатора**:
+
+```typescript
+import { AbstractControl, AsyncValidatorFn, ValidationErrors } from "@angular/forms";
+import { Observable, of } from "rxjs";
+import { map, debounceTime, switchMap, catchError, first } from "rxjs/operators";
+import { UserService } from "./user.service";
+
+// Функция-фабрика для создания асинхронного валидатора
+export function uniqueUsernameValidator(userService: UserService): AsyncValidatorFn {
+  return (control: AbstractControl): Observable<ValidationErrors | null> => {
+    if (!control.value) {
+      return of(null); // Пустое значение не проверяем
+    }
+
+    return of(control.value).pipe(
+      // Задержка для предотвращения множества запросов при быстром вводе
+      debounceTime(400),
+      // Переключаемся на новый запрос при каждом изменении
+      switchMap((username) =>
+        userService.checkUsernameExists(username).pipe(
+          // Преобразуем результат в формат валидатора
+          map((exists) => (exists ? { usernameExists: true } : null)),
+          // Берем только первый результат
+          first(),
+          // В случае ошибки запроса считаем проверку пройденной
+          catchError(() => of(null))
+        )
+      )
+    );
+  };
+}
+```
+
+**Применение асинхронного валидатора в Reactive Forms**:
+
+```typescript
+import { Component, OnInit } from "@angular/core";
+import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { UserService } from "../services/user.service";
+import { uniqueUsernameValidator } from "../validators/async-validators";
+
+@Component({
+  selector: "app-registration",
+  templateUrl: "./registration.component.html",
+})
+export class RegistrationComponent implements OnInit {
+  registrationForm: FormGroup;
+
+  constructor(private fb: FormBuilder, private userService: UserService) {}
+
+  ngOnInit(): void {
+    this.registrationForm = this.fb.group({
+      username: [
+        "",
+        {
+          validators: [Validators.required, Validators.minLength(3)],
+          asyncValidators: [uniqueUsernameValidator(this.userService)],
+          updateOn: "blur", // Валидация при потере фокуса, а не при каждом нажатии клавиши
+        },
+      ],
+      email: [
+        "",
+        [Validators.required, Validators.email],
+        // Несколько асинхронных валидаторов
+        [this.emailDomainValidator(), uniqueEmailValidator(this.userService)],
+      ],
+      password: ["", [Validators.required, Validators.minLength(8)]],
+    });
+  }
+
+  // Геттер для удобного доступа
+  get username() {
+    return this.registrationForm.get("username");
+  }
+
+  get email() {
+    return this.registrationForm.get("email");
+  }
+
+  // Встроенный асинхронный валидатор
+  emailDomainValidator(): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+      const email = control.value;
+      if (!email || !email.includes("@")) {
+        return of(null);
+      }
+
+      const domain = email.split("@")[1];
+      return this.userService.getAllowedDomains().pipe(
+        map((allowedDomains) => (allowedDomains.includes(domain) ? null : { invalidDomain: true })),
+        catchError(() => of(null))
+      );
+    };
+  }
+
+  onSubmit() {
+    // Отключаем кнопку отправки пока идет асинхронная валидация
+    if (this.registrationForm.pending) {
+      return;
+    }
+
+    if (this.registrationForm.valid) {
+      console.log("Form submitted:", this.registrationForm.value);
+      this.userService.registerUser(this.registrationForm.value).subscribe(/* ... */);
+    } else {
+      this.registrationForm.markAllAsTouched();
+    }
+  }
+}
+```
+
+**Отображение состояния асинхронной валидации в шаблоне**:
+
+```html
+<form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+  <div class="form-group">
+    <label for="username">Имя пользователя</label>
+    <input type="text" id="username" formControlName="username" />
+
+    <!-- Индикатор загрузки -->
+    <div *ngIf="username.pending" class="spinner">Проверка доступности...</div>
+
+    <!-- Сообщения об ошибках -->
+    <div *ngIf="username.invalid && (username.dirty || username.touched) && !username.pending">
+      <div *ngIf="username.errors?.required">Имя пользователя обязательно</div>
+      <div *ngIf="username.errors?.minlength">Минимальная длина {{ username.errors?.minlength.requiredLength }} символов</div>
+      <div *ngIf="username.errors?.usernameExists">Это имя пользователя уже занято</div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="email">Email</label>
+    <input type="email" id="email" formControlName="email" />
+
+    <!-- Индикатор загрузки -->
+    <div *ngIf="email.pending" class="spinner">Проверка email...</div>
+
+    <!-- Сообщения об ошибках -->
+    <div *ngIf="email.invalid && (email.dirty || email.touched) && !email.pending">
+      <div *ngIf="email.errors?.required">Email обязателен</div>
+      <div *ngIf="email.errors?.email">Введите корректный email</div>
+      <div *ngIf="email.errors?.emailExists">Этот email уже зарегистрирован</div>
+      <div *ngIf="email.errors?.invalidDomain">Недопустимый домен email. Разрешены только корпоративные домены.</div>
+    </div>
+  </div>
+
+  <!-- Другие поля -->
+
+  <button type="submit" [disabled]="registrationForm.invalid || registrationForm.pending">
+    <span *ngIf="registrationForm.pending">Проверка...</span>
+    <span *ngIf="!registrationForm.pending">Зарегистрироваться</span>
+  </button>
+</form>
+```
+
+**Обработка асинхронной валидации с помощью сервиса состояния**:
+
+```typescript
+@Injectable({
+  providedIn: "root",
+})
+export class ValidationService {
+  checkUsernameUnique(username: string): Observable<boolean> {
+    // Имитация запроса к API
+    return of(username !== "admin" && username !== "root").pipe(
+      delay(1000) // Задержка для демонстрации
+    );
+  }
+
+  validateUsername(): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+      return this.checkUsernameUnique(control.value).pipe(
+        map((isUnique) => (isUnique ? null : { usernameExists: true })),
+        catchError(() => of(null))
+      );
+    };
+  }
+}
+```
+
+**Оптимизация асинхронной валидации**:
+
+1. **Предотвращение частых запросов**:
+
+```typescript
+return control.valueChanges.pipe(
+  debounceTime(500), // Ждем 500 мс после ввода
+  distinctUntilChanged(), // Игнорируем, если значение не изменилось
+  take(1), // Берем только первое значение
+  switchMap((value) => {
+    return this.userService.checkUsernameExists(value);
+  }),
+  map((exists) => (exists ? { usernameExists: true } : null))
+);
+```
+
+2. **Кеширование результатов**:
+
+```typescript
+const cache = new Map<string, boolean>();
+
+return (control: AbstractControl): Observable<ValidationErrors | null> => {
+  const value = control.value;
+
+  // Проверяем кеш
+  if (cache.has(value)) {
+    const exists = cache.get(value);
+    return of(exists ? { usernameExists: true } : null);
+  }
+
+  // Если нет в кеше, делаем запрос
+  return this.userService.checkUsernameExists(value).pipe(
+    map((exists) => {
+      // Сохраняем в кеш
+      cache.set(value, exists);
+      return exists ? { usernameExists: true } : null;
+    })
+  );
+};
+```
+
+3. **Условный пропуск валидации**:
+
+```typescript
+// Проверяем только если значение прошло синхронную валидацию
+if (control.errors && !control.errors.usernameExists) {
+  return of(null); // Не выполняем асинхронную валидацию
+}
+
+// Проверяем только если длина достаточная
+if (control.value.length < 3) {
+  return of(null);
+}
+```
+
+**Визуальное отображение состояний асинхронной валидации**:
+
+```css
+.field-container {
+  position: relative;
+}
+
+.field-status {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.pending-indicator {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.valid-indicator {
+  color: green;
+}
+
+.invalid-indicator {
+  color: red;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+```
+
+```html
+<div class="field-container">
+  <input type="text" formControlName="username" />
+
+  <div class="field-status">
+    <div *ngIf="username.pending" class="pending-indicator"></div>
+    <div *ngIf="!username.pending && username.valid && username.touched" class="valid-indicator">✓</div>
+    <div *ngIf="!username.pending && username.invalid && username.touched" class="invalid-indicator">✗</div>
+  </div>
+</div>
+```
+
+Асинхронная валидация — мощный инструмент, который позволяет проверять данные формы через внешние источники данных. Правильное использование асинхронных валидаторов, включая оптимизацию запросов и наглядное отображение состояний, значительно улучшает пользовательский опыт при работе с формами.
+
+## Lazy Loading in Angular
+
+### 1. What is `Lazy loading`, and what is its purpose in Angular applications?
+
+**Lazy Loading (ленивая загрузка)** — это техника оптимизации, которая позволяет загружать части приложения (обычно модули) по требованию, а не при начальном запуске. В Angular эта концепция тесно связана с маршрутизацией и модульной архитектурой.
+
+**Принцип работы**:
+
+- При начальной загрузке приложения загружаются только основные (eagerly loaded) модули
+- Модули, настроенные на ленивую загрузку, компилируются в отдельные JavaScript-файлы (бандлы)
+- Эти файлы загружаются только тогда, когда пользователь переходит по соответствующему маршруту
+- После загрузки модуль становится доступным в приложении наравне с eagerly-loaded модулями
+
+**Основные цели и преимущества**:
+
+- **Ускорение начальной загрузки** — уменьшение размера начального бандла приложения
+- **Оптимизация использования ресурсов** — загружаются только те функции, которые действительно используются
+- **Улучшение пользовательского опыта** — более быстрый запуск приложения
+- **Масштабируемость** — возможность добавлять функциональность без существенного увеличения времени загрузки
+- **Разделение ответственности** — чистое разделение кода по функциональным модулям
+
+**Сценарии использования**:
+
+- **Крупные приложения** с множеством функциональных модулей
+- **Административные панели** с редко используемыми функциями
+- **Специализированные разделы** приложения (например, аналитика, настройки)
+- **Функции для определенных ролей пользователей** (например, модуль администратора)
+- **Редко используемые страницы** (например, страницы помощи, справочные материалы)
+
+### 2. How do you configure lazy loading for a specific module?
+
+Настройка ленивой загрузки для модуля включает несколько основных шагов:
+
+**1. Создание отдельного Feature-модуля**:
+
+```typescript
+// src/app/feature/feature.module.ts
+import { NgModule } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FeatureRoutingModule } from "./feature-routing.module";
+import { FeatureComponent } from "./feature.component";
+
+@NgModule({
+  declarations: [FeatureComponent],
+  imports: [
+    CommonModule,
+    FeatureRoutingModule, // Модуль маршрутизации для функционального модуля
+  ],
+})
+export class FeatureModule {}
+```
+
+**2. Настройка внутренней маршрутизации модуля**:
+
+```typescript
+// src/app/feature/feature-routing.module.ts
+import { NgModule } from "@angular/core";
+import { RouterModule, Routes } from "@angular/router";
+import { FeatureComponent } from "./feature.component";
+
+// Внутренние маршруты модуля
+const routes: Routes = [
+  {
+    path: "", // Пустой путь, так как префикс указывается в основном маршрутизаторе
+    component: FeatureComponent,
+  },
+  {
+    path: "detail/:id",
+    component: FeatureDetailComponent,
+  },
+];
+
+@NgModule({
+  imports: [RouterModule.forChild(routes)], // Важно: forChild, а не forRoot
+  exports: [RouterModule],
+})
+export class FeatureRoutingModule {}
+```
+
+**3. Настройка основного маршрутизатора для ленивой загрузки**:
+
+```typescript
+// src/app/app-routing.module.ts
+import { NgModule } from "@angular/core";
+import { RouterModule, Routes } from "@angular/router";
+import { HomeComponent } from "./home/home.component";
+
+const routes: Routes = [
+  { path: "", component: HomeComponent },
+  {
+    path: "feature",
+    // Здесь используется функция import() для ленивой загрузки
+    loadChildren: () => import("./feature/feature.module").then((m) => m.FeatureModule),
+  },
+  {
+    path: "admin",
+    loadChildren: () => import("./admin/admin.module").then((m) => m.AdminModule),
+  },
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule],
+})
+export class AppRoutingModule {}
+```
+
+**4. Убедитесь, что модуль не импортируется напрямую в AppModule**:
+Важное правило: ленивозагружаемые модули НЕ должны импортироваться через обычные imports в AppModule или другие eagerly-loaded модули. Это нарушит принцип ленивой загрузки.
+
+**5. Правильная организация компонентов**:
+Компоненты, используемые внутри ленивозагружаемого модуля, должны быть объявлены в этом модуле, а не в AppModule или других shared-модулях.
+
+**6. Для работы с Standalone компонентами** (начиная с Angular 14+):
+
+```typescript
+// Использование standalone-компонентов
+const routes: Routes = [
+  {
+    path: "profile",
+    loadComponent: () => import("./profile/profile.component").then((c) => c.ProfileComponent),
+  },
+];
+```
+
+**7. Для вложенных ленивозагружаемых маршрутов**:
+
+```typescript
+const routes: Routes = [
+  {
+    path: "dashboard",
+    loadChildren: () => import("./dashboard/dashboard.module").then((m) => m.DashboardModule),
+    // Можно добавить guard, title, data и другие свойства
+    canActivate: [AuthGuard],
+    data: { preload: true },
+  },
+];
+```
+
+### 3. What changes to the routing system are necessary to support lazy loading?
+
+Для поддержки ленивой загрузки в маршрутизации Angular необходимы следующие ключевые изменения:
+
+**1. Использование loadChildren вместо прямого указания компонентов**:
+
+```typescript
+// Традиционная маршрутизация без ленивой загрузки
+{ path: 'admin', component: AdminComponent }
+
+// Маршрутизация с ленивой загрузкой
+{
+  path: 'admin',
+  loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule)
+}
+```
+
+**2. Разделение структуры маршрутов на уровни**:
+
+- **Корневой маршрутизатор** (AppRoutingModule): определяет основные маршруты и точки ленивой загрузки
+- **Маршрутизаторы функциональных модулей**: определяют внутренние маршруты для своего модуля
+
+**3. Правильное использование RouterModule.forRoot() и RouterModule.forChild()**:
+
+- `RouterModule.forRoot()` используется только в главном AppRoutingModule
+- `RouterModule.forChild()` используется во всех ленивозагружаемых модулях
+
+**4. Настройка структуры путей**:
+
+- Базовый путь для модуля устанавливается в корневом маршрутизаторе
+- Внутренние пути модуля начинаются с пустого пути ('') или с относительных путей
+
+```typescript
+// app-routing.module.ts
+{
+  path: 'products', // Базовый путь
+  loadChildren: () => import('./products/products.module').then(m => m.ProductsModule)
+}
+
+// products-routing.module.ts
+const routes: Routes = [
+  { path: '', component: ProductListComponent }, // Соответствует /products
+  { path: 'new', component: AddProductComponent }, // Соответствует /products/new
+  { path: ':id', component: ProductDetailComponent } // Соответствует /products/123
+];
+```
+
+**5. Настройка предварительной загрузки (preloading)**:
+
+```typescript
+@NgModule({
+  imports: [
+    RouterModule.forRoot(routes, {
+      preloadingStrategy: PreloadAllModules, // или CustomPreloadingStrategy
+      // Другие опции: useHash, enableTracing, scrollPositionRestoration и т.д.
+    }),
+  ],
+  exports: [RouterModule],
+})
+export class AppRoutingModule {}
+```
+
+**6. Обработка Guards и Resolvers для ленивозагружаемых маршрутов**:
+
+- Guards (например, AuthGuard) можно применять как к основному маршруту модуля, так и к внутренним
+- Важно учитывать, что Guard будет загружен вместе с основным бандлом, даже если защищает ленивозагружаемый маршрут
+
+```typescript
+{
+  path: 'admin',
+  loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule),
+  canActivate: [AuthGuard],
+  canLoad: [AuthGuard] // Предотвращает даже загрузку модуля неавторизованным пользователям
+}
+```
+
+**7. Передача данных в ленивозагружаемые модули**:
+
+```typescript
+{
+  path: 'dashboard',
+  loadChildren: () => import('./dashboard/dashboard.module').then(m => m.DashboardModule),
+  data: { title: 'Dashboard', requiredRole: 'admin' }
+}
+```
+
+**8. Работа с дочерними маршрутами**:
+
+```typescript
+// В feature-routing.module.ts
+const routes: Routes = [
+  {
+    path: "",
+    component: FeatureComponent,
+    children: [
+      { path: "overview", component: OverviewComponent },
+      { path: "details", component: DetailsComponent },
+    ],
+  },
+];
+```
+
+### 4. What are the advantages of using lazy loading in your application?
+
+**1. Улучшение производительности начальной загрузки**:
+
+- **Уменьшение размера начального бандла** — загружаются только необходимые для старта модули
+- **Сокращение времени до интерактивности (TTI)** — приложение быстрее становится отзывчивым
+- **Более быстрая загрузка критических путей** — пользователи получают доступ к основным функциям раньше
+- **Количественные улучшения**: снижение времени загрузки может достигать 30-60% в крупных приложениях
+
+**2. Оптимизация использования сетевых ресурсов**:
+
+- **Загрузка по требованию** — пользователи загружают только то, что используют
+- **Сокращение трафика** — особенно важно для мобильных пользователей
+- **Распределение нагрузки** — запросы к серверу распределяются во времени
+- **Эффективное кеширование** — отдельные модули могут кешироваться браузером независимо
+
+**3. Улучшение пользовательского опыта**:
+
+- **Более быстрый отклик приложения** — пользователи видят основной контент раньше
+- **Плавные переходы** — при правильной настройке предварительной загрузки
+- **Индикаторы загрузки** — можно добавить индикаторы загрузки для больших модулей
+
+**4. Организационные преимущества для разработчиков**:
+
+- **Четкое разделение кода** — функциональные модули изолированы друг от друга
+- **Масштабируемость кодовой базы** — команды могут работать над модулями независимо
+- **Упрощение сопровождения** — модули можно обновлять и тестировать независимо
+- **Более четкая структура проекта** — принуждает к хорошему разделению функциональности
+
+**5. Бизнес-преимущества**:
+
+- **Удержание пользователей** — быстрые сайты имеют более низкие показатели отказов
+- **Улучшение конверсии** — каждая секунда загрузки критически важна для бизнес-показателей
+- **Экономия на серверной инфраструктуре** — сокращение трафика может снизить затраты
+- **Лучший SEO** — поисковые системы отдают предпочтение быстрым сайтам
+
+**6. Технические преимущества**:
+
+- **Возможность реализации функциональных флагов** — можно включать/отключать целые модули
+- **Упрощение A/B-тестирования** — возможность загружать разные версии модулей
+- **Лучшая изоляция кода** — ошибки в одном модуле реже влияют на другие части приложения
+- **Возможность обновления отдельных частей приложения** без полной перезагрузки
+
+**7. Примеры конкретных ситуаций**:
+
+- **Административная панель**, которую использует лишь малая часть пользователей
+- **Страницы настроек**, которые посещаются редко
+- **Инструменты аналитики и отчетов**, используемые небольшим процентом пользователей
+- **Расширенные функции редактирования** в приложениях с контентом
+- **Функциональность для определенных ролей**, например, модерирование контента
+
+### 5. What is Preload strategy, and what are the main strategies used for preloading modules (`NoPreloading` or `PreloadAllModules`)?
+
+**Стратегия предварительной загрузки (PreloadingStrategy)** — это механизм, который определяет, когда и какие ленивозагружаемые модули должны быть загружены в фоновом режиме после завершения начальной загрузки приложения. Это позволяет оптимизировать пользовательский опыт, сначала быстро отображая критический контент, а затем незаметно для пользователя загружая остальные модули.
+
+**Основные встроенные стратегии**:
+
+**1. NoPreloading** (стратегия по умолчанию):
+
+- **Принцип работы**: модули загружаются только при непосредственном переходе на соответствующий маршрут
+- **Плюсы**: минимальное использование сетевого трафика, модули загружаются только при необходимости
+- **Минусы**: при переходе на новый маршрут пользователю приходится ждать загрузки модуля
+- **Применение**: подходит для приложений с большим количеством редко используемых модулей или для экономии трафика
+
+```typescript
+import { RouterModule, NoPreloading } from "@angular/router";
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes, { preloadingStrategy: NoPreloading })],
+  exports: [RouterModule],
+})
+export class AppRoutingModule {}
+```
+
+**2. PreloadAllModules**:
+
+- **Принцип работы**: все ленивозагружаемые модули автоматически загружаются в фоновом режиме после завершения начальной загрузки
+- **Плюсы**: пользователь получает ощущение мгновенной навигации, так как модули уже предзагружены
+- **Минусы**: повышенное использование трафика, может быть неэффективно для очень больших приложений
+- **Применение**: идеально для средних приложений с ограниченным количеством модулей
+
+```typescript
+import { RouterModule, PreloadAllModules } from "@angular/router";
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })],
+  exports: [RouterModule],
+})
+export class AppRoutingModule {}
+```
+
+**Пользовательские стратегии предварительной загрузки**:
+
+**3. Selective Preloading** (выборочная предварительная загрузка):
+
+- **Принцип работы**: выбирает определенные модули для предзагрузки на основе метаданных маршрута
+- **Реализация**: создается пользовательская стратегия, которая проверяет свойство data маршрута
+
+```typescript
+import { Injectable } from "@angular/core";
+import { PreloadingStrategy, Route } from "@angular/router";
+import { Observable, of } from "rxjs";
+
+@Injectable({ providedIn: "root" })
+export class SelectivePreloadingStrategy implements PreloadingStrategy {
+  preload(route: Route, load: () => Observable<any>): Observable<any> {
+    // Проверяем флаг preload в метаданных маршрута
+    if (route.data && route.data["preload"]) {
+      console.log(`Preloading: ${route.path}`);
+      return load();
+    } else {
+      return of(null);
+    }
+  }
+}
+
+// Использование в маршрутах
+const routes: Routes = [
+  {
+    path: "important-feature",
+    loadChildren: () => import("./important/important.module").then((m) => m.ImportantModule),
+    data: { preload: true }, // Этот модуль будет предзагружен
+  },
+  {
+    path: "less-important",
+    loadChildren: () => import("./less-important/less-important.module").then((m) => m.LessImportantModule),
+    // Этот модуль не будет предзагружен
+  },
+];
+```
+
+**4. Network-Aware Preloading** (предзагрузка с учетом сети):
+
+- **Принцип работы**: загружает модули только при определенных сетевых условиях (например, только на WiFi)
+- **Реализация**: использует Network Information API для определения типа подключения
+
+```typescript
+import { Injectable } from "@angular/core";
+import { PreloadingStrategy, Route } from "@angular/router";
+import { Observable, of } from "rxjs";
+
+@Injectable({ providedIn: "root" })
+export class NetworkAwarePreloadStrategy implements PreloadingStrategy {
+  preload(route: Route, load: () => Observable<any>): Observable<any> {
+    // Проверяем тип соединения, если доступен API
+    if (navigator.connection) {
+      // Предзагружаем только на WiFi или быстром соединении
+      const connection = (navigator as any).connection;
+      if (connection.saveData) {
+        // Режим экономии трафика активен, не предзагружаем
+        return of(null);
+      }
+
+      const effectiveType = connection.effectiveType || "";
+      if (effectiveType === "4g") {
+        // Предзагружаем только при 4G соединении
+        return load();
+      }
+    }
+
+    // По умолчанию или если Network API недоступен
+    // можно проверить наличие флага preload
+    if (route.data && route.data["preload"]) {
+      return load();
+    }
+
+    return of(null);
+  }
+}
+```
+
+**5. QuickLink Strategy** (предзагрузка на основе видимых ссылок):
+
+- **Принцип работы**: предзагружает модули, к которым ведут ссылки, видимые на текущем экране
+- **Реализация**: использует IntersectionObserver для отслеживания видимости ссылок
+
+```typescript
+// Обычно используется с библиотекой ngx-quicklink
+import { QuicklinkStrategy } from "ngx-quicklink";
+
+@NgModule({
+  imports: [
+    RouterModule.forRoot(routes, {
+      preloadingStrategy: QuicklinkStrategy,
+    }),
+  ],
+  exports: [RouterModule],
+})
+export class AppRoutingModule {}
+```
+
+**6. Приоритетная предварительная загрузка**:
+
+- **Принцип работы**: загружает модули в порядке приоритета, указанного в настройках маршрута
+- **Реализация**: задерживает загрузку низкоприоритетных модулей
+
+```typescript
+@Injectable({ providedIn: "root" })
+export class PriorityPreloadingStrategy implements PreloadingStrategy {
+  preload(route: Route, load: () => Observable<any>): Observable<any> {
+    const priority = route.data?.["preloadPriority"] || 0;
+
+    // Задержка в зависимости от приоритета
+    const delay = 1000 * (5 - priority); // 0-5 секунд задержки
+
+    return of(true).pipe(
+      delay(delay),
+      switchMap(() => {
+        console.log(`Preloading with priority ${priority}: ${route.path}`);
+        return load();
+      })
+    );
+  }
+}
+
+// Использование
+const routes: Routes = [
+  {
+    path: "high-priority",
+    data: { preloadPriority: 5 },
+    loadChildren: () => import("./high-priority/high-priority.module").then((m) => m.HighPriorityModule),
+  },
+  {
+    path: "medium-priority",
+    data: { preloadPriority: 3 },
+    loadChildren: () => import("./medium-priority/medium-priority.module").then((m) => m.MediumPriorityModule),
+  },
+];
+```
+
+### 6. How do you use PreloadingStrategy with Angular Router to organize preloading of data?
+
+**Предварительная загрузка данных** (не только модулей) — это расширенный сценарий использования стратегий предзагрузки. Он позволяет загрузить не только код модуля, но и данные, необходимые для работы модуля, еще до того, как пользователь перейдет на соответствующую страницу.
+
+**1. Реализация кастомной стратегии предзагрузки данных**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { PreloadingStrategy, Route } from "@angular/router";
+import { Observable, of, switchMap } from "rxjs";
+import { DataService } from "./data.service";
+
+@Injectable({ providedIn: "root" })
+export class DataPreloadingStrategy implements PreloadingStrategy {
+  constructor(private dataService: DataService) {}
+
+  preload(route: Route, load: () => Observable<any>): Observable<any> {
+    // Проверяем наличие флага и информации о данных для предзагрузки
+    if (route.data && route.data["preloadData"]) {
+      const dataKey = route.data["dataKey"];
+
+      // Сначала загружаем модуль
+      return load().pipe(
+        // Затем загружаем связанные данные
+        switchMap((loadedModule) => {
+          console.log(`Preloading data for ${route.path}`);
+
+          // Загружаем данные и сохраняем их в сервисе кеширования
+          return this.dataService.preloadData(dataKey);
+        })
+      );
+    }
+
+    // Если нет флага предзагрузки данных, просто загружаем модуль
+    if (route.data && route.data["preload"]) {
+      return load();
+    }
+
+    return of(null); // Не предзагружаем модуль и данные
+  }
+}
+```
+
+**2. Сервис для кеширования предзагруженных данных**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable, of, tap, catchError } from "rxjs";
+
+@Injectable({
+  providedIn: "root",
+})
+export class DataService {
+  private cache = new Map<string, any>();
+
+  constructor(private http: HttpClient) {}
+
+  preloadData(dataKey: string): Observable<any> {
+    // Проверяем, есть ли данные уже в кеше
+    if (this.cache.has(dataKey)) {
+      console.log(`Using cached data for ${dataKey}`);
+      return of(this.cache.get(dataKey));
+    }
+
+    const url = this.getUrlForDataKey(dataKey);
+
+    // Загружаем данные и сохраняем в кеше
+    return this.http.get(url).pipe(
+      tap((data) => {
+        console.log(`Cached data for ${dataKey}`);
+        this.cache.set(dataKey, data);
+      }),
+      catchError((error) => {
+        console.error(`Failed to preload data for ${dataKey}`, error);
+        return of(null);
+      })
+    );
+  }
+
+  // Получение данных из кеша или загрузка, если их нет
+  getData(dataKey: string): Observable<any> {
+    if (this.cache.has(dataKey)) {
+      return of(this.cache.get(dataKey));
+    }
+
+    return this.preloadData(dataKey);
+  }
+
+  private getUrlForDataKey(dataKey: string): string {
+    // Преобразуем ключ данных в URL
+    const apiBase = "/api";
+    switch (dataKey) {
+      case "products":
+        return `${apiBase}/products`;
+      case "users":
+        return `${apiBase}/users`;
+      default:
+        return `${apiBase}/${dataKey}`;
+    }
+  }
+}
+```
+
+**3. Настройка маршрутов с предзагрузкой данных**:
+
+```typescript
+const routes: Routes = [
+  {
+    path: "products",
+    loadChildren: () => import("./products/products.module").then((m) => m.ProductsModule),
+    data: {
+      preload: true, // Предзагрузить модуль
+      preloadData: true, // Предзагрузить данные
+      dataKey: "products", // Ключ для определения данных
+    },
+  },
+  {
+    path: "users",
+    loadChildren: () => import("./users/users.module").then((m) => m.UsersModule),
+    data: {
+      preload: true,
+      preloadData: true,
+      dataKey: "users",
+    },
+  },
+];
+
+@NgModule({
+  imports: [
+    RouterModule.forRoot(routes, {
+      preloadingStrategy: DataPreloadingStrategy,
+    }),
+  ],
+  exports: [RouterModule],
+  providers: [DataPreloadingStrategy],
+})
+export class AppRoutingModule {}
+```
+
+**4. Использование предзагруженных данных в компоненте**:
+
+```typescript
+import { Component, OnInit } from "@angular/core";
+import { DataService } from "../../services/data.service";
+
+@Component({
+  selector: "app-product-list",
+  templateUrl: "./product-list.component.html",
+})
+export class ProductListComponent implements OnInit {
+  products: any[] = [];
+  loading = false;
+
+  constructor(private dataService: DataService) {}
+
+  ngOnInit(): void {
+    this.loading = true;
+
+    // Получаем данные из кеша (если они были предзагружены) или загружаем
+    this.dataService.getData("products").subscribe({
+      next: (data) => {
+        this.products = data;
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error("Error loading products", error);
+        this.loading = false;
+      },
+    });
+  }
+}
+```
+
+**5. Более сложный сценарий: предзагрузка с зависимостями**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { PreloadingStrategy, Route } from "@angular/router";
+import { Observable, of, forkJoin, switchMap } from "rxjs";
+import { DataService } from "./data.service";
+
+@Injectable({ providedIn: "root" })
+export class AdvancedPreloadingStrategy implements PreloadingStrategy {
+  constructor(private dataService: DataService) {}
+
+  preload(route: Route, load: () => Observable<any>): Observable<any> {
+    if (!route.data || !route.data["preload"]) {
+      return of(null);
+    }
+
+    // Загружаем модуль
+    return load().pipe(
+      switchMap((loadedModule) => {
+        // Если есть данные для предзагрузки
+        if (route.data && route.data["preloadData"]) {
+          const dataKeys = Array.isArray(route.data["dataKey"]) ? route.data["dataKey"] : [route.data["dataKey"]];
+
+          // Загружаем все указанные данные параллельно
+          const dataObservables = dataKeys.map((key) => this.dataService.preloadData(key));
+
+          // Ждем загрузки всех данных
+          return forkJoin(dataObservables);
+        }
+
+        return of(loadedModule);
+      })
+    );
+  }
+}
+```
+
+**6. Интеграция с Guards для условной предзагрузки**:
+
+````typescript
+import { Injectable } from "@angular/core";
+import { PreloadingStrategy, Route } from "@angular/router";
+import { Observable, of } from "rxjs";
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class GuardAwarePreloadingStrategy implements PreloadingStrategy {
+  constructor(private injector: Injector) {}
+
+  preload(route: Route, load: () => Observable<any>): Observable<any> {
+    // Если маршрут не предназначен для предзагрузки
+    if (!route.data || !route.data['preload']) {
+      return of(null);
+    }
+
+    // Если у маршрута есть canLoad guard, проверяем его перед предзагрузкой
+    if (route.canLoad) {
+      const guards = route.canLoad.map(guard => {
+        const guardInstance = this.injector.get(guard);
+        return guardInstance.canLoad ?
+          guardInstance.canLoad(route) :
+          guardInstance;
+      });
+
+      // Проверяем все guards
+      return forkJoin(guards).pipe(
+        map(results => results.every(result => result === true)),
+        switchMap(canLoad => canLoad ? load() : of(null))
+      );
+    }
+
+    // Если guards нет, просто загружаем
+    return load();
+  }
+}
+````
+
+### 7. What are the disadvantages of lazy loading?
+
+Несмотря на многочисленные преимущества, ленивая загрузка имеет ряд недостатков и ограничений, которые следует учитывать:
+
+**1. Задержка при первой навигации к маршруту**:
+
+- **Проблема**: При первом переходе к ленивозагружаемому маршруту пользователю приходится ждать загрузки модуля
+- **Последствия**: Ощущение "зависания" приложения, особенно на медленных соединениях
+- **Решение**: Использовать стратегии предзагрузки и индикаторы загрузки для улучшения UX
+
+**2. Увеличение общего размера приложения**:
+
+- **Проблема**: Ленивая загрузка часто приводит к дублированию кода в бандлах
+- **Технические детали**: Каждый ленивозагружаемый модуль содержит свои зависимости, которые могут дублироваться
+- **Пример**: Различные модули могут включать одни и те же общие утилиты
+- **Решение**: Использовать shared модули и следить за размером бандлов
+
+**3. Сложность разработки и отладки**:
+
+- **Проблема**: Усложнение структуры приложения и маршрутизации
+- **Последствия**: Потенциальные ошибки в настройке и циклические зависимости
+- **Примеры сложностей**: Взаимодействие между модулями, сервисы с разными экземплярами
+- **Решение**: Четкая архитектура и инструменты отладки
+
+**4. Проблемы с совместным использованием сервисов**:
+
+- **Проблема**: Сервисы в ленивозагружаемых модулях могут создавать отдельные экземпляры
+- **Пример**: Если сервис A предоставляется в AppModule и в ленивозагружаемом модуле, создаются два экземпляра
+- **Решение**: Использовать провайдеры с `providedIn: 'root'` или создавать singleton сервисы
+
+**5. Усложнение серверного рендеринга (SSR)**:
+
+- **Проблема**: Ленивая загрузка усложняет настройку и оптимизацию SSR
+- **Причины**: Серверу необходимы все маршруты заранее, а ленивая загрузка скрывает их
+- **Решение**: Специальная настройка Universal модуля и стратегий предзагрузки для SSR
+
+**6. Возможные проблемы с SEO**:
+
+- **Проблема**: Поисковые системы могут не видеть контент в ленивозагружаемых модулях
+- **Решение**: Использование SSR или убедиться, что важный контент находится в eagerly-loaded модулях
+
+**7. Потеря преимуществ с кешированием HTTP/2**:
+
+- **Проблема**: Современные серверы с HTTP/2 могут отправлять все ресурсы параллельно
+- **Последствия**: В некоторых случаях разделение на маленькие бандлы менее эффективно
+- **Решение**: Тестировать производительность с и без ленивой загрузки
+
+**8. Дополнительные сетевые запросы**:
+
+- **Проблема**: Каждый ленивозагружаемый модуль требует отдельного HTTP-запроса
+- **Последствия**: Увеличение времени загрузки из-за задержек между запросами
+- **Решение**: Уменьшать количество модулей, группировать функциональность
+
+**9. Трудности с миграцией существующего кода**:
+
+- **Проблема**: Переход от eager-loading к lazy-loading в существующем проекте может быть сложным
+- **Причины**: Циклические зависимости, глобальное состояние, проблемы с импортами
+- **Решение**: Постепенная миграция, тщательное планирование и тестирование
+
+**10. Проблемы с измерением и мониторингом**:
+
+- **Проблема**: Сложнее отслеживать производительность и ошибки
+- **Причины**: Ошибки могут возникать только при определенных навигационных паттернах
+- **Решение**: Расширенный мониторинг и инструменты для отслеживания загрузки модулей
+
+### 8. How do you debug lazy loading issues?
+
+Отладка проблем ленивой загрузки может быть сложной задачей из-за динамической природы загрузки модулей. Вот комплексный подход:
+
+**1. Использование инструментов разработчика в браузере**:
+
+- **Network панель**: Отслеживает загрузку JavaScript-файлов для ленивозагружаемых модулей
+  ```
+  Шаги:
+  1. Откройте DevTools (F12)
+  2. Перейдите на вкладку Network
+  3. Отфильтруйте по JS (*.js)
+  4. Наблюдайте за загрузкой чанков при навигации
+  ```
+- **Performance панель**: Анализирует время, затраченное на загрузку и выполнение кода
+  ```
+  Шаги:
+  1. Откройте вкладку Performance
+  2. Нажмите Record
+  3. Выполните навигацию к ленивозагружаемому маршруту
+  4. Остановите запись и проанализируйте timeline
+  ```
+
+**2. Webpack Bundle Analyzer для анализа бандлов**:
+
+- Визуализирует содержимое каждого бандла и помогает выявить дублирование
+
+  ```bash
+  # Установка
+  npm install --save-dev webpack-bundle-analyzer
+
+  # Использование с Angular CLI
+  ng build --stats-json
+  npx webpack-bundle-analyzer dist/your-project/stats.json
+  ```
+
+**3. Включение трассировки маршрутизации в Angular**:
+
+```typescript
+// app-routing.module.ts
+@NgModule({
+  imports: [
+    RouterModule.forRoot(routes, {
+      enableTracing: true, // <-- только для разработки!
+    }),
+  ],
+  exports: [RouterModule],
+})
+export class AppRoutingModule {}
+```
+
+- В консоли будет отображаться детальная информация о событиях маршрутизации
+
+**4. Логирование процесса загрузки модулей**:
+
+```typescript
+// Кастомная стратегия с логированием
+@Injectable()
+export class LoggingPreloadingStrategy implements PreloadingStrategy {
+  preload(route: Route, load: () => Observable<any>): Observable<any> {
+    if (route.data && route.data["preload"]) {
+      console.log(`Preloading: ${route.path}`);
+      return load().pipe(
+        tap(() => console.log(`Finished preloading: ${route.path}`)),
+        catchError((err) => {
+          console.error(`Error preloading ${route.path}:`, err);
+          return of(null);
+        })
+      );
+    }
+    return of(null);
+  }
+}
+```
+
+**5. Проверка конфигурации маршрутов**:
+
+- Убедитесь, что нет циклических зависимостей между модулями
+- Проверьте правильность путей в loadChildren
+
+**6. Отладка проблем с Angular-компилятором**:
+
+- **JIT компиляция**: Временно переключитесь на JIT для более подробных сообщений об ошибках
+  ```bash
+  ng serve --aot=false
+  ```
+- **Verbose output**: Включите подробный вывод Angular CLI
+  ```bash
+  ng build --verbose
+  ```
+
+**7. Тестирование с разными сетевыми условиями**:
+
+- Используйте Chrome DevTools для симуляции медленного соединения
+  ```
+  Шаги:
+  1. DevTools → Network → Throttling
+  2. Выберите "Slow 3G" для тестирования
+  ```
+- Проверьте поведение приложения при нестабильном соединении
+
+**8. Проверка отсутствия повторных импортов модулей**:
+
+- Убедитесь, что ленивозагружаемые модули не импортируются явно в AppModule
+- Проверьте SharedModule на предмет правильного экспорта общих компонентов
+
+**9. Использование индикаторов загрузки для улучшения UX**:
+
+```typescript
+// router-events.service.ts
+@Injectable({ providedIn: 'root' })
+export class RouterEventsService {
+  loading$ = new BehaviorSubject<boolean>(false);
+
+  constructor(private router: Router) {
+    this.router.events.pipe(
+      filter(event =>
+        event instanceof NavigationStart ||
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ),
+      map(event => event instanceof NavigationStart)
+    ).subscribe(isLoading => this.loading$.next(isLoading));
+  }
+}
+
+// В компоненте:
+<div *ngIf="routerEvents.loading$ | async" class="loading-indicator">
+  Загрузка...
+</div>
+```
+
+**10. Пользовательские инструменты для отладки Angular Router**:
+
+- **ngx-router-explorer**: Визуализирует структуру маршрутов
+- **Angular DevTools**: Расширение Chrome для отладки Angular приложений
+
+**11. Проверка конфигурации Webpack в Angular.json**:
+
+```json
+"optimization": true,
+"buildOptimizer": true,
+"vendorChunk": true,
+```
+
+- `vendorChunk: true` создает отдельный бандл для библиотек
+- Проверьте, что настройки оптимизации не конфликтуют с ленивой загрузкой
+
+**12. Решение распространенных проблем**:
+
+- **Модуль не загружается**:
+
+  - Проверьте консоль на ошибки
+  - Убедитесь, что путь в loadChildren правильный
+  - Проверьте экспорты/импорты в модуле
+
+- **Дублирование кода в бандлах**:
+
+  - Переместите общий код в SharedModule
+  - Используйте libraryTarget: 'umd' для общих библиотек
+
+- **Компоненты невидимы после ленивой загрузки**:
+
+  - Проверьте, что компоненты объявлены в правильном модуле
+  - Убедитесь, что SharedModule правильно экспортирует компоненты
+
+- **Проблемы с провайдерами и сервисами**:
+  - Используйте providedIn: 'root' для сервисов, которые должны быть синглтонами
+  - Проверьте, что сервисы не предоставляются на разных уровнях
+
+Отладка проблем ленивой загрузки часто требует комбинации нескольких подходов. Важно понимать основы работы Angular Router и системы бандлинга Webpack, а также иметь хорошую стратегию логирования и анализа производительности.
+
+## Modules in Angular
+
+### 1. What is a `Module` in Angular, and what role does it play in an application?
+
+**Модуль (NgModule)** в Angular — это ключевой механизм организации кода, который объединяет связанные компоненты, директивы, сервисы и другие элементы в функциональные блоки. Модуль можно рассматривать как контейнер, который инкапсулирует определенную часть приложения.
+
+**Роли модулей в Angular-приложении**:
+
+**1. Организация кода и управление сложностью**:
+
+- **Группировка функциональных блоков** — логически связанные компоненты, директивы и сервисы собираются вместе
+- **Разделение ответственности** — каждый модуль отвечает за определенную часть функциональности
+- **Улучшение поддерживаемости** — модульная структура упрощает понимание и изменение кода
+- **Масштабируемость** — легче добавлять новую функциональность в виде отдельных модулей
+
+**2. Изоляция и повторное использование**:
+
+- **Инкапсуляция** — модули скрывают внутреннюю реализацию и экспортируют только нужные элементы
+- **Переиспользование** — модули можно импортировать в разные части приложения или даже в разные проекты
+- **Изоляция функциональности** — позволяет командам работать над отдельными модулями независимо
+
+**3. Управление зависимостями**:
+
+- **Локальные сервисы** — модули могут предоставлять сервисы для своих компонентов
+- **Импорт других модулей** — модули используют другие модули для получения необходимой функциональности
+- **Injection Scope** — определение области видимости для внедрения зависимостей
+
+**4. Оптимизация производительности**:
+
+- **Ленивая загрузка** — модули могут загружаться по требованию, улучшая начальное время загрузки
+- **Компиляция** — Angular компилятор использует информацию из модулей для оптимизации кода
+- **Tree-shaking** — механизм для исключения неиспользуемого кода при сборке
+
+**5. Основные типы модулей в типичном Angular-приложении**:
+
+- **Root Module (AppModule)** — корневой модуль, который запускает приложение
+
+  ```typescript
+  @NgModule({
+    declarations: [AppComponent],
+    imports: [BrowserModule, AppRoutingModule, SharedModule],
+    providers: [],
+    bootstrap: [AppComponent],
+  })
+  export class AppModule {}
+  ```
+
+- **Feature Modules** — модули, реализующие конкретные функции приложения
+
+  ```typescript
+  @NgModule({
+    declarations: [UserListComponent, UserDetailComponent],
+    imports: [CommonModule, UserRoutingModule, SharedModule],
+    providers: [UserService],
+  })
+  export class UserModule {}
+  ```
+
+- **Shared Modules** — модули с общими компонентами, директивами и пайпами
+
+  ```typescript
+  @NgModule({
+    declarations: [CardComponent, ButtonComponent, HighlightDirective],
+    imports: [CommonModule],
+    exports: [CardComponent, ButtonComponent, HighlightDirective],
+  })
+  export class SharedModule {}
+  ```
+
+- **Core Module** — содержит синглтон-сервисы, которые используются во всем приложении
+
+  ```typescript
+  @NgModule({
+    imports: [CommonModule, HttpClientModule],
+    providers: [AuthService, LoggingService, ApiService],
+  })
+  export class CoreModule {
+    // Предотвращает импортирование CoreModule более одного раза
+    constructor(@Optional() @SkipSelf() parentModule: CoreModule) {
+      if (parentModule) {
+        throw new Error("CoreModule уже загружен. Импортируйте его только в AppModule.");
+      }
+    }
+  }
+  ```
+
+- **Routing Modules** — модули, содержащие настройки маршрутизации
+  ```typescript
+  @NgModule({
+    imports: [RouterModule.forChild(routes)],
+    exports: [RouterModule],
+  })
+  export class ProductRoutingModule {}
+  ```
+
+### 2. Can you explain the structure of a module and its metadata?
+
+**Структура модуля Angular** определяется декоратором `@NgModule`, который принимает объект метаданных, определяющий свойства и поведение модуля.
+
+**Основные свойства метаданных @NgModule**:
+
+**1. declarations** — компоненты, директивы и пайпы, принадлежащие этому модулю:
+
+```typescript
+declarations: [ProductListComponent, ProductDetailComponent, ProductFilterPipe, QuantitySelectorDirective];
+```
+
+- Каждый компонент, директива или пайп должны быть объявлены только в одном модуле
+- Объявленные элементы видны только внутри модуля, если не экспортированы
+- Нельзя объявлять один и тот же элемент в нескольких модулях
+
+**2. imports** — другие модули, функциональность которых необходима этому модулю:
+
+```typescript
+imports: [
+  CommonModule, // Базовые директивы Angular
+  ReactiveFormsModule, // Поддержка реактивных форм
+  RouterModule, // Функциональность маршрутизации
+  SharedModule, // Общие компоненты
+];
+```
+
+- Импорт делает доступными экспортируемые компоненты, директивы и пайпы из других модулей
+- Обычно импортируются общие модули и модули с необходимой функциональностью
+- Импорт модуля не делает автоматически доступными его провайдеры (кроме модулей с providedIn)
+
+**3. exports** — компоненты, директивы и пайпы, которые должны быть доступны в других модулях:
+
+```typescript
+exports: [ProductCardComponent, StarRatingComponent, PricePipe];
+```
+
+- Экспортируемые элементы становятся публичным API модуля
+- Можно экспортировать элементы из declarations
+- Можно также реэкспортировать элементы из импортированных модулей
+
+**4. providers** — сервисы, которые будут доступны через DI этого модуля:
+
+```typescript
+providers: [ProductService, { provide: ProductStrategy, useClass: DefaultProductStrategy }, { provide: API_URL, useValue: "https://api.example.com/products" }];
+```
+
+- Определяет сервисы, доступные для всего модуля и его дочерних компонентов
+- Создает единый экземпляр сервиса на уровне модуля
+- В современных приложениях вместо этого часто используется providedIn синтаксис
+
+**5. bootstrap** — корневой компонент, который Angular должен создать и вставить в index.html:
+
+```typescript
+bootstrap: [AppComponent];
+```
+
+- Используется только в корневом модуле (обычно AppModule)
+- Определяет точку входа приложения
+- Обычно содержит только один компонент
+
+**6. entryComponents** — компоненты, которые создаются динамически:
+
+```typescript
+entryComponents: [ModalComponent, DynamicFormComponent];
+```
+
+- Используется для компонентов, создаваемых программно (не через селекторы в шаблонах)
+- В Angular 9+ с Ivy рендерером это свойство стало необязательным
+
+**7. schemas** — определяет, какие элементы и свойства разрешены в шаблонах:
+
+```typescript
+schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA];
+```
+
+- `CUSTOM_ELEMENTS_SCHEMA` — разрешает использование нестандартных элементов (например, веб-компонентов)
+- `NO_ERRORS_SCHEMA` — отключает проверку неизвестных элементов и свойств (не рекомендуется для продакшна)
+
+**8. id** — уникальный идентификатор для модуля, используемый в некоторых продвинутых сценариях:
+
+```typescript
+id: "ProductModule";
+```
+
+**9. jit** — флаг, указывающий, что модуль должен компилироваться с помощью JIT-компиляции:
+
+```typescript
+jit: true;
+```
+
+**Полный пример структуры модуля**:
+
+```typescript
+import { NgModule } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { ReactiveFormsModule } from "@angular/forms";
+import { RouterModule } from "@angular/router";
+
+import { ProductListComponent } from "./product-list.component";
+import { ProductDetailComponent } from "./product-detail.component";
+import { ProductFormComponent } from "./product-form.component";
+import { ProductFilterPipe } from "./product-filter.pipe";
+import { QuantitySelectorDirective } from "./quantity-selector.directive";
+
+import { ProductService } from "./product.service";
+import { ProductRoutingModule } from "./product-routing.module";
+import { SharedModule } from "../shared/shared.module";
+
+@NgModule({
+  declarations: [ProductListComponent, ProductDetailComponent, ProductFormComponent, ProductFilterPipe, QuantitySelectorDirective],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ProductRoutingModule, SharedModule],
+  exports: [ProductListComponent, ProductFilterPipe],
+  providers: [
+    ProductService,
+    {
+      provide: "PRODUCT_CONFIG",
+      useValue: {
+        apiEndpoint: "/api/products",
+        pageSize: 10,
+      },
+    },
+  ],
+})
+export class ProductModule {}
+```
+
+### 3. How can you separate functionality into different modules and connect them to the main application module?
+
+Разделение приложения на модули — ключевая практика для создания масштабируемых и поддерживаемых Angular-приложений. Вот подробное руководство по разделению функциональности и подключению модулей:
+
+**1. Определение модульной структуры приложения**:
+
+**Типовая структура** современного Angular-приложения обычно включает:
+
+- **AppModule** — корневой модуль приложения
+- **CoreModule** — основные синглтон-сервисы, компоненты для оболочки приложения (header, footer)
+- **SharedModule** — общие компоненты, директивы и пайпы, используемые во многих местах
+- **Feature Modules** — модули с конкретной функциональностью (пользователи, продукты, заказы и т.д.)
+- **Widget Modules** — переиспользуемые UI-компоненты (карточки, таблицы, модальные окна)
+
+**2. Создание и организация модулей**:
+
+**A. Создание CoreModule**:
+
+```typescript
+// core/core.module.ts
+import { NgModule, Optional, SkipSelf } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { HttpClientModule } from "@angular/common/http";
+
+import { NavbarComponent } from "./components/navbar/navbar.component";
+import { FooterComponent } from "./components/footer/footer.component";
+import { AuthService } from "./services/auth.service";
+import { LoggingService } from "./services/logging.service";
+import { ApiService } from "./services/api.service";
+
+@NgModule({
+  declarations: [NavbarComponent, FooterComponent],
+  imports: [CommonModule, HttpClientModule],
+  exports: [NavbarComponent, FooterComponent],
+  providers: [AuthService, LoggingService, ApiService],
+})
+export class CoreModule {
+  // Предотвращает многократный импорт CoreModule
+  constructor(@Optional() @SkipSelf() parentModule: CoreModule) {
+    if (parentModule) {
+      throw new Error("CoreModule уже загружен. Импортируйте его только в AppModule.");
+    }
+  }
+}
+```
+
+**B. Создание SharedModule**:
+
+```typescript
+// shared/shared.module.ts
+import { NgModule } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+
+import { CardComponent } from "./components/card/card.component";
+import { ButtonComponent } from "./components/button/button.component";
+import { TruncatePipe } from "./pipes/truncate.pipe";
+import { HighlightDirective } from "./directives/highlight.directive";
+
+@NgModule({
+  declarations: [CardComponent, ButtonComponent, TruncatePipe, HighlightDirective],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  exports: [
+    // Экспортируем собственные компоненты, директивы и пайпы
+    CardComponent,
+    ButtonComponent,
+    TruncatePipe,
+    HighlightDirective,
+    // Реэкспортируем часто используемые модули
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+  ],
+})
+export class SharedModule {}
+```
+
+**C. Создание Feature Module**:
+
+```typescript
+// products/products.module.ts
+import { NgModule } from "@angular/core";
+
+import { ProductsRoutingModule } from "./products-routing.module";
+import { SharedModule } from "../shared/shared.module";
+
+import { ProductListComponent } from "./components/product-list/product-list.component";
+import { ProductDetailComponent } from "./components/product-detail/product-detail.component";
+import { ProductFormComponent } from "./components/product-form/product-form.component";
+import { ProductFilterPipe } from "./pipes/product-filter.pipe";
+
+import { ProductService } from "./services/product.service";
+
+@NgModule({
+  declarations: [ProductListComponent, ProductDetailComponent, ProductFormComponent, ProductFilterPipe],
+  imports: [SharedModule, ProductsRoutingModule],
+  providers: [ProductService],
+})
+export class ProductsModule {}
+```
+
+**D. Настройка маршрутизации для Feature Module**:
+
+```typescript
+// products/products-routing.module.ts
+import { NgModule } from "@angular/core";
+import { RouterModule, Routes } from "@angular/router";
+
+import { ProductListComponent } from "./components/product-list/product-list.component";
+import { ProductDetailComponent } from "./components/product-detail/product-detail.component";
+import { ProductFormComponent } from "./components/product-form/product-form.component";
+import { ProductGuard } from "./guards/product.guard";
+
+const routes: Routes = [
+  { path: "", component: ProductListComponent },
+  { path: "new", component: ProductFormComponent },
+  {
+    path: ":id",
+    component: ProductDetailComponent,
+    canActivate: [ProductGuard],
+  },
+  {
+    path: ":id/edit",
+    component: ProductFormComponent,
+    canActivate: [ProductGuard],
+  },
+];
+
+@NgModule({
+  imports: [RouterModule.forChild(routes)],
+  exports: [RouterModule],
+})
+export class ProductsRoutingModule {}
+```
+
+**3. Подключение модулей в корневом AppModule**:
+
+```typescript
+// app/app.module.ts
+import { NgModule } from "@angular/core";
+import { BrowserModule } from "@angular/platform-browser";
+import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
+
+import { AppRoutingModule } from "./app-routing.module";
+import { AppComponent } from "./app.component";
+import { CoreModule } from "./core/core.module";
+import { SharedModule } from "./shared/shared.module";
+import { HomeModule } from "./home/home.module";
+
+@NgModule({
+  declarations: [AppComponent],
+  imports: [
+    // Angular базовые модули
+    BrowserModule,
+    BrowserAnimationsModule,
+
+    // Собственные модули приложения
+    CoreModule, // Импортируем только один раз
+    SharedModule, // Общие компоненты для всего приложения
+    HomeModule, // Eagerly loaded модуль для главной страницы
+
+    // Маршрутизация (важно, чтобы была последней)
+    AppRoutingModule,
+  ],
+  bootstrap: [AppComponent],
+})
+export class AppModule {}
+```
+
+**4. Настройка маршрутизации для ленивой загрузки модулей**:
+
+```typescript
+// app/app-routing.module.ts
+import { NgModule } from "@angular/core";
+import { RouterModule, Routes, PreloadAllModules } from "@angular/router";
+
+import { HomeComponent } from "./home/home.component";
+import { PageNotFoundComponent } from "./core/components/page-not-found/page-not-found.component";
+import { AuthGuard } from "./core/guards/auth.guard";
+
+const routes: Routes = [
+  { path: "", component: HomeComponent },
+  {
+    path: "products",
+    loadChildren: () => import("./products/products.module").then((m) => m.ProductsModule),
+  },
+  {
+    path: "orders",
+    loadChildren: () => import("./orders/orders.module").then((m) => m.OrdersModule),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: "admin",
+    loadChildren: () => import("./admin/admin.module").then((m) => m.AdminModule),
+    canActivate: [AuthGuard],
+    data: { roles: ["ADMIN"] },
+  },
+  { path: "**", component: PageNotFoundComponent },
+];
+
+@NgModule({
+  imports: [
+    RouterModule.forRoot(routes, {
+      preloadingStrategy: PreloadAllModules,
+      scrollPositionRestoration: "enabled",
+    }),
+  ],
+  exports: [RouterModule],
+})
+export class AppRoutingModule {}
+```
+
+**5. Практические рекомендации по разделению на модули**:
+
+**A. Когда создавать отдельный модуль:**
+
+- **Логически связанные компоненты** — группируйте компоненты, относящиеся к одной бизнес-функции
+- **Переиспользуемая функциональность** — выделяйте в модули код, который можно использовать в разных частях приложения
+- **Большие наборы компонентов** — разделяйте большие группы компонентов на модули для лучшей организации
+- **Ленивая загрузка** — создавайте отдельные модули для функциональности, которая загружается по требованию
+
+**B. Принципы организации модулей:**
+
+- **Однонаправленные зависимости** — избегайте циклических зависимостей между модулями
+- **Видимость** — экспортируйте только компоненты, которые должны использоваться извне
+- **Сервисы** — размещайте сервисы в соответствующих модулях или используйте providedIn: 'root'
+- **Реэкспорт** — в SharedModule часто реэкспортируют CommonModule, FormsModule и т.д.
+
+**C. Типовая файловая структура для модульного Angular-приложения:**
+
+```
+src/
+├── app/
+│   ├── app.component.ts
+│   ├── app.module.ts
+│   ├── app-routing.module.ts
+│   ├── core/
+│   │   ├── core.module.ts
+│   │   ├── guards/
+│   │   ├── interceptors/
+│   │   ├── services/
+│   │   └── components/
+│   ├── shared/
+│   │   ├── shared.module.ts
+│   │   ├── components/
+│   │   ├── directives/
+│   │   └── pipes/
+│   ├── features/
+│   │   ├── products/
+│   │   │   ├── products.module.ts
+│   │   │   ├── products-routing.module.ts
+│   │   │   ├── components/
+│   │   │   ├── services/
+│   │   │   └── models/
+│   │   ├── orders/
+│   │   │   ├── orders.module.ts
+│   │   │   ├── orders-routing.module.ts
+│   │   │   └── ...
+│   │   └── admin/
+│   │       ├── admin.module.ts
+│   │       └── ...
+│   └── home/
+│       ├── home.module.ts
+│       └── home.component.ts
+├── assets/
+└── environments/
+```
+
+**6. Продвинутые техники организации модулей**:
+
+**A. Conditionally Loaded Modules (модули, загружаемые при определенных условиях):**
+
+```typescript
+// Загрузка модуля в зависимости от роли пользователя
+const routes: Routes = [
+  {
+    path: "admin",
+    loadChildren: () => {
+      const user = this.authService.currentUser;
+      if (user && user.hasRole("ADMIN")) {
+        return import("./admin/admin.module").then((m) => m.AdminModule);
+      } else {
+        return import("./access-denied/access-denied.module").then((m) => m.AccessDeniedModule);
+      }
+    },
+  },
+];
+```
+
+**B. Feature Toggles с помощью модулей:**
+
+```typescript
+// app.module.ts
+let featureModules = [];
+if (environment.features.newUI) {
+  featureModules.push(NewUIModule);
+} else {
+  featureModules.push(LegacyUIModule);
+}
+
+@NgModule({
+  imports: [BrowserModule, ...featureModules, AppRoutingModule],
+  // ...
+})
+export class AppModule {}
+```
+
+**C. Dynamic Module Loading (динамическая загрузка модулей):**
+
+```typescript
+// Загрузка модуля программно вне маршрутизации
+import { Compiler, Injector, NgModuleFactory } from "@angular/core";
+
+@Injectable({ providedIn: "root" })
+export class DynamicModuleLoader {
+  constructor(private compiler: Compiler, private injector: Injector) {}
+
+  async loadModule(modulePath: string): Promise<any> {
+    const moduleOrFactory = await import(modulePath);
+    const moduleFactory = moduleOrFactory instanceof NgModuleFactory ? moduleOrFactory : await this.compiler.compileModuleAsync(moduleOrFactory);
+
+    return moduleFactory.create(this.injector).instance;
+  }
+}
+```
+
+**D. Multi-Module Applications (проекты с несколькими приложениями):**
+
+```typescript
+// projects/admin-app/src/app/app.module.ts
+@NgModule({
+  imports: [
+    BrowserModule,
+    CoreModule,
+    SharedLibraryModule, // Общая библиотека компонентов
+    AdminModule,
+  ],
+  // ...
+})
+export class AdminAppModule {}
+
+// projects/customer-app/src/app/app.module.ts
+@NgModule({
+  imports: [
+    BrowserModule,
+    CoreModule,
+    SharedLibraryModule, // Та же общая библиотека
+    CustomerModule,
+  ],
+  // ...
+})
+export class CustomerAppModule {}
+```
+
+Разделение приложения на модули требует тщательного планирования, но приносит значительные преимущества в плане организации кода, производительности и масштабируемости. Правильная модульная структура упрощает совместную работу команд и позволяет эффективно управлять сложностью больших приложений.
+
+## HTTP in Angular
+
+### 1. What is `HttpClientModule`, and why is it important in Angular applications?
+
+**HttpClientModule** — это встроенный модуль Angular, который предоставляет клиент для выполнения HTTP-запросов к серверам. Этот модуль является частью `@angular/common/http` пакета и служит основным механизмом для взаимодействия с внешними API и сервисами.
+
+**Ключевые компоненты HttpClientModule**:
+
+- **HttpClient** — основной сервис для выполнения HTTP-запросов (GET, POST, PUT, DELETE и др.)
+- **HttpHeaders** — класс для работы с HTTP-заголовками
+- **HttpParams** — класс для управления URL-параметрами
+- **HttpInterceptor** — интерфейс для перехвата и модификации HTTP-запросов и ответов
+- **HttpResponse** и **HttpErrorResponse** — классы для работы с ответами сервера
+
+**Важность HttpClientModule в Angular-приложениях**:
+
+**1. Основа коммуникации клиент-сервер**:
+
+- Обеспечивает стандартизированный способ взаимодействия с бэкенд-сервисами
+- Позволяет приложению получать, создавать, обновлять и удалять данные на сервере
+- Является ключевым компонентом для создания динамических приложений
+
+**2. Интеграция с RxJS**:
+
+- HttpClient возвращает Observable вместо Promise, что обеспечивает мощные возможности по работе с потоками данных
+- Поддерживает отмену запросов, конкатенацию, объединение и другие операции с потоками
+- Позволяет создавать реактивные приложения с асинхронной обработкой данных
+
+**3. Типизация и безопасность**:
+
+- Поддерживает строгую типизацию с помощью дженериков для запросов и ответов
+- Упрощает проверку типов на этапе компиляции
+- Позволяет создавать четко определенные интерфейсы для данных API
+
+```typescript
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+this.http.get<User[]>("/api/users").subscribe((users) => (this.users = users));
+```
+
+**4. Продвинутая обработка ошибок**:
+
+- Предоставляет механизмы для перехвата и обработки HTTP-ошибок
+- Поддерживает единый подход к обработке ошибок во всем приложении
+- Позволяет реализовать стратегии повторных попыток, резервного копирования и т.д.
+
+**5. Настраиваемое поведение через интерсепторы**:
+
+- Позволяет модифицировать запросы и ответы с помощью интерсепторов
+- Упрощает добавление общих заголовков, обработку ошибок и аутентификацию
+- Обеспечивает точки расширения для мониторинга, кеширования и других аспектов
+
+**6. Тестируемость**:
+
+- HttpClientTestingModule предоставляет инструменты для тестирования HTTP-запросов
+- Позволяет имитировать ответы сервера без реальных сетевых запросов
+- Упрощает написание модульных и интеграционных тестов
+
+**7. Безопасность**:
+
+- Автоматически защищает от XSS-атак при обработке ответов
+- Поддерживает XSRF-защиту для предотвращения атак подделки межсайтовых запросов
+- Позволяет реализовать проверки безопасности на уровне приложения
+
+**Пример использования HttpClientModule**:
+
+Регистрация в приложении:
+
+```typescript
+// В AppModule или CoreModule
+import { HttpClientModule } from "@angular/common/http";
+
+@NgModule({
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+    // другие модули
+  ],
+  declarations: [AppComponent],
+  bootstrap: [AppComponent],
+})
+export class AppModule {}
+```
+
+### 2. How can you make HTTP requests using Angular's `HttpClient`?
+
+**HttpClient** предоставляет широкий набор методов для выполнения различных типов HTTP-запросов. Вот подробное руководство по основным возможностям:
+
+**1. Базовые HTTP-методы**:
+
+**GET** — получение данных:
+
+```typescript
+import { HttpClient } from "@angular/common/http";
+import { Injectable } from "@angular/core";
+import { Observable } from "rxjs";
+
+@Injectable({
+  providedIn: "root",
+})
+export class UserService {
+  private apiUrl = "https://api.example.com/users";
+
+  constructor(private http: HttpClient) {}
+
+  getUsers(): Observable<User[]> {
+    return this.http.get<User[]>(this.apiUrl);
+  }
+
+  getUserById(id: number): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/${id}`);
+  }
+}
+```
+
+**POST** — создание новых данных:
+
+```typescript
+createUser(user: User): Observable<User> {
+  return this.http.post<User>(this.apiUrl, user);
+}
+```
+
+**PUT** — полное обновление существующих данных:
+
+```typescript
+updateUser(id: number, user: User): Observable<User> {
+  return this.http.put<User>(`${this.apiUrl}/${id}`, user);
+}
+```
+
+**PATCH** — частичное обновление данных:
+
+```typescript
+partialUpdateUser(id: number, changes: Partial<User>): Observable<User> {
+  return this.http.patch<User>(`${this.apiUrl}/${id}`, changes);
+}
+```
+
+**DELETE** — удаление данных:
+
+```typescript
+deleteUser(id: number): Observable<any> {
+  return this.http.delete(`${this.apiUrl}/${id}`);
+}
+```
+
+**2. Настройка запросов с помощью параметров**:
+
+**Добавление параметров запроса (query parameters)**:
+
+```typescript
+import { HttpParams } from '@angular/common/http';
+
+searchUsers(term: string, page: number = 1, limit: number = 10): Observable<User[]> {
+  // Создание объекта HttpParams
+  let params = new HttpParams()
+    .set('q', term)
+    .set('page', page.toString())
+    .set('limit', limit.toString());
+
+  // Альтернативный синтаксис
+  // let params = new HttpParams({ fromObject: { q: term, page: page.toString(), limit: limit.toString() } });
+
+  return this.http.get<User[]>(`${this.apiUrl}/search`, { params });
+}
+```
+
+**Настройка HTTP-заголовков**:
+
+```typescript
+import { HttpHeaders } from '@angular/common/http';
+
+getUsersWithHeaders(): Observable<User[]> {
+  const headers = new HttpHeaders()
+    .set('Content-Type', 'application/json')
+    .set('Authorization', `Bearer ${this.authService.getToken()}`)
+    .set('X-API-Version', '1.0');
+
+  return this.http.get<User[]>(this.apiUrl, { headers });
+}
+```
+
+**3. Дополнительные опции запросов**:
+
+**Отслеживание прогресса загрузки**:
+
+```typescript
+uploadUserAvatar(userId: number, file: File): Observable<any> {
+  const formData = new FormData();
+  formData.append('avatar', file, file.name);
+
+  return this.http.post(`${this.apiUrl}/${userId}/avatar`, formData, {
+    reportProgress: true,
+    observe: 'events'
+  }).pipe(
+    tap(event => {
+      if (event.type === HttpEventType.UploadProgress) {
+        const percentDone = event.total ? Math.round(100 * event.loaded / event.total) : 0;
+        console.log(`Upload progress: ${percentDone}%`);
+      } else if (event.type === HttpEventType.Response) {
+        console.log('Upload complete');
+      }
+    })
+  );
+}
+```
+
+**Получение полного ответа с метаданными**:
+
+```typescript
+getUsersWithFullResponse(): Observable<HttpResponse<User[]>> {
+  return this.http.get<User[]>(this.apiUrl, {
+    observe: 'response'
+  });
+}
+
+// Использование
+this.userService.getUsersWithFullResponse().subscribe(response => {
+  console.log('Status code:', response.status);
+  console.log('Headers:', response.headers);
+  console.log('Body:', response.body);
+});
+```
+
+**Настройка ожидаемого типа ответа**:
+
+```typescript
+downloadUserReport(userId: number): Observable<Blob> {
+  return this.http.get(`${this.apiUrl}/${userId}/report`, {
+    responseType: 'blob'
+  });
+}
+
+getTextConfig(): Observable<string> {
+  return this.http.get('/assets/config.txt', {
+    responseType: 'text'
+  });
+}
+```
+
+**4. Отмена запросов**:
+
+```typescript
+import { Subject, takeUntil } from "rxjs";
+
+export class UserComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+
+  constructor(private userService: UserService) {}
+
+  ngOnInit() {
+    this.loadUsers();
+  }
+
+  loadUsers() {
+    this.userService
+      .getUsers()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((users) => (this.users = users));
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}
+```
+
+**5. Объединение и комбинирование запросов**:
+
+**Параллельные запросы**:
+
+```typescript
+import { forkJoin } from 'rxjs';
+
+getUserData(userId: number): Observable<[User, Post[], Comment[]]> {
+  return forkJoin([
+    this.http.get<User>(`/api/users/${userId}`),
+    this.http.get<Post[]>(`/api/users/${userId}/posts`),
+    this.http.get<Comment[]>(`/api/users/${userId}/comments`)
+  ]);
+}
+
+// Использование
+this.userService.getUserData(123).subscribe(([user, posts, comments]) => {
+  this.user = user;
+  this.posts = posts;
+  this.comments = comments;
+});
+```
+
+**Последовательные запросы**:
+
+```typescript
+import { switchMap } from 'rxjs/operators';
+
+getLatestPostComments(userId: number): Observable<Comment[]> {
+  return this.http.get<Post[]>(`/api/users/${userId}/posts?limit=1`)
+    .pipe(
+      switchMap(posts => {
+        if (posts.length === 0) {
+          return of([]);
+        }
+        return this.http.get<Comment[]>(`/api/posts/${posts[0].id}/comments`);
+      })
+    );
+}
+```
+
+**6. Обработка ответов и преобразование данных**:
+
+```typescript
+import { map, catchError } from 'rxjs/operators';
+
+getFormattedUsers(): Observable<FormattedUser[]> {
+  return this.http.get<User[]>(this.apiUrl)
+    .pipe(
+      map(users => users.map(user => ({
+        fullName: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        isAdmin: user.role === 'ADMIN',
+        lastActive: new Date(user.lastLogin)
+      }))),
+      catchError(error => {
+        console.error('Error fetching users', error);
+        return of([]);
+      })
+    );
+}
+```
+
+**7. Создание многоразовых конфигураций**:
+
+```typescript
+private createAuthHeaders(): HttpHeaders {
+  return new HttpHeaders()
+    .set('Authorization', `Bearer ${this.authService.getToken()}`);
+}
+
+private getRequestOptions(params?: any): object {
+  return {
+    headers: this.createAuthHeaders(),
+    params: params ? new HttpParams({ fromObject: params }) : undefined
+  };
+}
+
+getProtectedResource(path: string, params?: any): Observable<any> {
+  return this.http.get(`${this.apiBaseUrl}${path}`, this.getRequestOptions(params));
+}
+
+postProtectedResource(path: string, body: any, params?: any): Observable<any> {
+  return this.http.post(`${this.apiBaseUrl}${path}`, body, this.getRequestOptions(params));
+}
+```
+
+HttpClient в Angular предоставляет мощный и гибкий API для выполнения HTTP-запросов. Интеграция с RxJS позволяет эффективно управлять асинхронными операциями, комбинировать запросы и обрабатывать ответы. Типизация обеспечивает надежность кода, а различные опции позволяют настраивать поведение под конкретные сценарии.
+
+### 3. Can you explain the difference between Observables and Promises in handling HTTP responses?
+
+В Angular для обработки HTTP-ответов можно использовать как Promises, так и Observables, но между ними существуют фундаментальные различия, которые важно понимать для эффективной разработки.
+
+**Ключевые различия между Observables и Promises**:
+
+**1. Парадигма и концептуальная модель**:
+
+**Promise**:
+
+- **Одиночное значение** — предоставляет одно разрешенное или отклоненное значение
+- **Базируется на концепции "eventual completion"** — обещание выполнить операцию в будущем
+- **Императивный подход** — фокусируется на результате асинхронной операции
+- **Часть спецификации ECMAScript** — нативно поддерживается в JavaScript
+
+```javascript
+// Пример Promise
+fetch("/api/users")
+  .then((response) => response.json())
+  .then((users) => console.log(users))
+  .catch((error) => console.error(error));
+```
+
+**Observable**:
+
+- **Поток значений** — может эмитить множество значений с течением времени
+- **Базируется на паттерне "observer"** — реактивное представление последовательности событий
+- **Декларативный подход** — фокусируется на обработке потока данных
+- **Реализуется библиотекой RxJS** — предоставляет мощный API для работы с асинхронными потоками
+
+```typescript
+// Пример Observable
+this.http
+  .get("/api/users")
+  .pipe(
+    tap((users) => console.log("Original users:", users)),
+    map((users) => users.filter((user) => user.active)),
+    catchError((error) => {
+      console.error(error);
+      return of([]);
+    })
+  )
+  .subscribe((activeUsers) => console.log("Active users:", activeUsers));
+```
+
+**2. Функциональные возможности**:
+
+**Promise**:
+
+- **Ограниченный функционал** — только `.then()`, `.catch()` и `.finally()`
+- **Нет отмены** — once created, a Promise cannot be cancelled
+- **Eager execution** — выполняется сразу после создания
+- **Не поддерживает операторы трансформации** — ограниченные возможности для манипуляции данными
+
+**Observable**:
+
+- **Богатый набор операторов** — более 100 операторов для трансформации, фильтрации, комбинирования и т.д.
+- **Поддержка отмены** — можно отменить подписку в любой момент
+- **Lazy execution** — не выполняется до вызова `.subscribe()`
+- **Возможность комбинирования** — мощные инструменты для объединения потоков данных
+
+**3. Подписка и отмена**:
+
+**Promise**:
+
+- **Автоматическое выполнение** — начинает выполняться сразу после создания
+- **Нет механизма отмены** — нельзя остановить или отменить Promise
+- **Одноразовое потребление** — каждый тогда/перехват выполняется один раз
+
+**Observable**:
+
+- **Требует подписки** — не выполняется до вызова `.subscribe()`
+- **Управляемый жизненный цикл** — можно отписаться в любой момент
+- **Многократное потребление** — можно иметь несколько подписчиков на один Observable
+
+```typescript
+// Отмена подписки на Observable
+const subscription = this.http.get("/api/users").subscribe((users) => (this.users = users));
+
+// Позже, когда подписка больше не нужна
+subscription.unsubscribe();
+```
+
+**4. Обработка ошибок**:
+
+**Promise**:
+
+- **Централизованная обработка ошибок** — через `.catch()`
+- **Распространение ошибок по цепочке** — ошибка прерывает всю цепочку до ближайшего `.catch()`
+- **Невозможность восстановления потока** — после ошибки Promise остается отклоненным
+
+**Observable**:
+
+- **Гибкая обработка ошибок** — через операторы `catchError`, `retry`, `retryWhen`
+- **Возможность продолжения потока** — после ошибки поток может продолжиться
+- **Стратегии восстановления** — возможность повторных попыток или переключения на резервные данные
+
+```typescript
+this.http
+  .get("/api/users")
+  .pipe(
+    // Повтор запроса при ошибке
+    retry(3),
+
+    // Или обработка ошибки и продолжение с запасными данными
+    catchError((error) => {
+      console.error("Error fetching users", error);
+      return of([{ id: 0, name: "Default User" }]);
+    })
+  )
+  .subscribe((users) => (this.users = users));
+```
+
+**5. Трансформация и комбинирование**:
+
+**Promise**:
+
+- **Ограниченные возможности трансформации** — только через `.then()`
+- **Базовое комбинирование** — `Promise.all()`, `Promise.race()`, `Promise.allSettled()`
+
+```javascript
+// Комбинирование Promises
+Promise.all([fetch("/api/users").then((r) => r.json()), fetch("/api/posts").then((r) => r.json())]).then(([users, posts]) => {
+  console.log({ users, posts });
+});
+```
+
+**Observable**:
+
+- **Мощные операторы трансформации** — `map`, `filter`, `reduce`, `scan`, `groupBy`, и т.д.
+- **Широкие возможности комбинирования** — `forkJoin`, `combineLatest`, `merge`, `concat`, `zip`, и т.д.
+- **Временные операторы** — `debounceTime`, `throttleTime`, `delay`, `timeout`
+- **Специализированные операторы** — для конкретных сценариев использования
+
+```typescript
+// Комбинирование Observables
+forkJoin([this.http.get("/api/users"), this.http.get("/api/posts")])
+  .pipe(
+    map(([users, posts]) => {
+      // Объединение данных
+      return users.map((user) => ({
+        ...user,
+        posts: posts.filter((post) => post.userId === user.id),
+      }));
+    })
+  )
+  .subscribe((usersWithPosts) => (this.usersWithPosts = usersWithPosts));
+```
+
+**6. Обработка HTTP-запросов в Angular**:
+
+**HttpClient с Promise**:
+
+```typescript
+// Преобразование Observable в Promise
+getUsersAsPromise(): Promise<User[]> {
+  return this.http.get<User[]>('/api/users').toPromise();
+}
+
+// Использование
+async loadUsers() {
+  try {
+    this.users = await this.userService.getUsersAsPromise();
+  } catch (error) {
+    console.error('Error loading users', error);
+  }
+}
+```
+
+**HttpClient с Observable (стандартный подход)**:
+
+```typescript
+// Нативное использование Observable
+getUsers(): Observable<User[]> {
+  return this.http.get<User[]>('/api/users');
+}
+
+// Использование
+loadUsers() {
+  this.userService.getUsers().pipe(
+    takeUntil(this.destroy$) // Автоматическая отмена при уничтожении компонента
+  ).subscribe({
+    next: users => this.users = users,
+    error: error => this.handleError(error),
+    complete: () => console.log('Users loaded')
+  });
+}
+```
+
+**7. Практические различия при использовании в Angular**:
+
+**Observable преимущества в Angular**:
+
+- **Встроенная отмена запросов** — предотвращает утечки памяти и нежелательные обновления состояния
+- **Интеграция с AsyncPipe** — декларативное связывание с шаблонами без ручного управления подписками
+- **Легкость композиции** — упрощает объединение нескольких источников данных
+- **Оптимизация производительности** — операторы `distinctUntilChanged`, `debounceTime` для уменьшения запросов
+
+```html
+<!-- AsyncPipe с Observable -->
+<div *ngIf="users$ | async as users">
+  <div *ngFor="let user of users">{{ user.name }}</div>
+</div>
+```
+
+**Promise ограничения в Angular**:
+
+- **Сложная отмена** — нет простого способа отменить HTTP-запрос при уничтожении компонента
+- **Ручное управление подписками** — требуется явное управление жизненным циклом запросов
+- **Более сложная композиция** — усложняется при работе с несколькими источниками данных
+- **Ограниченные возможности оптимизации** — меньше инструментов для предотвращения излишних запросов
+
+**8. Рекомендации по выбору между Observable и Promise**:
+
+**Использовать Observable, когда**:
+
+- Работаете с потенциально многократными событиями
+- Требуется возможность отмены операции
+- Нужна богатая функциональность трансформации и комбинирования
+- Работаете с Angular компонентами и их жизненным циклом
+- Используете реактивные формы и другие реактивные API Angular
+
+**Использовать Promise, когда**:
+
+- Нужно однократное разрешение значения
+- Работаете с существующим кодом на Promise
+- Используете async/await для более линейного потока кода
+- Интегрируете с API, основанными на Promise
+- Нет необходимости в отмене операции
+
+В контексте Angular HttpClient, Observable предоставляет больше преимуществ и лучше интегрируется с экосистемой фреймворка, что делает его предпочтительным выбором для большинства HTTP-операций.
+
+### 4. How can you handle errors during HTTP requests in Angular?
+
+Эффективная обработка ошибок при HTTP-запросах является критически важной частью разработки надежных Angular-приложений. Angular и RxJS предоставляют мощные инструменты для обработки различных типов ошибок на разных уровнях приложения.
+
+**Уровни обработки ошибок в Angular**:
+
+**1. Локальная обработка в компоненте или сервисе**:
+
+```typescript
+import { Component, OnInit } from "@angular/core";
+import { catchError } from "rxjs/operators";
+import { of } from "rxjs";
+import { UserService } from "./user.service";
+
+@Component({
+  selector: "app-user-list",
+  template: `
+    <div *ngIf="error" class="error-message">
+      {{ error }}
+    </div>
+    <div *ngIf="users.length">
+      <ul>
+        <li *ngFor="let user of users">{{ user.name }}</li>
+      </ul>
+    </div>
+    <div *ngIf="!users.length && !loading && !error">No users found</div>
+    <div *ngIf="loading">Loading...</div>
+  `,
+})
+export class UserListComponent implements OnInit {
+  users: User[] = [];
+  loading = false;
+  error: string | null = null;
+
+  constructor(private userService: UserService) {}
+
+  ngOnInit() {
+    this.loadUsers();
+  }
+
+  loadUsers() {
+    this.loading = true;
+    this.error = null;
+
+    this.userService
+      .getUsers()
+      .pipe(
+        catchError((error) => {
+          // Обработка ошибки локально в компоненте
+          console.error("Error fetching users", error);
+
+          if (error.status === 404) {
+            this.error = "Users not found";
+          } else if (error.status === 403) {
+            this.error = "You do not have permission to view users";
+          } else {
+            this.error = "Failed to load users. Please try again later.";
+          }
+
+          // Возвращаем пустой массив, чтобы компонент мог продолжить работу
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (users) => {
+          this.users = users;
+          this.loading = false;
+        },
+        complete: () => {
+          this.loading = false;
+        },
+      });
+  }
+}
+```
+
+**2. Централизованная обработка в сервисе**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpClient, HttpErrorResponse } from "@angular/common/http";
+import { Observable, throwError } from "rxjs";
+import { catchError, retry } from "rxjs/operators";
+
+@Injectable({
+  providedIn: "root",
+})
+export class UserService {
+  private apiUrl = "https://api.example.com/users";
+
+  constructor(private http: HttpClient) {}
+
+  getUsers(): Observable<User[]> {
+    return this.http.get<User[]>(this.apiUrl).pipe(
+      retry(2), // Повторить запрос до 2 раз при ошибке
+      catchError(this.handleError("getUsers", []))
+    );
+  }
+
+  getUserById(id: number): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/${id}`).pipe(catchError(this.handleError<User>(`getUser id=${id}`)));
+  }
+
+  createUser(user: User): Observable<User> {
+    return this.http.post<User>(this.apiUrl, user).pipe(catchError(this.handleError<User>("createUser")));
+  }
+
+  // Обобщенный метод обработки ошибок
+  private handleError<T>(operation = "operation", result?: T) {
+    return (error: HttpErrorResponse): Observable<T> => {
+      // Логирование ошибки в консоль
+      console.error(`${operation} failed:`, error);
+
+      // Определение пользовательского сообщения об ошибке
+      let errorMessage = "Unknown error occurred";
+
+      if (error.error instanceof ErrorEvent) {
+        // Клиентская ошибка
+        errorMessage = `Error: ${error.error.message}`;
+      } else {
+        // Серверная ошибка
+        errorMessage = `Server returned code ${error.status}, error message: ${error.error?.message || error.statusText}`;
+      }
+
+      // Можно отправить ошибку в системы мониторинга
+      this.logErrorService.logError(errorMessage, error);
+
+      // Возвращаем наблюдаемую с резервным значением или пробрасываем ошибку
+      return result !== undefined ? of(result) : throwError(() => new Error(errorMessage));
+    };
+  }
+}
+```
+
+**3. Глобальная обработка с помощью HTTP-интерсептора**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpEvent, HttpInterceptor, HttpHandler, HttpRequest, HttpErrorResponse } from "@angular/common/http";
+import { Observable, throwError } from "rxjs";
+import { catchError, retry } from "rxjs/operators";
+import { NotificationService } from "./notification.service";
+import { AuthService } from "./auth.service";
+
+@Injectable()
+export class ErrorInterceptor implements HttpInterceptor {
+  constructor(private notificationService: NotificationService, private authService: AuthService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Продолжаем с запросом
+    return next.handle(request).pipe(
+      // Опционально можно добавить retry для некритичных операций
+      // retry(1),
+
+      catchError((error: HttpErrorResponse) => {
+        let errorMessage = "";
+
+        if (error.error instanceof ErrorEvent) {
+          // Клиентская ошибка
+          errorMessage = `Client Error: ${error.error.message}`;
+          this.notificationService.showError("Network error occurred. Please check your connection.");
+        } else {
+          // Серверная ошибка
+          switch (error.status) {
+            case 0:
+              errorMessage = "Network error. Please check your connection.";
+              this.notificationService.showError(errorMessage);
+              break;
+
+            case 400:
+              errorMessage = "Bad request. Please check your input.";
+              this.notificationService.showError(errorMessage);
+              break;
+
+            case 401:
+              errorMessage = "Unauthorized. Please log in again.";
+              this.notificationService.showError(errorMessage);
+              // Перенаправляем на страницу входа
+              this.authService.logout();
+              break;
+
+            case 403:
+              errorMessage = "Forbidden. You do not have permission to access this resource.";
+              this.notificationService.showError(errorMessage);
+              break;
+
+            case 404:
+              errorMessage = "Resource not found.";
+              this.notificationService.showError(errorMessage);
+              break;
+
+            case 500:
+              errorMessage = "Internal server error. Please try again later.";
+              this.notificationService.showError(errorMessage);
+              break;
+
+            default:
+              errorMessage = `Server Error: ${error.status} - ${error.message}`;
+              this.notificationService.showError("An unexpected error occurred. Please try again later.");
+          }
+        }
+
+        // Логируем ошибку
+        console.error(`HTTP Error: ${request.url}`, errorMessage, error);
+
+        // Отправляем ошибку в систему мониторинга
+        this.loggingService.logError(errorMessage, {
+          url: request.url,
+          method: request.method,
+          status: error.status,
+          error: error.error,
+        });
+
+        // Пробрасываем ошибку дальше
+        return throwError(() => error);
+      })
+    );
+  }
+}
+```
+
+**Регистрация интерсептора в модуле**:
+
+```typescript
+import { NgModule } from "@angular/core";
+import { HTTP_INTERCEPTORS, HttpClientModule } from "@angular/common/http";
+import { ErrorInterceptor } from "./error.interceptor";
+
+@NgModule({
+  imports: [HttpClientModule],
+  providers: [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ErrorInterceptor,
+      multi: true,
+    },
+  ],
+})
+export class CoreModule {}
+```
+
+**4. Продвинутые техники обработки ошибок**:
+
+**Стратегия повторных попыток с экспоненциальной задержкой**:
+
+```typescript
+import { timer, Observable, throwError } from 'rxjs';
+import { mergeMap, retryWhen, delayWhen } from 'rxjs/operators';
+
+// Функция для создания стратегии повторных попыток
+export function retryWithBackoff<T>(
+  maxRetries = 3,
+  initialDelay = 1000,
+  maxDelay = 30000,
+  scalingFactor = 2,
+  shouldRetry = (error: any) => true
+) {
+  return (source: Observable<T>) =>
+    source.pipe(
+      retryWhen(errors => errors.pipe(
+        // Пронумеруем попытки повтора
+        scan((attempt, error) => {
+          // Проверяем, нужно ли повторять при данной ошибке
+          if (!shouldRetry(error) || attempt >= maxRetries) {
+            throw error;
+          }
+          return attempt + 1;
+        }, 0),
+        // Рассчитываем задержку
+        delayWhen(attempt => {
+          const delay = Math.min(
+            maxDelay,
+            initialDelay * Math.pow(scalingFactor, attempt)
+          );
+          console.log(`Retry attempt ${attempt + 1} with delay ${delay}ms`);
+          return timer(delay);
+        })
+      ))
+    );
+}
+
+// Использование в сервисе
+getUserData(): Observable<User> {
+  return this.http.get<User>('/api/user').pipe(
+    retryWithBackoff(3, 1000, 10000, 2, error => {
+      // Повторяем только при ошибках сети или 500-х ошибках
+      return error.status === 0 || (error.status >= 500 && error.status < 600);
+    }),
+    catchError(error => {
+      // Финальная обработка ошибки после всех попыток
+      this.notificationService.error('Failed to load user data');
+      return throwError(() => error);
+    })
+  );
+}
+```
+
+**Обработка ошибок с использованием switchMap для резервного API**:
+
+```typescript
+getUserProfile(userId: string): Observable<UserProfile> {
+  return this.http.get<UserProfile>(`/api/v2/users/${userId}`).pipe(
+    catchError(error => {
+      // Если новое API недоступно, переключаемся на старое API
+      if (error.status === 404) {
+        console.warn('Falling back to legacy API for user profile');
+        return this.http.get<LegacyUserProfile>(`/api/v1/users/${userId}`).pipe(
+          map(legacyProfile => this.convertToNewProfile(legacyProfile))
+        );
+      }
+      return throwError(() => error);
+    })
+  );
+}
+```
+
+**Обработка множественных ошибок с использованием finalize**:
+
+```typescript
+import { finalize } from 'rxjs/operators';
+
+loadData() {
+  this.loading = true;
+  this.error = null;
+
+  this.dataService.getData().pipe(
+    catchError(error => {
+      this.error = 'Failed to load data';
+      return throwError(() => error);
+    }),
+    finalize(() => {
+      // Выполняется всегда, независимо от успеха или ошибки
+      this.loading = false;
+    })
+  ).subscribe({
+    next: data => this.data = data,
+    error: error => {
+      // Дополнительная обработка ошибок, если нужно
+      console.error('Error in component:', error);
+    }
+  });
+}
+```
+
+**5. Обработка ошибок при множественных параллельных запросах**:
+
+```typescript
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+loadDashboardData() {
+  this.loading = true;
+
+  // Оборачиваем каждый запрос в catchError, чтобы предотвратить падение всего forkJoin
+  const users$ = this.userService.getUsers().pipe(
+    catchError(error => {
+      this.errors.users = 'Failed to load users';
+      console.error('Users error:', error);
+      return of([]); // Возвращаем пустой массив как запасной вариант
+    })
+  );
+
+  const stats$ = this.statsService.getStats().pipe(
+    catchError(error => {
+      this.errors.stats = 'Failed to load statistics';
+      console.error('Stats error:', error);
+      return of(null);
+    })
+  );
+
+  const notifications$ = this.notificationService.getNotifications().pipe(
+    catchError(error => {
+      this.errors.notifications = 'Failed to load notifications';
+      console.error('Notifications error:', error);
+      return of([]);
+    })
+  );
+
+  forkJoin({
+    users: users$,
+    stats: stats$,
+    notifications: notifications$
+  }).pipe(
+    finalize(() => this.loading = false)
+  ).subscribe(results => {
+    this.users = results.users;
+    this.stats = results.stats;
+    this.notifications = results.notifications;
+  });
+}
+```
+
+**6. Обработка ошибок при последовательных зависимых запросах**:
+
+```typescript
+getUserAndPosts(userId: string) {
+  this.userService.getUser(userId).pipe(
+    catchError(error => {
+      this.userError = `Failed to load user: ${error.message}`;
+      // Прекращаем цепочку запросов
+      return throwError(() => error);
+    }),
+    switchMap(user => {
+      this.user = user;
+
+      // Теперь загружаем посты пользователя
+      return this.postService.getPostsByUser(userId).pipe(
+        catchError(error => {
+          // Обрабатываем ошибку загрузки постов, но не прерываем поток
+          this.postsError = `Failed to load posts: ${error.message}`;
+          return of([]);  // Продолжаем с пустым массивом постов
+        })
+      );
+    }),
+    finalize(() => this.loading = false)
+  ).subscribe(posts => {
+    this.posts = posts;
+  });
+}
+```
+
+**7. Лучшие практики обработки ошибок в Angular**:
+
+1. **Многоуровневый подход** — комбинируйте обработку ошибок на разных уровнях:
+
+   - Глобальные интерсепторы для общих ошибок (аутентификация, сеть)
+   - Сервисы для ошибок, специфичных для бизнес-логики
+   - Компоненты для представления ошибок пользователю
+
+2. **Типизация ошибок** — создавайте интерфейсы для различных типов ошибок:
+
+```typescript
+interface ApiError {
+  code: string;
+  message: string;
+  details?: string;
+}
+
+// Использование
+this.http.get<User[]>("/api/users").pipe(
+  catchError((error: HttpErrorResponse) => {
+    const apiError = error.error as ApiError;
+    this.errorMessage = apiError.message || "Unknown error";
+    return throwError(() => apiError);
+  })
+);
+```
+
+3. **Информативные сообщения** — обеспечьте понятные пользователю сообщения об ошибках:
+
+```typescript
+getErrorMessage(error: HttpErrorResponse): string {
+  if (error.error instanceof ErrorEvent) {
+    // Клиентская ошибка
+    return `Network error: Please check your connection`;
+  }
+
+  // Серверная ошибка с пользовательскими кодами
+  const apiError = error.error as ApiError;
+
+  switch (apiError.code) {
+    case 'RESOURCE_NOT_FOUND':
+      return 'The requested item does not exist';
+    case 'PERMISSION_DENIED':
+      return 'You do not have permission to perform this action';
+    case 'VALIDATION_ERROR':
+      return `Validation error: ${apiError.details}`;
+    default:
+      return 'An unexpected error occurred. Please try again later.';
+  }
+}
+```
+
+4. **Стратегии восстановления** — предусмотрите резервные варианты при ошибках:
+
+   - Кеширование предыдущих результатов
+   - Использование локальных данных
+   - Переключение на альтернативные API
+   - Повторные попытки с задержкой
+
+5. **Сохранение состояния приложения** — защитите приложение от сбоев:
+   - Регулярно сохраняйте данные формы
+   - Используйте хранилище состояния (например, NgRx)
+   - Реализуйте механизм автоматического восстановления
+
+Эффективная обработка ошибок HTTP в Angular требует комбинации различных подходов и тщательного планирования. Правильно реализованная стратегия обработки ошибок значительно повышает надежность приложения и улучшает пользовательский опыт, даже когда происходят неизбежные сбои.
+
+### 5. What are some techniques to optimize HTTP requests and handle caching considerations for Angular applications?
+
+Оптимизация HTTP-запросов и эффективное кеширование играют ключевую роль в создании быстрых и отзывчивых Angular-приложений. Рассмотрим комплексный набор техник для повышения производительности работы с сетью:
+
+**1. Встроенное кеширование в Angular HttpClient**:
+
+**Базовый механизм кеширования с shareReplay**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable } from "rxjs";
+import { shareReplay } from "rxjs/operators";
+
+@Injectable({
+  providedIn: "root",
+})
+export class ConfigService {
+  private configUrl = "/api/config";
+  private config$: Observable<AppConfig> | null = null;
+
+  constructor(private http: HttpClient) {}
+
+  getConfig(): Observable<AppConfig> {
+    // Если запрос уже был сделан, используем кешированный результат
+    if (!this.config$) {
+      this.config$ = this.http.get<AppConfig>(this.configUrl).pipe(
+        // shareReplay(1) сохраняет последнее значение и делится им с новыми подписчиками
+        shareReplay(1)
+      );
+    }
+    return this.config$;
+  }
+}
+```
+
+**Расширенное кеширование с управлением временем жизни**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable, of, throwError } from "rxjs";
+import { shareReplay, tap, catchError, map } from "rxjs/operators";
+
+@Injectable({
+  providedIn: "root",
+})
+export class CachingService {
+  private cache: Map<string, CacheEntry> = new Map();
+  private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 минут в миллисекундах
+
+  constructor(private http: HttpClient) {}
+
+  get<T>(url: string, options?: any, ttl?: number): Observable<T> {
+    const cacheKey = this.createCacheKey(url, options);
+    const entry = this.cache.get(cacheKey);
+    const now = Date.now();
+
+    // Если есть кешированные данные и они не устарели
+    if (entry && entry.expiresAt > now) {
+      return of(entry.data as T);
+    }
+
+    // Удаляем устаревшие данные
+    if (entry) {
+      this.cache.delete(cacheKey);
+    }
+
+    // Делаем новый запрос и кешируем результат
+    return this.http.get<T>(url, options).pipe(
+      tap((response) => {
+        const expiresAt = now + (ttl || this.DEFAULT_TTL);
+        this.cache.set(cacheKey, { data: response, expiresAt });
+      }),
+      shareReplay(1),
+      catchError((error) => {
+        // Опционально: использовать устаревшие данные в случае ошибки
+        if (entry) {
+          console.warn("Using stale data for:", url);
+          return of(entry.data as T);
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  // Очистка кеша
+  clearCache(url?: string, options?: any): void {
+    if (url) {
+      // Удаляем конкретный элемент
+      const cacheKey = this.createCacheKey(url, options);
+      this.cache.delete(cacheKey);
+    } else {
+      // Очищаем весь кеш
+      this.cache.clear();
+    }
+  }
+
+  // Инвалидация устаревших записей
+  invalidateCache(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.expiresAt < now) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
+  private createCacheKey(url: string, options?: any): string {
+    return `${url}:${options ? JSON.stringify(options) : ""}`;
+  }
+}
+
+interface CacheEntry {
+  data: any;
+  expiresAt: number;
+}
+```
+
+**2. Использование HTTP-заголовков для кеширования**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpClient, HttpHeaders, HttpResponse } from "@angular/common/http";
+import { Observable } from "rxjs";
+import { tap } from "rxjs/operators";
+
+@Injectable({
+  providedIn: "root",
+})
+export class HttpCacheService {
+  private etags: Map<string, string> = new Map();
+  private lastModified: Map<string, string> = new Map();
+  private responseCache: Map<string, any> = new Map();
+
+  constructor(private http: HttpClient) {}
+
+  get<T>(url: string): Observable<T> {
+    // Подготавливаем заголовки для условных запросов
+    let headers = new HttpHeaders();
+
+    if (this.etags.has(url)) {
+      headers = headers.set("If-None-Match", this.etags.get(url)!);
+    }
+
+    if (this.lastModified.has(url)) {
+      headers = headers.set("If-Modified-Since", this.lastModified.get(url)!);
+    }
+
+    // Запрашиваем полный ответ с заголовками
+    return this.http
+      .get<T>(url, {
+        headers,
+        observe: "response",
+      })
+      .pipe(
+        tap((response: HttpResponse<T>) => {
+          // Сохраняем ETag если имеется
+          if (response.headers.has("ETag")) {
+            this.etags.set(url, response.headers.get("ETag")!);
+          }
+
+          // Сохраняем Last-Modified если имеется
+          if (response.headers.has("Last-Modified")) {
+            this.lastModified.set(url, response.headers.get("Last-Modified")!);
+          }
+
+          // Кешируем тело ответа
+          if (response.body) {
+            this.responseCache.set(url, response.body);
+          }
+        }),
+        map((response: HttpResponse<T>) => {
+          // Если сервер вернул 304 Not Modified, используем кешированный ответ
+          if (response.status === 304 && this.responseCache.has(url)) {
+            return this.responseCache.get(url);
+          }
+          return response.body!;
+        })
+      );
+  }
+}
+```
+
+**3. Кеширование с помощью Interceptor**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpResponse } from "@angular/common/http";
+import { Observable, of } from "rxjs";
+import { tap, shareReplay } from "rxjs/operators";
+
+@Injectable()
+export class CacheInterceptor implements HttpInterceptor {
+  private cache = new Map<string, HttpResponse<any>>();
+  private readonly CACHEABLE_METHODS = ["GET"];
+  private readonly CACHEABLE_URLS = ["/api/config", "/api/countries", "/api/static-data"];
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Кешируем только GET запросы к определенным URL
+    if (!this.isCacheable(request)) {
+      return next.handle(request);
+    }
+
+    const cacheKey = this.createCacheKey(request);
+    const cachedResponse = this.cache.get(cacheKey);
+
+    if (cachedResponse) {
+      return of(cachedResponse.clone());
+    }
+
+    return next.handle(request).pipe(
+      tap((event) => {
+        if (event instanceof HttpResponse) {
+          this.cache.set(cacheKey, event.clone());
+        }
+      }),
+      shareReplay(1)
+    );
+  }
+
+  private isCacheable(request: HttpRequest<any>): boolean {
+    if (!this.CACHEABLE_METHODS.includes(request.method)) {
+      return false;
+    }
+
+    return this.CACHEABLE_URLS.some((url) => request.url.includes(url));
+  }
+
+  private createCacheKey(request: HttpRequest<any>): string {
+    return `${request.method}-${request.urlWithParams}`;
+  }
+}
+```
+
+**4. Оптимизация запросов с debounceTime и distinctUntilChanged**:
+
+```typescript
+import { Component, OnInit } from "@angular/core";
+import { FormControl } from "@angular/forms";
+import { debounceTime, distinctUntilChanged, switchMap } from "rxjs/operators";
+import { UserService } from "./user.service";
+
+@Component({
+  selector: "app-user-search",
+  template: `
+    <input type="text" [formControl]="searchControl" placeholder="Search users..." />
+    <div *ngIf="loading">Loading...</div>
+    <ul>
+      <li *ngFor="let user of users">{{ user.name }}</li>
+    </ul>
+  `,
+})
+export class UserSearchComponent implements OnInit {
+  searchControl = new FormControl("");
+  users: User[] = [];
+  loading = false;
+
+  constructor(private userService: UserService) {}
+
+  ngOnInit() {
+    this.searchControl.valueChanges
+      .pipe(
+        // Ждем 300ms после последнего ввода перед отправкой запроса
+        debounceTime(300),
+
+        // Не отправляем запрос, если значение не изменилось
+        distinctUntilChanged(),
+
+        // Отменяем предыдущий запрос при новом вводе
+        switchMap((term) => {
+          this.loading = true;
+          return this.userService.searchUsers(term);
+        })
+      )
+      .subscribe({
+        next: (users) => {
+          this.users = users;
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error("Error searching users", error);
+          this.loading = false;
+        },
+      });
+  }
+}
+```
+
+**5. Предварительная загрузка данных с Resolvers**:
+
+```typescript
+import { Injectable } from '@angular/core';
+import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { UserService } from './user.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UserResolver implements Resolve<User> {
+  constructor(private userService: UserService) {}
+
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<User> {
+    const userId = route.paramMap.get('id')!;
+
+    return this.userService.getUser(userId).pipe(
+      catchError(error => {
+        console.error('Error in UserResolver', error);
+        return of({ id: '0', name: 'Unknown User' } as User);
+      })
+    );
+  }
+}
+
+// Настройка маршрута
+const routes: Routes = [
+  {
+    path: 'user/:id',
+    component: UserDetailComponent,
+    resolve: {
+      user: UserResolver
+    }
+  }
+];
+
+// Использование в компоненте
+@Component({ ... })
+export class UserDetailComponent implements OnInit {
+  user!: User;
+
+  constructor(private route: ActivatedRoute) {}
+
+  ngOnInit() {
+    // Данные уже загружены до активации компонента
+    this.user = this.route.snapshot.data['user'];
+  }
+}
+```
+
+**6. Использование IndexedDB для локального кеширования**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { from, Observable, of } from "rxjs";
+import { tap, switchMap, catchError } from "rxjs/operators";
+import { openDB, DBSchema, IDBPDatabase } from "idb";
+
+interface AppDBSchema extends DBSchema {
+  apiCache: {
+    key: string;
+    value: {
+      data: any;
+      timestamp: number;
+    };
+  };
+}
+
+@Injectable({
+  providedIn: "root",
+})
+export class IndexedDBCacheService {
+  private db!: Promise<IDBPDatabase<AppDBSchema>>;
+  private readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 часа
+
+  constructor(private http: HttpClient) {
+    this.initDB();
+  }
+
+  private initDB() {
+    this.db = openDB<AppDBSchema>("app-cache", 1, {
+      upgrade(db) {
+        db.createObjectStore("apiCache");
+      },
+    });
+  }
+
+  get<T>(url: string, maxAge = this.CACHE_DURATION): Observable<T> {
+    return from(this.getCachedData<T>(url, maxAge)).pipe(
+      switchMap((cachedData) => {
+        if (cachedData) {
+          return of(cachedData);
+        }
+
+        return this.http.get<T>(url).pipe(tap((response) => this.cacheData(url, response)));
+      }),
+      catchError((error) => {
+        console.error("Cache error:", error);
+        return this.http.get<T>(url);
+      })
+    );
+  }
+
+  private async getCachedData<T>(url: string, maxAge: number): Promise<T | null> {
+    const db = await this.db;
+    const cachedItem = await db.get("apiCache", url);
+
+    if (!cachedItem) {
+      return null;
+    }
+
+    const now = Date.now();
+    if (now - cachedItem.timestamp > maxAge) {
+      // Данные устарели, удаляем их
+      await db.delete("apiCache", url);
+      return null;
+    }
+
+    return cachedItem.data as T;
+  }
+
+  private async cacheData(url: string, data: any): Promise<void> {
+    const db = await this.db;
+    await db.put(
+      "apiCache",
+      {
+        data,
+        timestamp: Date.now(),
+      },
+      url
+    );
+  }
+
+  async clearCache(url?: string): Promise<void> {
+    const db = await this.db;
+    if (url) {
+      await db.delete("apiCache", url);
+    } else {
+      await db.clear("apiCache");
+    }
+  }
+}
+```
+
+**7. Батчинг (объединение) запросов**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable, Subject, forkJoin } from "rxjs";
+import { buffer, debounceTime, map, switchMap } from "rxjs/operators";
+
+@Injectable({
+  providedIn: "root",
+})
+export class BatchRequestService {
+  private userRequestQueue = new Subject<{ id: string; subscriber: Subject<User> }>();
+
+  constructor(private http: HttpClient) {
+    // Объединяем запросы, поступающие в течение 50 мс
+    this.userRequestQueue
+      .pipe(
+        buffer(this.userRequestQueue.pipe(debounceTime(50))),
+        switchMap((requests) => {
+          if (requests.length === 0) {
+            return [];
+          }
+
+          // Извлекаем уникальные ID для пакетного запроса
+          const uniqueIds = [...new Set(requests.map((r) => r.id))];
+
+          return this.http.get<User[]>(`/api/users/batch?ids=${uniqueIds.join(",")}`).pipe(
+            map((users) => {
+              // Для каждого запроса находим соответствующего пользователя и возвращаем результат
+              requests.forEach((request) => {
+                const user = users.find((u) => u.id === request.id);
+                request.subscriber.next(user || null);
+                request.subscriber.complete();
+              });
+              return users;
+            })
+          );
+        })
+      )
+      .subscribe();
+  }
+
+  getUser(id: string): Observable<User> {
+    const subject = new Subject<User>();
+
+    // Добавляем запрос в очередь
+    this.userRequestQueue.next({ id, subscriber: subject });
+
+    return subject.asObservable();
+  }
+}
+```
+
+**8. Прогрессивная загрузка данных**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { BehaviorSubject, Observable } from "rxjs";
+import { scan, tap } from "rxjs/operators";
+
+@Injectable({
+  providedIn: "root",
+})
+export class ProductService {
+  private productsSubject = new BehaviorSubject<Product[]>([]);
+  private pageSize = 20;
+  private currentPage = 0;
+  private isLoading = false;
+  private hasMore = true;
+
+  products$ = this.productsSubject.asObservable();
+
+  constructor(private http: HttpClient) {}
+
+  loadMoreProducts(): Observable<Product[]> {
+    if (this.isLoading || !this.hasMore) {
+      return this.products$;
+    }
+
+    this.isLoading = true;
+    this.currentPage++;
+
+    return this.http
+      .get<ProductResponse>("/api/products", {
+        params: {
+          page: this.currentPage.toString(),
+          size: this.pageSize.toString(),
+        },
+      })
+      .pipe(
+        tap((response) => {
+          const currentProducts = this.productsSubject.value;
+          const newProducts = [...currentProducts, ...response.items];
+
+          this.hasMore = response.hasMore;
+          this.isLoading = false;
+          this.productsSubject.next(newProducts);
+        })
+      );
+  }
+
+  resetProducts(): void {
+    this.currentPage = 0;
+    this.hasMore = true;
+    this.productsSubject.next([]);
+  }
+}
+
+interface ProductResponse {
+  items: Product[];
+  hasMore: boolean;
+  total: number;
+}
+```
+
+**9. Оптимизация графовых запросов с GraphQL**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { Apollo } from "apollo-angular";
+import { Observable } from "rxjs";
+import { map } from "rxjs/operators";
+import { GET_USER_WITH_DETAILS, GET_USER_BASIC } from "./graphql.queries";
+
+@Injectable({
+  providedIn: "root",
+})
+export class UserGraphQLService {
+  constructor(private apollo: Apollo) {}
+
+  // Получение только нужных полей
+  getUserBasic(id: string): Observable<User> {
+    return this.apollo
+      .query<any>({
+        query: GET_USER_BASIC,
+        variables: { id },
+      })
+      .pipe(map((result) => result.data.user));
+  }
+
+  // Получение всех деталей пользователя
+  getUserWithDetails(id: string): Observable<UserWithDetails> {
+    return this.apollo
+      .query<any>({
+        query: GET_USER_WITH_DETAILS,
+        variables: { id },
+      })
+      .pipe(map((result) => result.data.user));
+  }
+}
+
+// Определение запросов
+const GET_USER_BASIC = gql`
+  query GetUserBasic($id: ID!) {
+    user(id: $id) {
+      id
+      name
+      email
+    }
+  }
+`;
+
+const GET_USER_WITH_DETAILS = gql`
+  query GetUserWithDetails($id: ID!) {
+    user(id: $id) {
+      id
+      name
+      email
+      phone
+      company {
+        name
+        address
+      }
+      posts {
+        id
+        title
+        createdAt
+      }
+    }
+  }
+`;
+```
+
+**10. Оптимизация загрузки изображений**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable, of } from "rxjs";
+import { tap, catchError } from "rxjs/operators";
+
+@Injectable({
+  providedIn: "root",
+})
+export class ImageCacheService {
+  private cache = new Map<string, string>();
+
+  constructor(private http: HttpClient) {
+    // Инициализация кеша из localStorage при загрузке
+    this.loadCacheFromStorage();
+
+    // Сохранение кеша в localStorage перед закрытием
+    window.addEventListener("beforeunload", () => {
+      this.saveCacheToStorage();
+    });
+  }
+
+  getImage(url: string): Observable<string> {
+    // Проверяем кеш
+    if (this.cache.has(url)) {
+      return of(this.cache.get(url)!);
+    }
+
+    // Загружаем изображение как Blob
+    return this.http.get(url, { responseType: "blob" }).pipe(
+      tap((blob) => {
+        // Конвертируем Blob в Data URL
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = () => {
+          const base64data = reader.result as string;
+          this.cache.set(url, base64data);
+        };
+      }),
+      // Преобразуем Blob в URL для немедленного использования
+      map((blob) => URL.createObjectURL(blob)),
+      catchError((error) => {
+        console.error("Error loading image", error);
+        return of("assets/placeholder.png"); // Fallback изображение
+      })
+    );
+  }
+
+  private loadCacheFromStorage(): void {
+    try {
+      const storedCache = localStorage.getItem("imageCacheIndex");
+      if (storedCache) {
+        const urls = JSON.parse(storedCache) as string[];
+
+        urls.forEach((url) => {
+          const cachedImage = localStorage.getItem(`imageCache:${url}`);
+          if (cachedImage) {
+            this.cache.set(url, cachedImage);
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Failed to load image cache", error);
+    }
+  }
+
+  private saveCacheToStorage(): void {
+    try {
+      // Сохраняем индекс URL
+      const urls = Array.from(this.cache.keys());
+      localStorage.setItem("imageCacheIndex", JSON.stringify(urls));
+
+      // Сохраняем каждое изображение отдельно
+      for (const [url, dataUrl] of this.cache.entries()) {
+        localStorage.setItem(`imageCache:${url}`, dataUrl);
+      }
+    } catch (error) {
+      console.error("Failed to save image cache", error);
+    }
+  }
+
+  clearCache(): void {
+    this.cache.clear();
+    // Очистка localStorage
+    const keys = Object.keys(localStorage);
+    keys.forEach((key) => {
+      if (key === "imageCacheIndex" || key.startsWith("imageCache:")) {
+        localStorage.removeItem(key);
+      }
+    });
+  }
+}
+```
+
+**11. Сервис сетевого состояния для интеллектуального кеширования**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { BehaviorSubject, fromEvent, merge, Observable, of } from "rxjs";
+import { map, distinctUntilChanged } from "rxjs/operators";
+
+export enum NetworkStatus {
+  ONLINE,
+  OFFLINE,
+}
+
+@Injectable({
+  providedIn: "root",
+})
+export class NetworkService {
+  private networkStatus = new BehaviorSubject<NetworkStatus>(navigator.onLine ? NetworkStatus.ONLINE : NetworkStatus.OFFLINE);
+
+  constructor() {
+    // Слушаем события онлайн/оффлайн
+    merge(fromEvent(window, "online").pipe(map(() => NetworkStatus.ONLINE)), fromEvent(window, "offline").pipe(map(() => NetworkStatus.OFFLINE))).subscribe((status) => {
+      console.log("Network status changed:", status);
+      this.networkStatus.next(status);
+    });
+  }
+
+  get online$(): Observable<boolean> {
+    return this.networkStatus.pipe(
+      map((status) => status === NetworkStatus.ONLINE),
+      distinctUntilChanged()
+    );
+  }
+
+  get offline$(): Observable<boolean> {
+    return this.networkStatus.pipe(
+      map((status) => status === NetworkStatus.OFFLINE),
+      distinctUntilChanged()
+    );
+  }
+
+  get isOnline(): boolean {
+    return this.networkStatus.value === NetworkStatus.ONLINE;
+  }
+
+  get isOffline(): boolean {
+    return this.networkStatus.value === NetworkStatus.OFFLINE;
+  }
+}
+
+// Использование в data service
+@Injectable({ providedIn: "root" })
+export class SmartCachingService {
+  constructor(private http: HttpClient, private networkService: NetworkService, private storage: LocalStorageService) {}
+
+  getData<T>(url: string): Observable<T> {
+    // Всегда пытаемся получить из кэша
+    const cachedData = this.storage.get<{ data: T; timestamp: number }>(url);
+
+    // Если оффлайн, используем кешированные данные
+    if (this.networkService.isOffline) {
+      if (cachedData) {
+        console.log("Offline: using cached data for", url);
+        return of(cachedData.data);
+      }
+      return throwError(() => new Error("No cached data available and device is offline"));
+    }
+
+    // Если онлайн, проверяем свежесть кеша
+    if (cachedData && Date.now() - cachedData.timestamp < 5 * 60 * 1000) {
+      console.log("Using fresh cached data for", url);
+      return of(cachedData.data);
+    }
+
+    // Делаем запрос и кешируем результат
+    return this.http.get<T>(url).pipe(
+      tap((data) => {
+        this.storage.set(url, { data, timestamp: Date.now() });
+      }),
+      catchError((error) => {
+        // В случае ошибки сети, используем кеш если доступен
+        if (cachedData) {
+          console.log("Error occurred, using cached data for", url);
+          return of(cachedData.data);
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+}
+```
+
+**12. Лучшие практики оптимизации HTTP и кеширования в Angular**:
+
+1. **Выбирайте правильную стратегию кеширования**:
+
+   - Для статичных данных — долгосрочное кеширование (часы/дни)
+   - Для часто меняющихся данных — короткий TTL или условные запросы
+   - Для пользовательских данных — персонализированное кеширование
+
+2. **Оптимизируйте пересылаемые данные**:
+
+   - Используйте GraphQL для точного указания нужных полей
+   - Применяйте фильтрацию на стороне сервера
+   - Компрессия ответов (gzip/brotli)
+   - Пагинация для больших наборов данных
+
+3. **Используйте многоуровневое кеширование**:
+
+   - In-memory кеширование для часто используемых данных
+   - LocalStorage/IndexedDB для более крупных наборов данных
+   - HTTP-кеширование с заголовками для оптимизации на уровне браузера
+
+4. **Оптимизируйте частоту запросов**:
+
+   - Используйте debounceTime для поисковых запросов
+   - Применяйте throttling для событий прокрутки
+   - Отменяйте ненужные запросы при навигации
+
+5. **Реализуйте проактивное кеширование**:
+
+   - Предварительная загрузка вероятных маршрутов
+   - Загрузка связанных данных вместе с основными
+   - Обновление кеша в фоновом режиме
+
+6. **Обеспечьте устойчивость к ошибкам**:
+
+   - Стратегия stale-while-revalidate (показ устаревших данных при обновлении)
+   - Degradation grace (деградация функциональности при проблемах с сетью)
+   - Оффлайн-режим с синхронизацией при восстановлении соединения
+
+7. **Мониторинг и оптимизация**:
+   - Анализ времени загрузки и размера данных
+   - Измерение процента кеш-хитов
+   - Профилирование производительности запросов
+
+Оптимизация HTTP-запросов и эффективное кеширование — это важные аспекты производительности Angular-приложений. Правильно реализованные стратегии могут значительно улучшить пользовательский опыт, снизить нагрузку на сервер и обеспечить работу приложения даже при нестабильном соединении.
+
+### 6. What is the purpose of `HttpInterceptor` in Angular, and how does it work?
+
+**HttpInterceptor** — это мощный механизм в Angular, который позволяет перехватывать и модифицировать HTTP-запросы и ответы перед их обработкой. Концептуально это похоже на middleware в серверных фреймворках.
+
+**Основные цели HttpInterceptor**:
+
+**1. Модификация запросов и ответов**:
+
+- Добавление заголовков (например, авторизационных токенов)
+- Трансформация тела запроса или ответа
+- Изменение URL или параметров запроса
+- Стандартизация форматов данных
+
+**2. Централизованная обработка ошибок**:
+
+- Единообразная обработка HTTP-ошибок
+- Перенаправление при ошибках аутентификации
+- Повторные попытки запросов при сбоях сети
+- Логирование ошибок
+
+**3. Функции безопасности**:
+
+- Добавление токенов аутентификации
+- Защита от CSRF-атак
+- Проверка и обработка JWT-токенов
+- Шифрование/дешифрование данных
+
+**4. Мониторинг и логирование**:
+
+- Логирование запросов для отладки
+- Сбор метрик производительности
+- Отслеживание статусов запросов
+- Интеграция с системами мониторинга
+
+**5. Кеширование и оптимизация**:
+
+- Реализация кеширования на стороне клиента
+- Предотвращение дублирующихся запросов
+- Управление offline-режимом
+- Оптимизация сетевого трафика
+
+**Принцип работы HttpInterceptor**:
+
+HttpInterceptor представляет собой класс, реализующий интерфейс `HttpInterceptor`, который имеет единственный метод `intercept()`. Этот метод получает HTTP-запрос и ссылку на следующий обработчик в цепочке интерсепторов.
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from "@angular/common/http";
+import { Observable } from "rxjs";
+
+@Injectable()
+export class ExampleInterceptor implements HttpInterceptor {
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    // Обработка запроса перед отправкой
+    console.log("Request intercepted:", request.url);
+
+    // Модификация запроса (запросы иммутабельны, поэтому создаем новый)
+    const modifiedRequest = request.clone({
+      headers: request.headers.set("X-Custom-Header", "custom-value"),
+    });
+
+    // Передача модифицированного запроса следующему обработчику
+    return next.handle(modifiedRequest);
+  }
+}
+```
+
+**Жизненный цикл HTTP-запроса с интерсепторами**:
+
+1. **Создание запроса**: Приложение создает HTTP-запрос через HttpClient
+2. **Цепочка интерсепторов (запрос)**: Запрос проходит через все зарегистрированные интерсепторы в порядке их регистрации
+3. **Отправка запроса**: После прохождения всех интерсепторов запрос отправляется на сервер
+4. **Получение ответа**: Сервер возвращает ответ
+5. **Цепочка интерсепторов (ответ)**: Ответ проходит через все интерсепторы в обратном порядке
+6. **Обработка ответа**: Ответ возвращается в компонент или сервис, который инициировал запрос
+
+**Регистрация интерсепторов**:
+
+Интерсепторы регистрируются в массиве провайдеров через специальный токен `HTTP_INTERCEPTORS`. Важно, что порядок регистрации определяет порядок их применения.
+
+```typescript
+import { NgModule } from "@angular/core";
+import { HTTP_INTERCEPTORS, HttpClientModule } from "@angular/common/http";
+
+import { AuthInterceptor } from "./auth.interceptor";
+import { LoggingInterceptor } from "./logging.interceptor";
+import { CachingInterceptor } from "./caching.interceptor";
+import { ErrorInterceptor } from "./error.interceptor";
+
+@NgModule({
+  imports: [HttpClientModule],
+  providers: [
+    // Интерсепторы выполняются в порядке регистрации
+    { provide: HTTP_INTERCEPTORS, useClass: LoggingInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: CachingInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
+  ],
+})
+export class CoreModule {}
+```
+
+**Ключевые особенности HttpInterceptor**:
+
+**1. Иммутабельность запросов**:
+
+- Объекты HttpRequest иммутабельны для безопасности
+- Для модификации необходимо создавать новые экземпляры с помощью метода `clone()`
+
+```typescript
+// Правильно:
+const modifiedRequest = request.clone({
+  headers: request.headers.set("Authorization", `Bearer ${token}`),
+});
+return next.handle(modifiedRequest);
+
+// Неправильно (не будет работать):
+request.headers.set("Authorization", `Bearer ${token}`);
+return next.handle(request);
+```
+
+**2. Модификация тела запроса**:
+
+```typescript
+intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  // Добавляем временную метку к каждому запросу
+  let modifiedBody = request.body || {};
+  if (typeof modifiedBody === 'object') {
+    modifiedBody = {
+      ...modifiedBody,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  const modifiedRequest = request.clone({
+    body: modifiedBody
+  });
+
+  return next.handle(modifiedRequest);
+}
+```
+
+**3. Фильтрация запросов (обработка только определенных запросов)**:
+
+```typescript
+intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  // Применяем интерсептор только к API-запросам
+  if (request.url.includes('/api/')) {
+    const modifiedRequest = request.clone({
+      headers: request.headers.set('API-Version', '1.0')
+    });
+    return next.handle(modifiedRequest);
+  }
+
+  // Пропускаем другие запросы без изменений
+  return next.handle(request);
+}
+```
+
+**4. Модификация ответа**:
+
+```typescript
+import { tap, map } from 'rxjs/operators';
+
+intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  return next.handle(request).pipe(
+    // Фильтруем только HTTP-ответы (не события прогресса)
+    filter(event => event instanceof HttpResponse),
+
+    // Преобразуем ответ
+    map((event: HttpResponse<any>) => {
+      // Нормализация данных ответа
+      if (event.body && event.body.data) {
+        return event.clone({
+          body: event.body.data
+        });
+      }
+      return event;
+    })
+  );
+}
+```
+
+**5. Обработка ошибок с возможностью восстановления**:
+
+```typescript
+import { catchError, retry, switchMap } from 'rxjs/operators';
+
+intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  return next.handle(request).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401) {
+        // Пытаемся обновить токен и повторить запрос
+        return this.authService.refreshToken().pipe(
+          switchMap(token => {
+            // Создаем новый запрос с обновленным токеном
+            const updatedRequest = request.clone({
+              headers: request.headers.set('Authorization', `Bearer ${token}`)
+            });
+
+            // Повторяем запрос с новым токеном
+            return next.handle(updatedRequest);
+          }),
+          catchError(refreshError => {
+            // Если не удалось обновить токен, перенаправляем на вход
+            this.authService.logout();
+            this.router.navigate(['/login']);
+            return throwError(() => refreshError);
+          })
+        );
+      }
+
+      // Для других ошибок просто прокидываем их дальше
+      return throwError(() => error);
+    })
+  );
+}
+```
+
+**6. Интерсептор для отображения индикатора загрузки**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpEvent, HttpInterceptor, HttpHandler, HttpRequest } from "@angular/common/http";
+import { Observable } from "rxjs";
+import { finalize } from "rxjs/operators";
+import { LoaderService } from "./loader.service";
+
+@Injectable()
+export class LoadingInterceptor implements HttpInterceptor {
+  private activeRequests = 0;
+
+  constructor(private loaderService: LoaderService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Увеличиваем счетчик активных запросов
+    this.activeRequests++;
+    this.loaderService.show();
+
+    return next.handle(request).pipe(
+      finalize(() => {
+        // Уменьшаем счетчик и скрываем индикатор, если запросов больше нет
+        this.activeRequests--;
+        if (this.activeRequests === 0) {
+          this.loaderService.hide();
+        }
+      })
+    );
+  }
+}
+```
+
+**7. Взаимодействие между интерсепторами**:
+
+Интерсепторы образуют цепочку, где выход одного становится входом для следующего. Порядок выполнения:
+
+1. Запрос проходит через интерсепторы в порядке их регистрации
+2. Ответ проходит через интерсепторы в обратном порядке
+
+```
+Запрос: Компонент -> ИнтерсепторA -> ИнтерсепторB -> ИнтерсепторC -> Сервер
+Ответ:  Сервер -> ИнтерсепторC -> ИнтерсепторB -> ИнтерсепторA -> Компонент
+```
+
+Интерсепторы представляют собой мощный инструмент для централизованной обработки HTTP-запросов в Angular-приложениях. Они позволяют реализовать сквозную функциональность, такую как аутентификация, кеширование, логирование и обработка ошибок, в едином месте, избегая дублирования кода и соблюдая принцип DRY (Don't Repeat Yourself).
+
+### 7. In which scenarios would you consider using an interceptor for error handling in an Angular application?
+
+Интерсепторы для обработки ошибок представляют собой мощный инструмент централизованного управления ошибками HTTP-запросов. Рассмотрим ключевые сценарии их применения:
+
+**1. Централизованная обработка общих ошибок HTTP**:
+
+Это наиболее распространенный сценарий использования интерсепторов для обработки ошибок. Вместо дублирования логики обработки в каждом сервисе, можно реализовать единый подход.
+
+```typescript
+@Injectable()
+export class GlobalErrorInterceptor implements HttpInterceptor {
+  constructor(private notificationService: NotificationService, private logger: LoggingService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    return next.handle(request).pipe(
+      catchError((error: HttpErrorResponse) => {
+        // Классификация и обработка различных типов ошибок
+        let userMessage: string;
+        let logLevel: LogLevel = LogLevel.ERROR;
+
+        if (error.error instanceof ErrorEvent) {
+          // Клиентские ошибки (сетевые проблемы)
+          userMessage = "Проблема с подключением. Проверьте соединение.";
+          logLevel = LogLevel.WARN;
+        } else {
+          // Серверные ошибки
+          switch (error.status) {
+            case 0:
+              userMessage = "Нет соединения с сервером. Пожалуйста, проверьте подключение.";
+              break;
+            case 400:
+              userMessage = "Некорректный запрос. Пожалуйста, проверьте данные.";
+              break;
+            case 404:
+              userMessage = "Запрашиваемый ресурс не найден.";
+              break;
+            case 500:
+              userMessage = "Внутренняя ошибка сервера. Попробуйте позже.";
+              break;
+            default:
+              userMessage = `Произошла ошибка: ${error.status} ${error.statusText}`;
+          }
+        }
+
+        // Показываем уведомление пользователю
+        this.notificationService.showError(userMessage);
+
+        // Логируем подробности ошибки для разработчиков
+        this.logger.log(logLevel, "HTTP Error", {
+          url: request.url,
+          method: request.method,
+          status: error.status,
+          error: error.error,
+          message: error.message,
+        });
+
+        // Пробрасываем ошибку дальше
+        return throwError(() => error);
+      })
+    );
+  }
+}
+```
+
+**2. Автоматическая аутентификация при истечении срока действия токена**:
+
+Когда API возвращает ошибку 401 (Unauthorized), интерсептор может автоматически обновить токен и повторить запрос.
+
+```typescript
+@Injectable()
+export class AuthErrorInterceptor implements HttpInterceptor {
+  private isRefreshing = false;
+  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+
+  constructor(private authService: AuthService, private router: Router) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    return next.handle(request).pipe(
+      catchError((error) => {
+        if (error instanceof HttpErrorResponse && error.status === 401) {
+          // Проверяем, это запрос на обновление токена уже неудачен?
+          if (request.url.includes("refresh-token")) {
+            // Если сам запрос обновления токена вернул 401, значит нужен полный логаут
+            this.authService.logout();
+            this.router.navigate(["/login"]);
+            return throwError(() => error);
+          }
+
+          return this.handle401Error(request, next);
+        }
+
+        return throwError(() => error);
+      })
+    );
+  }
+
+  private handle401Error(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    if (!this.isRefreshing) {
+      this.isRefreshing = true;
+      this.refreshTokenSubject.next(null);
+
+      return this.authService.refreshToken().pipe(
+        switchMap((token) => {
+          this.isRefreshing = false;
+          this.refreshTokenSubject.next(token);
+
+          // Создаем новый запрос с новым токеном
+          const updatedRequest = this.addTokenToRequest(request, token);
+          return next.handle(updatedRequest);
+        }),
+        catchError((error) => {
+          this.isRefreshing = false;
+
+          // Если не удалось обновить токен, выполняем логаут
+          this.authService.logout();
+          this.router.navigate(["/login"]);
+
+          return throwError(() => error);
+        })
+      );
+    } else {
+      // Если уже идет процесс обновления токена, ждем его завершения
+      return this.refreshTokenSubject.pipe(
+        filter((token) => token !== null),
+        take(1),
+        switchMap((token) => {
+          const updatedRequest = this.addTokenToRequest(request, token);
+          return next.handle(updatedRequest);
+        })
+      );
+    }
+  }
+
+  private addTokenToRequest(request: HttpRequest<any>, token: string): HttpRequest<any> {
+    return request.clone({
+      headers: request.headers.set("Authorization", `Bearer ${token}`),
+    });
+  }
+}
+```
+
+**3. Стратегия повторных попыток для нестабильных сетей**:
+
+Для мобильных приложений или нестабильных сетей полезно автоматически повторять запросы при временных сбоях.
+
+```typescript
+@Injectable()
+export class RetryInterceptor implements HttpInterceptor {
+  constructor(private networkService: NetworkService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    return next.handle(request).pipe(
+      // Применяем стратегию повторных попыток только для GET запросов
+      switchMap((event) => {
+        // Пропускаем все успешные события
+        return of(event);
+      }),
+      catchError((error: HttpErrorResponse) => {
+        // Повторяем только определенные типы ошибок
+        if (this.isRetryable(request, error)) {
+          return this.retryWithBackoff(request, next);
+        }
+
+        // Остальные ошибки просто пробрасываем
+        return throwError(() => error);
+      })
+    );
+  }
+
+  private isRetryable(request: HttpRequest<any>, error: HttpErrorResponse): boolean {
+    // Повторяем только GET запросы
+    if (request.method !== "GET") {
+      return false;
+    }
+
+    // Повторяем при ошибках сети или 5xx ошибках сервера
+    return error.status === 0 || (error.status >= 500 && error.status < 600);
+  }
+
+  private retryWithBackoff(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    return of(null).pipe(
+      delay(1000), // Начальная задержка 1 секунда
+      switchMap(() => {
+        console.log(`Retrying ${request.url}`);
+        return next.handle(request).pipe(
+          // Рекурсивно повторяем до 3 раз с экспоненциальной задержкой
+          retryWhen((errors) =>
+            errors.pipe(
+              scan((count, error) => {
+                if (count >= 3) {
+                  throw error;
+                }
+                console.log(`Retry attempt ${count + 1} for ${request.url}`);
+                return count + 1;
+              }, 0),
+              delayWhen((count) => timer(Math.pow(2, count) * 1000))
+            )
+          )
+        );
+      })
+    );
+  }
+}
+```
+
+**4. Обработка оффлайн-режима и синхронизация**:
+
+Для приложений, которые должны работать в оффлайне, интерсептор может перенаправлять запросы в локальное хранилище.
+
+```typescript
+@Injectable()
+export class OfflineInterceptor implements HttpInterceptor {
+  constructor(private networkService: NetworkService, private offlineStorage: OfflineStorageService, private syncQueue: SyncQueueService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Проверяем подключение к сети
+    if (!this.networkService.isOnline) {
+      // Для GET запросов - пытаемся взять из кеша
+      if (request.method === "GET") {
+        return from(this.offlineStorage.getFromCache(request)).pipe(
+          map((data) => {
+            if (!data) {
+              throw new Error("No cached data available");
+            }
+
+            // Создаем искусственный HTTP-ответ из кешированных данных
+            return new HttpResponse({
+              body: data,
+              status: 200,
+              statusText: "OK (cached)",
+              headers: new HttpHeaders({ "X-Data-Source": "offline-cache" }),
+            });
+          }),
+          catchError((error) => {
+            // Если в кеше ничего нет, возвращаем ошибку
+            return throwError(
+              () =>
+                new HttpErrorResponse({
+                  error: "Offline mode: No cached data available",
+                  status: 0,
+                  statusText: "Offline",
+                  url: request.url,
+                })
+            );
+          })
+        );
+      } else {
+        // Для модифицирующих запросов (POST, PUT, DELETE) - добавляем в очередь синхронизации
+        this.syncQueue.addToQueue(request);
+
+        // Возвращаем "оптимистичный" ответ
+        return of(
+          new HttpResponse({
+            status: 202,
+            statusText: "Accepted Offline",
+            body: { success: true, offlineQueued: true },
+          })
+        );
+      }
+    }
+
+    // Если онлайн, просто выполняем запрос
+    return next.handle(request).pipe(
+      // Кешируем успешные GET-ответы для оффлайн-режима
+      tap((event) => {
+        if (event instanceof HttpResponse && request.method === "GET") {
+          this.offlineStorage.cacheResponse(request, event.body);
+        }
+      })
+    );
+  }
+}
+```
+
+**5. Логирование и анализ ошибок**:
+
+Для целей отладки, мониторинга и аналитики, интерсептор может отправлять подробную информацию об ошибках в системы логирования.
+
+```typescript
+@Injectable()
+export class ErrorReportingInterceptor implements HttpInterceptor {
+  constructor(private errorReportingService: ErrorReportingService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    const startTime = Date.now();
+    let requestId = this.generateRequestId();
+
+    // Добавляем ID запроса для корреляции с серверными логами
+    const trackedRequest = request.clone({
+      headers: request.headers.set("X-Request-ID", requestId),
+    });
+
+    return next.handle(trackedRequest).pipe(
+      catchError((error: HttpErrorResponse) => {
+        const duration = Date.now() - startTime;
+        const errorContext = {
+          requestId,
+          url: request.url,
+          method: request.method,
+          headers: this.sanitizeHeaders(request.headers),
+          body: this.sanitizeBody(request.body),
+          duration,
+          status: error.status,
+          statusText: error.statusText,
+          error: error.error,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          appVersion: environment.version,
+        };
+
+        // Отправляем отчет об ошибке в мониторинговые системы
+        this.errorReportingService.reportError("HttpError", error.message, errorContext);
+
+        // Добавляем пометку, что ошибка уже была зарегистрирована
+        const processedError = new HttpErrorResponse({
+          error: error.error,
+          headers: error.headers,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url || undefined,
+        });
+        (processedError as any).__reported = true;
+
+        return throwError(() => processedError);
+      })
+    );
+  }
+
+  private generateRequestId(): string {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+  }
+
+  private sanitizeHeaders(headers: HttpHeaders): any {
+    const sanitized = {};
+    headers.keys().forEach((key) => {
+      // Скрываем чувствительные заголовки
+      if (key.toLowerCase() === "authorization") {
+        sanitized[key] = "Bearer [REDACTED]";
+      } else {
+        sanitized[key] = headers.getAll(key);
+      }
+    });
+    return sanitized;
+  }
+
+  private sanitizeBody(body: any): any {
+    if (!body) return body;
+
+    // Создаем копию для безопасного редактирования
+    const sanitized = JSON.parse(JSON.stringify(body));
+
+    // Скрываем чувствительные поля
+    const sensitiveFields = ["password", "token", "credit_card", "ssn"];
+    this.recursivelyRedact(sanitized, sensitiveFields);
+
+    return sanitized;
+  }
+
+  private recursivelyRedact(obj: any, sensitiveFields: string[]): void {
+    if (typeof obj !== "object" || obj === null) return;
+
+    Object.keys(obj).forEach((key) => {
+      if (sensitiveFields.includes(key.toLowerCase())) {
+        obj[key] = "[REDACTED]";
+      } else if (typeof obj[key] === "object" && obj[key] !== null) {
+        this.recursivelyRedact(obj[key], sensitiveFields);
+      }
+    });
+  }
+}
+```
+
+**6. Управление зависимыми запросами при ошибках**:
+
+Интерсептор может отменять зависимые запросы, если основной запрос завершился с ошибкой.
+
+```typescript
+@Injectable()
+export class DependentRequestInterceptor implements HttpInterceptor {
+  private errorSubject = new Subject<string>();
+  public errors$ = this.errorSubject.asObservable().pipe(shareReplay(1), debounceTime(100));
+
+  constructor() {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Проверяем, является ли запрос зависимым
+    const dependsOn = request.headers.get("X-Depends-On");
+
+    if (dependsOn) {
+      // Для зависимых запросов подписываемся на поток ошибок
+      return this.errors$.pipe(
+        // Ждем 100мс, проверяя, не произошла ли ошибка в зависимостях
+        take(1),
+        timeout(100),
+        catchError((timeoutError) => {
+          // Если не было ошибок в зависимостях, выполняем запрос
+          return next.handle(request);
+        }),
+        // Если была ошибка в зависимостях, отменяем запрос
+        switchMap((errorKey) => {
+          if (errorKey === dependsOn) {
+            return throwError(() => new Error(`Canceled due to error in dependent request: ${dependsOn}`));
+          }
+          return next.handle(request);
+        })
+      );
+    }
+
+    // Для независимых запросов просто обрабатываем и публикуем ошибки
+    return next.handle(request).pipe(
+      catchError((error) => {
+        // Публикуем ошибку для зависимых запросов
+        if (request.headers.has("X-Request-Key")) {
+          this.errorSubject.next(request.headers.get("X-Request-Key")!);
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+}
+```
+
+**7. Изоляция ошибок в микрофронтендах**:
+
+В приложениях с микрофронтенд-архитектурой нужно изолировать ошибки, чтобы сбой в одном модуле не влиял на другие.
+
+```typescript
+@Injectable()
+export class MicrofrontendErrorIsolationInterceptor implements HttpInterceptor {
+  constructor(private errorBoundaryService: ErrorBoundaryService, private moduleRegistry: ModuleRegistryService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Определяем, к какому микрофронтенду относится запрос
+    const moduleName = this.identifyModuleFromRequest(request);
+
+    return next.handle(request).pipe(
+      catchError((error) => {
+        // Регистрируем ошибку в контексте конкретного модуля
+        this.errorBoundaryService.registerError(moduleName, error);
+
+        // Проверяем, критична ли ошибка для всего приложения
+        if (this.isCriticalError(error)) {
+          // Для критичных ошибок уведомляем все модули
+          this.moduleRegistry.notifyError(error);
+          return throwError(() => error);
+        }
+
+        // Для некритичных ошибок создаем запасной ответ
+        if (this.canProvideDefaultResponse(request)) {
+          const fallbackResponse = this.createFallbackResponse(moduleName, request);
+          return of(fallbackResponse);
+        }
+
+        return throwError(() => error);
+      })
+    );
+  }
+
+  private identifyModuleFromRequest(request: HttpRequest<any>): string {
+    // Определяем модуль по URL или заголовкам
+    const moduleName = request.headers.get("X-Module-Name");
+    if (moduleName) {
+      return moduleName;
+    }
+
+    // Определение по URL
+    const url = request.url;
+    for (const module of this.moduleRegistry.getModules()) {
+      if (url.includes(module.apiPrefix)) {
+        return module.name;
+      }
+    }
+
+    return "core";
+  }
+
+  private isCriticalError(error: HttpErrorResponse): boolean {
+    // Проверка на критические ошибки
+    return error.status === 401 || error.status === 403 || error.status === 0;
+  }
+
+  private canProvideDefaultResponse(request: HttpRequest<any>): boolean {
+    // Проверка, можем ли предоставить запасной ответ
+    return request.method === "GET" && !request.headers.has("X-No-Fallback");
+  }
+
+  private createFallbackResponse(moduleName: string, request: HttpRequest<any>): HttpResponse<any> {
+    // Получаем запасные данные для модуля
+    const fallbackData = this.moduleRegistry.getFallbackData(moduleName, request.url);
+
+    return new HttpResponse({
+      body: fallbackData,
+      status: 200,
+      statusText: "OK (fallback)",
+      headers: new HttpHeaders({ "X-Fallback": "true" }),
+    });
+  }
+}
+```
+
+**8. Обработка ошибок в мультитенантных приложениях**:
+
+В приложениях с поддержкой нескольких клиентов (тенантов) интерсептор может применять разные стратегии обработки ошибок.
+
+```typescript
+@Injectable()
+export class MultiTenantErrorInterceptor implements HttpInterceptor {
+  constructor(private tenantService: TenantService, private notificationService: NotificationService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    return next.handle(request).pipe(
+      catchError((error: HttpErrorResponse) => {
+        // Получаем текущего клиента
+        const tenant = this.tenantService.getCurrentTenant();
+
+        // Получаем настройки обработки ошибок для клиента
+        const errorConfig = tenant.errorHandlingConfig;
+
+        // Применяем специфические для клиента правила обработки ошибок
+        switch (error.status) {
+          case 400:
+            this.handleBadRequest(error, errorConfig);
+            break;
+          case 404:
+            this.handleNotFound(error, errorConfig);
+            break;
+          case 500:
+            this.handleServerError(error, errorConfig);
+            break;
+          default:
+            this.handleGenericError(error, errorConfig);
+        }
+
+        // Пробрасываем оригинальную ошибку или кастомную
+        if (errorConfig.transformErrors) {
+          const transformedError = this.transformError(error, errorConfig);
+          return throwError(() => transformedError);
+        }
+
+        return throwError(() => error);
+      })
+    );
+  }
+
+  private handleBadRequest(error: HttpErrorResponse, config: TenantErrorConfig): void {
+    if (config.logValidationErrors) {
+      this.logError("Validation Error", error);
+    }
+
+    if (config.showValidationMessages) {
+      const errorMessage = this.extractValidationMessage(error, config);
+      this.notificationService.showError(errorMessage, config.validationErrorTitle);
+    }
+  }
+
+  private handleNotFound(error: HttpErrorResponse, config: TenantErrorConfig): void {
+    if (config.redirectOnNotFound) {
+      this.router.navigate([config.notFoundRedirectPath || "/not-found"]);
+    }
+
+    if (config.showNotFoundMessage) {
+      this.notificationService.showWarning(config.notFoundMessage || "The requested resource was not found.", config.notFoundTitle || "Not Found");
+    }
+  }
+
+  private handleServerError(error: HttpErrorResponse, config: TenantErrorConfig): void {
+    if (config.automaticRetryOnServerError) {
+      // Логика повторных попыток...
+    }
+
+    if (config.showServerErrorMessage) {
+      const contactInfo = config.supportContactInfo ? `Please contact support at ${config.supportContactInfo}` : "";
+
+      this.notificationService.showError(`${config.serverErrorMessage || "An unexpected server error occurred."} ${contactInfo}`, config.serverErrorTitle || "Server Error");
+    }
+  }
+
+  private extractValidationMessage(error: HttpErrorResponse, config: TenantErrorConfig): string {
+    // Извлекаем сообщения об ошибках в зависимости от формата, который использует клиент
+    if (config.validationErrorFormat === "flat") {
+      return error.error.message || "Validation error occurred";
+    } else if (config.validationErrorFormat === "field-errors") {
+      const fieldErrors = error.error.errors || {};
+      return Object.values(fieldErrors).join(". ") || "Please check the form for errors";
+    }
+
+    return "Please check your input and try again";
+  }
+
+  private transformError(error: HttpErrorResponse, config: TenantErrorConfig): any {
+    // Трансформируем ошибку в соответствии с требованиями клиента
+    if (config.useCustomErrorFormat) {
+      return {
+        code: error.status,
+        message: this.getCustomErrorMessage(error, config),
+        timestamp: new Date().toISOString(),
+        tenantId: config.tenantId,
+        requestId: error.headers?.get("X-Request-ID") || undefined,
+      };
+    }
+
+    return error;
+  }
+
+  private getCustomErrorMessage(error: HttpErrorResponse, config: TenantErrorConfig): string {
+    // Возвращаем сообщение в соответствии с настройками клиента
+    const defaultMessages = config.defaultErrorMessages || {};
+    return defaultMessages[error.status] || error.message;
+  }
+}
+```
+
+Интерсепторы для обработки ошибок представляют собой гибкий и мощный инструмент для централизованного управления ошибками HTTP в Angular-приложениях. Они позволяют реализовать единообразную обработку ошибок, улучшить пользовательский опыт, обеспечить логирование и отладку, а также реализовать сложные сценарии восстановления после ошибок.
+
+### 8. How do you handle authentication and authorization with HTTP interceptors?
+
+HTTP-интерсепторы предоставляют мощный механизм для централизованной обработки аутентификации и авторизации в Angular-приложениях. Они позволяют единообразно управлять безопасностью всех HTTP-запросов, не дублируя код в каждом сервисе.
+
+**Основные аспекты обработки аутентификации и авторизации через интерсепторы**:
+
+**1. Добавление токенов аутентификации к запросам**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from "@angular/common/http";
+import { Observable } from "rxjs";
+import { AuthService } from "./auth.service";
+
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+  constructor(private authService: AuthService) {}
+
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    // Получаем текущий токен из сервиса аутентификации
+    const token = this.authService.getToken();
+
+    // Пропускаем запросы к публичным API или запросы аутентификации
+    if (this.isPublicRequest(request)) {
+      return next.handle(request);
+    }
+
+    // Если есть токен, добавляем его к запросу
+    if (token) {
+      // Клонируем запрос, так как оригинальный запрос иммутабелен
+      const authRequest = request.clone({
+        headers: request.headers.set("Authorization", `Bearer ${token}`),
+      });
+
+      // Передаем модифицированный запрос следующему обработчику
+      return next.handle(authRequest);
+    }
+
+    // Если токена нет, просто передаем запрос дальше
+    return next.handle(request);
+  }
+
+  private isPublicRequest(request: HttpRequest<any>): boolean {
+    // Логика определения публичных запросов
+    const publicUrls = ["/api/auth/login", "/api/auth/register", "/api/public"];
+
+    return publicUrls.some((url) => request.url.includes(url));
+  }
+}
+```
+
+**2. Перехват и обработка 401/403 ошибок**:
+
+```typescript
+import { Injectable } from "@angular/core";
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse } from "@angular/common/http";
+import { Observable, throwError, BehaviorSubject } from "rxjs";
+import { catchError, filter, take, switchMap } from "rxjs/operators";
+import { AuthService } from "./auth.service";
+import { Router } from "@angular/router";
+
+@Injectable()
+export class AuthErrorInterceptor implements HttpInterceptor {
+  private isRefreshing = false;
+  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+
+  constructor(private authService: AuthService, private router: Router) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    return next.handle(request).pipe(
+      catchError((error) => {
+        if (error instanceof HttpErrorResponse) {
+          // Обработка ошибок аутентификации
+          if (error.status === 401) {
+            return this.handle401Error(request, next);
+          }
+
+          // Обработка ошибок авторизации
+          if (error.status === 403) {
+            return this.handle403Error(error);
+          }
+        }
+
+        // Пробрасываем остальные ошибки
+        return throwError(() => error);
+      })
+    );
+  }
+
+  private handle401Error(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Проверяем, не является ли это запросом на обновление токена
+    if (request.url.includes("refresh-token")) {
+      // Если сам запрос обновления токена неудачен, делаем полный логаут
+      this.authService.logout();
+      this.router.navigate(["/login"]);
+      return throwError(() => new Error("Session expired. Please login again."));
+    }
+
+    if (!this.isRefreshing) {
+      this.isRefreshing = true;
+      this.refreshTokenSubject.next(null);
+
+      return this.authService.refreshToken().pipe(
+        switchMap((token) => {
+          this.isRefreshing = false;
+          this.refreshTokenSubject.next(token);
+
+          // Клонируем оригинальный запрос с новым токеном
+          const authReq = request.clone({
+            headers: request.headers.set("Authorization", `Bearer ${token}`),
+          });
+
+          // Повторяем оригинальный запрос с новым токеном
+          return next.handle(authReq);
+        }),
+        catchError((error) => {
+          this.isRefreshing = false;
+
+          // Если не удалось обновить токен, делаем логаут
+          this.authService.logout();
+          this.router.navigate(["/login"]);
+
+          return throwError(() => new Error("Session expired. Please login again."));
+        })
+      );
+    } else {
+      // Если процесс обновления токена уже идет, ждем завершения
+      return this.refreshTokenSubject.pipe(
+        filter((token) => token !== null),
+        take(1),
+        switchMap((token) => {
+          // Клонируем запрос с новым токеном
+          const authReq = request.clone({
+            headers: request.headers.set("Authorization", `Bearer ${token}`),
+          });
+
+          // Повторяем запрос с новым токеном
+          return next.handle(authReq);
+        })
+      );
+    }
+  }
+
+  private handle403Error(error: HttpErrorResponse): Observable<HttpEvent<any>> {
+    // Логируем информацию о доступе
+    console.error("Access denied:", error);
+
+    // Перенаправляем на страницу "Доступ запрещен"
+    this.router.navigate(["/forbidden"], {
+      queryParams: { returnUrl: this.router.url },
+    });
+
+    // Возвращаем более информативную ошибку
+    return throwError(() => new Error("You do not have permission to access this resource"));
+  }
+}
+```
+
+**3. Управление сессией и автоматический выход**:
+
+```typescript
+@Injectable()
+export class SessionInterceptor implements HttpInterceptor {
+  private readonly SESSION_HEADER = "X-Session-Info";
+
+  constructor(private authService: AuthService, private notificationService: NotificationService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    return next.handle(request).pipe(
+      tap((event) => {
+        // Проверяем только HTTP-ответы
+        if (event instanceof HttpResponse) {
+          // Обновляем информацию о сессии, если она есть в заголовках
+          if (event.headers.has(this.SESSION_HEADER)) {
+            const sessionInfo = JSON.parse(atob(event.headers.get(this.SESSION_HEADER)!));
+
+            // Обновляем время сессии
+            if (sessionInfo.expiresAt) {
+              this.authService.updateSessionExpiration(sessionInfo.expiresAt);
+            }
+
+            // Показываем предупреждение, если сессия скоро истечет
+            if (sessionInfo.expiresIn && sessionInfo.expiresIn < 300) {
+              // Меньше 5 минут
+              this.notificationService.warning(`Your session will expire in ${Math.ceil(sessionInfo.expiresIn / 60)} minutes. ` + `Would you like to extend it?`, "Session Expiring Soon", {
+                action: "Extend",
+                duration: 10000,
+                onAction: () => this.authService.extendSession(),
+              });
+            }
+          }
+        }
+      }),
+      catchError((error) => {
+        // Проверяем на ошибки сессии
+        if (error instanceof HttpErrorResponse) {
+          // Обрабатываем особые коды ошибок для управления сессией
+          if (error.status === 440) {
+            // Кастомный код "Session Timeout"
+            this.authService.logout();
+            this.notificationService.error("Your session has expired");
+            this.router.navigate(["/login"]);
+            return throwError(() => new Error("Session expired"));
+          }
+
+          // Обрабатываем случай одновременного входа с другого устройства
+          if (error.status === 409 && error.error?.code === "SESSION_CONFLICT") {
+            this.authService.logout();
+            this.notificationService.error("Your account has been logged in from another device", "Session Conflict");
+            this.router.navigate(["/login"]);
+            return throwError(() => new Error("Session conflict"));
+          }
+        }
+
+        return throwError(() => error);
+      })
+    );
+  }
+}
+```
+
+**4. Реализация CSRF/XSRF защиты**:
+
+Angular уже имеет встроенную защиту от CSRF-атак через `HttpClientXsrfModule`, но иногда требуется кастомная реализация.
+
+```typescript
+@Injectable()
+export class CsrfInterceptor implements HttpInterceptor {
+  constructor(private cookieService: CookieService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Пропускаем GET-запросы (они должны быть идемпотентными)
+    if (request.method === "GET") {
+      return next.handle(request);
+    }
+
+    // Получаем CSRF-токен из cookie
+    const csrfToken = this.cookieService.get("XSRF-TOKEN");
+
+    if (csrfToken) {
+      // Клонируем запрос с добавленным заголовком
+      const modifiedRequest = request.clone({
+        headers: request.headers.set("X-XSRF-TOKEN", csrfToken),
+      });
+
+      return next.handle(modifiedRequest);
+    }
+
+    // Если токена нет, сначала запрашиваем его с сервера
+    if (!request.url.includes("/api/csrf-token")) {
+      return this.getCsrfToken().pipe(
+        switchMap((token) => {
+          const modifiedRequest = request.clone({
+            headers: request.headers.set("X-XSRF-TOKEN", token),
+          });
+
+          return next.handle(modifiedRequest);
+        })
+      );
+    }
+
+    // Передаем запрос без модификации (например, для запроса CSRF-токена)
+    return next.handle(request);
+  }
+
+  private getCsrfToken(): Observable<string> {
+    // Запрашиваем новый CSRF-токен с сервера
+    return this.http.get("/api/csrf-token", { responseType: "text" }).pipe(
+      map((token) => {
+        this.cookieService.set("XSRF-TOKEN", token);
+        return token;
+      })
+    );
+  }
+}
+```
+
+**5. Управление доступом на основе ролей**:
+
+```typescript
+@Injectable()
+export class RoleBasedAuthInterceptor implements HttpInterceptor {
+  constructor(private authService: AuthService, private router: Router) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Извлекаем требуемую роль из метаданных запроса или ссылок API
+    const requiredRole = this.extractRequiredRole(request);
+
+    if (requiredRole) {
+      // Проверяем роль пользователя
+      const userRoles = this.authService.getUserRoles();
+
+      if (!userRoles.includes(requiredRole)) {
+        // Перенаправляем на страницу "доступ запрещен"
+        this.router.navigate(["/forbidden"]);
+
+        // Возвращаем ошибку
+        return throwError(
+          () =>
+            new HttpErrorResponse({
+              error: `Access denied: Required role '${requiredRole}'`,
+              status: 403,
+              statusText: "Forbidden",
+              url: request.url,
+            })
+        );
+      }
+    }
+
+    // Пропускаем запрос, если проверка пройдена или роль не требуется
+    return next.handle(request);
+  }
+
+  private extractRequiredRole(request: HttpRequest<any>): string | null {
+    // Извлекаем роль из заголовка (установленного сервисом)
+
+    if (request.headers.has("X-Required-Role")) {
+      return request.headers.get("X-Required-Role");
+    }
+
+    // Или определяем роль на основе endpoint URL
+    const adminPatterns = ["/api/admin/", "/api/manage/users"];
+    if (adminPatterns.some((pattern) => request.url.includes(pattern))) {
+      return "ADMIN";
+    }
+
+    const moderatorPatterns = ["/api/moderate/", "/api/manage/content"];
+    if (moderatorPatterns.some((pattern) => request.url.includes(pattern))) {
+      return "MODERATOR";
+    }
+
+    return null; // Роль не требуется
+  }
+}
+```
+
+**6. Многофакторная аутентификация (MFA)**:
+
+```typescript
+@Injectable()
+export class MfaInterceptor implements HttpInterceptor {
+  constructor(private authService: AuthService, private mfaService: MfaService, private dialog: MatDialog) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    return next.handle(request).pipe(
+      catchError((error) => {
+        // Проверяем, требуется ли MFA для данного запроса
+        if (error instanceof HttpErrorResponse && error.status === 403 && error.error?.code === "MFA_REQUIRED") {
+          // Открываем диалоговое окно для MFA
+          return this.showMfaDialog().pipe(
+            switchMap((mfaCode) => {
+              // Повторяем запрос с MFA кодом
+              const mfaRequest = request.clone({
+                headers: request.headers.set("X-MFA-Code", mfaCode),
+              });
+
+              return next.handle(mfaRequest);
+            }),
+            catchError((mfaError) => {
+              // Обрабатываем ошибки MFA процесса
+              if (mfaError === "CANCELED") {
+                return throwError(() => new Error("MFA verification was canceled"));
+              }
+
+              return throwError(() => mfaError);
+            })
+          );
+        }
+
+        // Пробрасываем остальные ошибки
+        return throwError(() => error);
+      })
+    );
+  }
+
+  private showMfaDialog(): Observable<string> {
+    // Открываем диалоговое окно для ввода MFA
+    const dialogRef = this.dialog.open(MfaDialogComponent, {
+      width: "350px",
+      disableClose: true,
+      data: {
+        phone: this.authService.getCurrentUser()?.phone,
+        mfaType: this.mfaService.getPreferredMfaType(),
+      },
+    });
+
+    // Получаем код из диалога
+    return dialogRef.afterClosed();
+  }
+}
+```
+
+**7. API с разными схемами аутентификации**:
+
+```typescript
+@Injectable()
+export class MultiAuthInterceptor implements HttpInterceptor {
+  constructor(private authService: AuthService, private apiKeyService: ApiKeyService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Определяем схему аутентификации по URL
+    const authScheme = this.getAuthScheme(request.url);
+
+    let modifiedRequest: HttpRequest<any>;
+
+    switch (authScheme) {
+      case "JWT":
+        // Стандартная JWT аутентификация
+        const jwtToken = this.authService.getToken();
+        if (jwtToken) {
+          modifiedRequest = request.clone({
+            headers: request.headers.set("Authorization", `Bearer ${jwtToken}`),
+          });
+        } else {
+          // Если нет токена для защищенного ресурса
+          return throwError(() => new Error("Authentication required"));
+        }
+        break;
+
+      case "API_KEY":
+        // API ключ для внешних сервисов
+        const apiKey = this.apiKeyService.getApiKey();
+        modifiedRequest = request.clone({
+          headers: request.headers.set("X-API-Key", apiKey),
+        });
+        break;
+
+      case "BASIC":
+        // Basic аутентификация
+        const credentials = this.authService.getBasicCredentials();
+        if (credentials) {
+          modifiedRequest = request.clone({
+            headers: request.headers.set("Authorization", `Basic ${btoa(`${credentials.username}:${credentials.password}`)}`),
+          });
+        } else {
+          return throwError(() => new Error("Basic authentication credentials required"));
+        }
+        break;
+
+      case "NONE":
+      default:
+        // Публичный API без аутентификации
+        modifiedRequest = request;
+    }
+
+    return next.handle(modifiedRequest);
+  }
+
+  private getAuthScheme(url: string): string {
+    // Определяем схему по URL или домену
+    if (url.includes("/api/auth/") || url.includes("/public/")) {
+      return "NONE";
+    }
+
+    if (url.includes("/api/admin/") || url.includes("/api/user/")) {
+      return "JWT";
+    }
+
+    if (url.includes("external-api.com")) {
+      return "API_KEY";
+    }
+
+    if (url.includes("legacy-api.com")) {
+      return "BASIC";
+    }
+
+    // По умолчанию используем JWT
+    return "JWT";
+  }
+}
+```
+
+**8. Обработка Single Sign-On (SSO) и OAuth**:
+
+```typescript
+@Injectable()
+export class OAuthInterceptor implements HttpInterceptor {
+  constructor(private oauthService: OAuthService, private router: Router) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Проверяем, требуется ли аутентификация для запроса
+    if (this.requiresAuthentication(request)) {
+      // Получаем текущий OAuth токен
+      const token = this.oauthService.getAccessToken();
+
+      if (!token) {
+        // Если токена нет, перенаправляем на аутентификацию
+        this.oauthService.initLoginFlow();
+        return throwError(() => new Error("Authentication required"));
+      }
+
+      // Проверяем, не истек ли токен
+      if (this.oauthService.hasValidAccessToken()) {
+        // Добавляем токен к запросу
+        const authRequest = request.clone({
+          headers: request.headers.set("Authorization", `Bearer ${token}`),
+        });
+
+        return next.handle(authRequest).pipe(
+          catchError((error) => {
+            if (error instanceof HttpErrorResponse && error.status === 401) {
+              // Пытаемся обновить токен через refresh_token
+              return from(this.oauthService.refreshToken()).pipe(
+                switchMap(() => {
+                  // Получаем новый токен после обновления
+                  const newToken = this.oauthService.getAccessToken();
+
+                  // Повторяем запрос с новым токеном
+                  const refreshedRequest = request.clone({
+                    headers: request.headers.set("Authorization", `Bearer ${newToken}`),
+                  });
+
+                  return next.handle(refreshedRequest);
+                }),
+                catchError((refreshError) => {
+                  // Если не удалось обновить токен, перенаправляем на вход
+                  console.error("Failed to refresh token", refreshError);
+                  this.oauthService.logOut();
+                  this.router.navigate(["/login"]);
+                  return throwError(() => new Error("Session expired"));
+                })
+              );
+            }
+
+            return throwError(() => error);
+          })
+        );
+      } else {
+        // Токен истек, пытаемся обновить
+        return from(this.oauthService.refreshToken()).pipe(
+          switchMap(() => {
+            const newToken = this.oauthService.getAccessToken();
+
+            const refreshedRequest = request.clone({
+              headers: request.headers.set("Authorization", `Bearer ${newToken}`),
+            });
+
+            return next.handle(refreshedRequest);
+          }),
+          catchError((error) => {
+            // Не удалось обновить токен, перенаправляем на вход
+            this.oauthService.logOut();
+            this.router.navigate(["/login"]);
+            return throwError(() => new Error("Session expired"));
+          })
+        );
+      }
+    }
+
+    // Пропускаем запрос, если аутентификация не требуется
+    return next.handle(request);
+  }
+
+  private requiresAuthentication(request: HttpRequest<any>): boolean {
+    // Исключаем запросы для аутентификации и публичные API
+    const publicUrls = ["/assets/", "/api/public/", this.oauthService.loginUrl, this.oauthService.tokenEndpoint];
+
+    return !publicUrls.some((url) => request.url.includes(url));
+  }
+}
+```
+
+**9. Обработка JWT с реактивным обновлением**:
+
+```typescript
+@Injectable()
+export class JwtInterceptor implements HttpInterceptor {
+  private refreshTokenInProgress = false;
+  private tokenRefreshedSource = new Subject<void>();
+  private tokenRefreshed$ = this.tokenRefreshedSource.asObservable().pipe(share());
+
+  constructor(private authService: AuthService, private jwtHelper: JwtHelperService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Проверяем, нужно ли добавлять токен к запросу
+    if (this.shouldAddToken(request)) {
+      return this.addToken(request, next);
+    }
+
+    // Если токен не нужен, пропускаем запрос без изменений
+    return next.handle(request);
+  }
+
+  private addToken(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Получаем текущий токен
+    const token = this.authService.getToken();
+
+    if (!token) {
+      return next.handle(request);
+    }
+
+    // Проверяем, валиден ли токен
+    if (this.jwtHelper.isTokenExpired(token)) {
+      // Если токен истек, пытаемся обновить
+      return this.handleExpiredToken(request, next);
+    }
+
+    // Проверяем, скоро ли истекает токен (за 30 секунд)
+    const tokenExpirationDate = this.jwtHelper.getTokenExpirationDate(token);
+    const now = new Date();
+    const tokenExpiresInSeconds = (tokenExpirationDate!.getTime() - now.getTime()) / 1000;
+
+    if (tokenExpiresInSeconds < 30) {
+      // Если токен скоро истекает, проактивно обновляем
+      return this.handleExpiredToken(request, next);
+    }
+
+    // Если токен в порядке, добавляем его к запросу
+    return next.handle(this.createRequestWithToken(request, token));
+  }
+
+  private handleExpiredToken(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Если процесс обновления токена уже запущен, ждем его завершения
+    if (this.refreshTokenInProgress) {
+      return this.tokenRefreshed$.pipe(switchMap(() => this.addToken(request, next)));
+    }
+
+    this.refreshTokenInProgress = true;
+
+    // Сбрасываем состояние subject
+    this.tokenRefreshedSource.next();
+
+    return this.authService.refreshToken().pipe(
+      switchMap((token) => {
+        this.refreshTokenInProgress = false;
+        this.tokenRefreshedSource.next();
+
+        // Повторяем запрос с новым токеном
+        return next.handle(this.createRequestWithToken(request, token));
+      }),
+      catchError((error) => {
+        this.refreshTokenInProgress = false;
+
+        // Если не удалось обновить токен, делаем логаут
+        this.authService.logout();
+        return throwError(() => error);
+      })
+    );
+  }
+
+  private shouldAddToken(request: HttpRequest<any>): boolean {
+    // Определяем, нужно ли добавлять токен к запросу
+    const skipUrls = ["/api/auth/login", "/api/auth/refresh-token", "/assets/"];
+
+    return !skipUrls.some((url) => request.url.includes(url));
+  }
+
+  private createRequestWithToken(request: HttpRequest<any>, token: string): HttpRequest<any> {
+    return request.clone({
+      headers: request.headers.set("Authorization", `Bearer ${token}`),
+    });
+  }
+}
+```
+
+**10. Использование HTTP-интерсепторов для разных сред разработки**:
+
+```typescript
+@Injectable()
+export class EnvironmentInterceptor implements HttpInterceptor {
+  constructor(private configService: ConfigService) {}
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Получаем текущую конфигурацию окружения
+    const environment = this.configService.getEnvironment();
+    const apiBase = this.configService.getApiBaseUrl();
+
+    // Преобразуем относительные URL в абсолютные
+    if (request.url.startsWith("/api")) {
+      const modifiedRequest = request.clone({
+        url: `${apiBase}${request.url}`,
+      });
+
+      // Добавляем информацию об окружении
+      if (environment !== "production") {
+        modifiedRequest = modifiedRequest.clone({
+          headers: modifiedRequest.headers.set("X-Environment", environment),
+        });
+      }
+
+      return next.handle(modifiedRequest);
+    }
+
+    // Добавляем информацию о тестировании в не-production средах
+    if (environment === "testing" || environment === "development") {
+      const testRequest = request.clone({
+        headers: request.headers.set("X-Test-Mode", "true"),
+      });
+
+      return next.handle(testRequest);
+    }
+
+    return next.handle(request);
+  }
+}
+```
+
+**Лучшие практики при работе с интерсепторами для аутентификации и авторизации**:
+
+1. **Порядок регистрации интерсепторов**:
+   - Регистрируйте интерсепторы аутентификации перед интерсепторами, которые зависят от данных аутентификации
+   - Сначала должны идти интерсепторы, модифицирующие запросы, затем обрабатывающие ответы
+
+```typescript
+providers: [
+  { provide: HTTP_INTERCEPTORS, useClass: EnvironmentInterceptor, multi: true },
+  { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+  { provide: HTTP_INTERCEPTORS, useClass: CsrfInterceptor, multi: true },
+  { provide: HTTP_INTERCEPTORS, useClass: LoadingInterceptor, multi: true },
+  { provide: HTTP_INTERCEPTORS, useClass: AuthErrorInterceptor, multi: true },
+  { provide: HTTP_INTERCEPTORS, useClass: ErrorHandlingInterceptor, multi: true },
+];
+```
+
+2. **Безопасное хранение токенов**:
+
+   - Используйте secure и httpOnly cookies для важных токенов
+   - Для SPA обычно используется localStorage или sessionStorage, но с пониманием рисков XSS
+   - Рассмотрите возможность шифрования токенов перед хранением
+
+3. **Реактивное обновление UI при изменении статуса аутентификации**:
+
+   - Используйте сервис с Observable для оповещения компонентов об изменениях статуса аутентификации
+   - Применяйте Guards для защиты маршрутов с учетом текущего статуса аутентификации
+
+4. **Обработка одновременных запросов**:
+
+   - Используйте механизмы предотвращения race condition при обновлении токенов
+   - Кешируйте процесс обновления токена, чтобы избежать множественных обновлений
+
+5. **Отладка интерсепторов**:
+
+   - Добавляйте возможность логирования для облегчения отладки (с переключателями для prod/dev)
+   - Используйте инструменты разработчика для проверки правильности заголовков
+
+6. **Гибкая конфигурация**:
+
+   - Создавайте конфигурируемые интерсепторы, которые могут работать в разных окружениях
+   - Используйте инъекцию зависимостей и сервисы конфигурации для настройки поведения
+
+7. **Изоляция бизнес-логики**:
+   - Храните основную логику аутентификации в сервисах, а не в интерсепторах
+   - Интерсепторы должны быть тонким слоем, использующим сервисы для выполнения операций
+
+HTTP-интерсепторы представляют собой мощный механизм для централизованной обработки аутентификации и авторизации в Angular-приложениях. Правильно реализованные интерсепторы обеспечивают безопасность, улучшают пользовательский опыт и значительно упрощают управление сессиями и токенами в приложении.
+
+## Tests in Angular
+
+### 1. What types of `Testing` does Angular support (e.g., unit tests, integration tests, e2e tests)?
+
+Angular предоставляет комплексный инструментарий для различных типов тестирования, позволяющий проверять приложение на разных уровнях:
+
+**1. Модульные тесты (Unit Tests)**:
+
+- **Назначение**: тестирование отдельных изолированных компонентов и функций
+- **Фокус**: проверка отдельных блоков кода в изоляции от других частей
+- **Инструменты**: Jasmine, Karma, TestBed
+- **Характеристики**: быстрые, изолированные, с использованием моков и заглушек
+- **Что тестируется**: сервисы, компоненты, директивы, пайпы, функции-утилиты
+
+```typescript
+describe("CounterService", () => {
+  let service: CounterService;
+
+  beforeEach(() => {
+    service = new CounterService();
+  });
+
+  it("should increment counter", () => {
+    expect(service.count).toBe(0);
+    service.increment();
+    expect(service.count).toBe(1);
+  });
+});
+```
+
+**2. Интеграционные тесты (Integration Tests)**:
+
+- **Назначение**: тестирование взаимодействия между различными частями приложения
+- **Фокус**: проверка совместной работы нескольких компонентов или модулей
+- **Инструменты**: TestBed, ComponentFixture, DebugElement
+- **Характеристики**: тестирование взаимодействий, реальных зависимостей, DOM-событий
+- **Что тестируется**: взаимодействие компонентов, сервисов, директив, DOM-события
+
+```typescript
+describe("UserProfileComponent", () => {
+  let component: UserProfileComponent;
+  let fixture: ComponentFixture<UserProfileComponent>;
+  let userService: UserService;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [UserProfileComponent, UserAvatarComponent],
+      providers: [UserService],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(UserProfileComponent);
+    component = fixture.componentInstance;
+    userService = TestBed.inject(UserService);
+  });
+
+  it("should display user data correctly", () => {
+    const testUser = { id: 1, name: "Test User" };
+    spyOn(userService, "getUser").and.returnValue(of(testUser));
+
+    fixture.detectChanges(); // Запускает ngOnInit и применяет изменения
+
+    const nameElement = fixture.debugElement.query(By.css(".user-name"));
+    expect(nameElement.nativeElement.textContent).toContain("Test User");
+  });
+});
+```
+
+**3. End-to-End тесты (E2E Tests)**:
+
+- **Назначение**: тестирование всего приложения в реальном окружении браузера
+- **Фокус**: проверка пользовательских сценариев от начала до конца
+- **Инструменты**: Protractor (устаревает), Cypress, Playwright, Selenium
+- **Характеристики**: моделируют реальные действия пользователя, длительные по времени выполнения
+- **Что тестируется**: полные пользовательские сценарии, бизнес-процессы, потоки работы
+
+```typescript
+// Пример с использованием Cypress
+describe("Login Flow", () => {
+  it("should log in a user successfully", () => {
+    cy.visit("/login");
+    cy.get('input[name="email"]').type("user@example.com");
+    cy.get('input[name="password"]').type("password123");
+    cy.get('button[type="submit"]').click();
+
+    // Проверяем, что пользователь перенаправлен на dashboard
+    cy.url().should("include", "/dashboard");
+    cy.get(".user-welcome").should("contain", "Welcome, User");
+  });
+});
+```
+
+**4. Тесты для компонентного взаимодействия (Component Interaction Tests)**:
+
+- **Назначение**: тестирование взаимодействия между родительскими и дочерними компонентами
+- **Фокус**: проверка передачи данных через @Input и @Output
+- **Инструменты**: TestBed, ComponentFixture
+- **Характеристики**: проверка передачи данных, обработки событий, жизненного цикла
+- **Что тестируется**: @Input, @Output, @ViewChild, ng-content, проекция контента
+
+```typescript
+describe("ParentComponent interaction with ChildComponent", () => {
+  let parentFixture: ComponentFixture<ParentComponent>;
+  let parentComponent: ParentComponent;
+  let childDebugElement: DebugElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ParentComponent, ChildComponent],
+    }).compileComponents();
+
+    parentFixture = TestBed.createComponent(ParentComponent);
+    parentComponent = parentFixture.componentInstance;
+    parentFixture.detectChanges();
+
+    childDebugElement = parentFixture.debugElement.query(By.directive(ChildComponent));
+  });
+
+  it("should pass data to child component via @Input", () => {
+    parentComponent.dataForChild = "test data";
+    parentFixture.detectChanges();
+
+    const childComponent = childDebugElement.componentInstance;
+    expect(childComponent.inputData).toBe("test data");
+  });
+
+  it("should react to child component events via @Output", () => {
+    const childComponent = childDebugElement.componentInstance;
+
+    // Проверяем, что parentComponent.handleChildEvent вызывается
+    // когда childComponent.buttonClicked эмитирует событие
+    spyOn(parentComponent, "handleChildEvent");
+    childComponent.buttonClicked.emit("child event data");
+
+    expect(parentComponent.handleChildEvent).toHaveBeenCalledWith("child event data");
+  });
+});
+```
+
+**5. Тесты маршрутизации (Routing Tests)**:
+
+- **Назначение**: тестирование навигации и маршрутизации в приложении
+- **Фокус**: проверка работы Guards, Resolvers, правильности маршрутов
+- **Инструменты**: RouterTestingModule, Router, Location
+- **Характеристики**: проверка URL, перенаправлений, параметров маршрута
+- **Что тестируется**: конфигурация маршрутов, защита маршрутов, резолверы данных
+
+```typescript
+describe("App Routing", () => {
+  let router: Router;
+  let location: Location;
+  let fixture: ComponentFixture<AppComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [RouterTestingModule.withRoutes(routes)],
+      declarations: [AppComponent, HomeComponent, AboutComponent],
+    }).compileComponents();
+
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+    fixture = TestBed.createComponent(AppComponent);
+
+    fixture.detectChanges();
+  });
+
+  it('should navigate to "about" successfully', fakeAsync(() => {
+    router.navigate(["/about"]);
+    tick(); // Для обработки асинхронной навигации
+
+    expect(location.path()).toBe("/about");
+    fixture.detectChanges();
+
+    const aboutElement = fixture.debugElement.query(By.css("app-about"));
+    expect(aboutElement).toBeTruthy();
+  }));
+});
+```
+
+**6. Тесты форм (Form Tests)**:
+
+- **Назначение**: тестирование поведения и валидации форм
+- **Фокус**: проверка состояний формы, валидации, отправки данных
+- **Инструменты**: ReactiveFormsModule, FormsModule
+- **Характеристики**: проверка валидности, состояний формы, обработки отправки
+- **Что тестируется**: модели форм, валидаторы, состояния контролов
+
+```typescript
+describe("LoginForm", () => {
+  let component: LoginFormComponent;
+  let fixture: ComponentFixture<LoginFormComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ReactiveFormsModule],
+      declarations: [LoginFormComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(LoginFormComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it("should validate email format", () => {
+    const emailControl = component.loginForm.get("email");
+
+    emailControl?.setValue("not-an-email");
+    expect(emailControl?.valid).toBeFalsy();
+    expect(emailControl?.errors?.["email"]).toBeTruthy();
+
+    emailControl?.setValue("valid@example.com");
+    expect(emailControl?.valid).toBeTruthy();
+  });
+
+  it("should submit form when valid", () => {
+    spyOn(component, "onSubmit");
+
+    component.loginForm.setValue({
+      email: "test@example.com",
+      password: "password123",
+    });
+
+    const submitButton = fixture.debugElement.query(By.css('button[type="submit"]'));
+    submitButton.nativeElement.click();
+
+    expect(component.onSubmit).toHaveBeenCalled();
+  });
+});
+```
+
+**7. Тесты HTTP-запросов (HTTP Tests)**:
+
+- **Назначение**: тестирование взаимодействия с серверным API
+- **Фокус**: проверка запросов, ответов, обработки ошибок
+- **Инструменты**: HttpClientTestingModule, HttpTestingController
+- **Характеристики**: мокирование HTTP-запросов без реальных сетевых вызовов
+- **Что тестируется**: сервисы работы с API, перехватчики, трансформации данных
+
+```typescript
+describe("UserService", () => {
+  let service: UserService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [UserService],
+    });
+
+    service = TestBed.inject(UserService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify(); // Проверяет, что нет незавершенных ожиданий
+  });
+
+  it("should fetch users", () => {
+    const mockUsers = [
+      { id: 1, name: "Alice" },
+      { id: 2, name: "Bob" },
+    ];
+
+    service.getUsers().subscribe((users) => {
+      expect(users).toEqual(mockUsers);
+    });
+
+    const req = httpMock.expectOne("/api/users");
+    expect(req.request.method).toBe("GET");
+    req.flush(mockUsers); // Имитируем успешный ответ
+  });
+
+  it("should handle errors", () => {
+    service.getUsers().subscribe({
+      next: () => fail("Should have failed"),
+      error: (error) => {
+        expect(error.status).toBe(404);
+      },
+    });
+
+    const req = httpMock.expectOne("/api/users");
+    req.flush("Not found", { status: 404, statusText: "Not Found" });
+  });
+});
+```
+
+**8. Тесты директив и пайпов (Directive and Pipe Tests)**:
+
+- **Назначение**: тестирование преобразований данных и манипуляций с DOM
+- **Фокус**: проверка трансформации данных, манипуляций с DOM
+- **Инструменты**: TestBed, ComponentFixture
+- **Характеристики**: изолированное тестирование логики трансформации
+- **Что тестируется**: пользовательские директивы и пайпы
+
+```typescript
+// Тест для пайпа
+describe("FileSizePipe", () => {
+  let pipe: FileSizePipe;
+
+  beforeEach(() => {
+    pipe = new FileSizePipe();
+  });
+
+  it("should convert bytes to human readable format", () => {
+    expect(pipe.transform(0)).toBe("0 B");
+    expect(pipe.transform(1024)).toBe("1 KB");
+    expect(pipe.transform(1048576)).toBe("1 MB");
+    expect(pipe.transform(1073741824)).toBe("1 GB");
+  });
+});
+
+// Тест для директивы
+describe("HighlightDirective", () => {
+  let fixture: ComponentFixture<TestComponent>;
+  let des: DebugElement[];
+
+  @Component({
+    template: `<div appHighlight="yellow">Highlight me!</div>`,
+  })
+  class TestComponent {}
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [HighlightDirective, TestComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestComponent);
+    fixture.detectChanges();
+
+    des = fixture.debugElement.queryAll(By.directive(HighlightDirective));
+  });
+
+  it("should change background color on mouseenter", () => {
+    const element = des[0].nativeElement;
+
+    // Исходное состояние
+    expect(element.style.backgroundColor).toBe("");
+
+    // Симулируем событие mouseenter
+    des[0].triggerEventHandler("mouseenter", null);
+    fixture.detectChanges();
+
+    expect(element.style.backgroundColor).toBe("yellow");
+
+    // Симулируем событие mouseleave
+    des[0].triggerEventHandler("mouseleave", null);
+    fixture.detectChanges();
+
+    expect(element.style.backgroundColor).toBe("");
+  });
+});
+```
+
+**9. Тесты состояний (State Management Tests)**:
+
+- **Назначение**: тестирование управления состоянием приложения
+- **Фокус**: проверка изменений состояния, побочных эффектов, селекторов
+- **Инструменты**: специфические для используемой библиотеки (NgRx, NGXS и т.д.)
+- **Характеристики**: тестирование редьюсеров, эффектов, селекторов
+- **Что тестируется**: логика изменения состояния, обработка действий, выборка данных
+
+```typescript
+// Тесты NgRx редьюсера
+describe("Counter Reducer", () => {
+  it("should increment counter", () => {
+    const initialState = { count: 0 };
+    const action = increment();
+    const newState = counterReducer(initialState, action);
+
+    expect(newState.count).toBe(1);
+  });
+
+  it("should decrement counter", () => {
+    const initialState = { count: 5 };
+    const action = decrement();
+    const newState = counterReducer(initialState, action);
+
+    expect(newState.count).toBe(4);
+  });
+});
+
+// Тесты NgRx эффекта
+describe("Auth Effects", () => {
+  let effects: AuthEffects;
+  let actions$: ReplaySubject<any>;
+  let authService: jasmine.SpyObj<AuthService>;
+
+  beforeEach(() => {
+    const authServiceSpy = jasmine.createSpyObj("AuthService", ["login"]);
+
+    TestBed.configureTestingModule({
+      providers: [AuthEffects, provideMockActions(() => actions$), { provide: AuthService, useValue: authServiceSpy }],
+    });
+
+    effects = TestBed.inject(AuthEffects);
+    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
+    actions$ = new ReplaySubject(1);
+  });
+
+  it("should dispatch loginSuccess after successful login", () => {
+    const credentials = { username: "test", password: "pass" };
+    const user = { id: 1, username: "test" };
+
+    authService.login.and.returnValue(of(user));
+
+    actions$.next(login({ credentials }));
+
+    effects.login$.subscribe((action) => {
+      expect(action.type).toBe("[Auth] Login Success");
+      expect(action.user).toEqual(user);
+    });
+  });
+});
+```
+
+Angular поддерживает различные уровни тестирования, от модульных тестов отдельных компонентов до комплексных E2E-тестов всего приложения. Эта гибкость позволяет создавать эффективные тестовые стратегии, соответствующие конкретным потребностям проекта и обеспечивающие надежность разрабатываемого ПО.
+
+### 2. What are the main tools and libraries used by Angular for testing (`Jasmine`, `Karma`, and `Protractor`)?
+
+Angular предоставляет комплексный набор инструментов для тестирования, включающий несколько ключевых библиотек и фреймворков. Рассмотрим подробно каждый из них:
+
+**1. Jasmine: Фреймворк для написания тестов**
+
+Jasmine — это фреймворк для тестирования JavaScript, который используется по умолчанию в Angular для написания модульных и интеграционных тестов.
+
+**Ключевые особенности Jasmine**:
+
+- **Поддержка BDD-синтаксиса** (Behavior-Driven Development)
+- **Не зависит от других фреймворков**, библиотек или DOM
+- **Встроенные асинхронные возможности** для тестирования асинхронного кода
+- **Встроенная система моков** (spies) для имитации объектов и функций
+
+**Основные элементы синтаксиса Jasmine**:
+
+- `describe()`: определяет набор тестов (тестовый сьют)
+- `it()`: определяет отдельный тест (спецификацию)
+- `beforeEach()`, `afterEach()`: хуки для настройки и очистки перед/после каждого теста
+- `beforeAll()`, `afterAll()`: выполняется один раз перед/после всех тестов в блоке
+- `expect()`: создает утверждение с матчерами (toEqual, toBe, toContain и т.д.)
+- `spyOn()`: создает шпиона (spy) для мокирования функций
+
+```typescript
+describe("Calculator", () => {
+  let calculator: Calculator;
+
+  beforeEach(() => {
+    calculator = new Calculator();
+  });
+
+  it("should add two numbers correctly", () => {
+    const result = calculator.add(3, 5);
+    expect(result).toBe(8);
+  });
+
+  it("should subtract two numbers correctly", () => {
+    const result = calculator.subtract(10, 4);
+    expect(result).toBe(6);
+  });
+
+  it("should call logger when performing calculations", () => {
+    const logger = jasmine.createSpyObj("Logger", ["log"]);
+    calculator.setLogger(logger);
+
+    calculator.add(1, 2);
+    expect(logger.log).toHaveBeenCalledWith("Calculation performed: 1 + 2 = 3");
+  });
+});
+```
+
+**2. Karma: Средство запуска тестов**
+
+Karma — это средство запуска тестов (test runner), которое обеспечивает выполнение тестов в различных браузерах и средах.
+
+**Ключевые особенности Karma**:
+
+- **Запуск тестов в реальных браузерах** (Chrome, Firefox, Safari и др.)
+- **Поддержка режима наблюдения** (watch mode) для непрерывного выполнения тестов при изменении кода
+- **Интеграция с системами CI/CD** (continuous integration/continuous deployment)
+- **Расширяемость через плагины** для поддержки различных фреймворков, reporters и browsers
+
+**Конфигурация Karma** (karma.conf.js):
+
+```javascript
+module.exports = function (config) {
+  config.set({
+    basePath: "",
+    frameworks: ["jasmine", "@angular-devkit/build-angular"],
+    plugins: [require("karma-jasmine"), require("karma-chrome-launcher"), require("karma-jasmine-html-reporter"), require("karma-coverage"), require("@angular-devkit/build-angular/plugins/karma")],
+    client: {
+      clearContext: false, // оставляет видимой панель Jasmine в браузере
+    },
+    coverageReporter: {
+      dir: require("path").join(__dirname, "./coverage/my-app"),
+      subdir: ".",
+      reporters: [{ type: "html" }, { type: "text-summary" }],
+    },
+    reporters: ["progress", "kjhtml"],
+    port: 9876,
+    colors: true,
+    logLevel: config.LOG_INFO,
+    autoWatch: true,
+    browsers: ["Chrome"],
+    singleRun: false,
+    restartOnFileChange: true,
+  });
+};
+```
+
+**Типичные способы запуска тестов с Karma**:
+
+```bash
+#### Запуск всех тестов один раз
+ng test
+
+#### Запуск в режиме наблюдения (перезапуск при изменении файлов)
+ng test --watch=true
+
+#### Запуск с отчетом о покрытии
+ng test --code-coverage
+
+#### Запуск определенного набора тестов
+ng test --include='src/app/feature/**/*.spec.ts'
+```
+
+**3. Protractor: Фреймворк для E2E-тестирования (устаревает)**
+
+Protractor — это фреймворк для end-to-end тестирования, который был создан специально для Angular. Важно отметить, что Protractor **устаревает**, и команда Angular рекомендует переходить на современные альтернативы, такие как Cypress, Playwright или WebdriverIO.
+
+**Ключевые особенности Protractor**:
+
+- **Ориентирован на Angular**: автоматическая синхронизация с операциями Angular
+- **Построен на основе Selenium WebDriver**
+- **Использует Jasmine в качестве фреймворка тестирования по умолчанию**
+- **Поддержка паттерна Page Object** для улучшения организации тестов
+
+**Пример теста на Protractor**:
+
+```typescript
+describe("Todo App", () => {
+  beforeEach(() => {
+    browser.get("/");
+  });
+
+  it("should add a todo", () => {
+    element(by.css("input.new-todo")).sendKeys("Learn Protractor");
+    element(by.css("input.new-todo")).sendKeys(protractor.Key.ENTER);
+
+    const todoList = element.all(by.css(".todo-list li"));
+    expect(todoList.count()).toEqual(1);
+    expect(todoList.get(0).getText()).toEqual("Learn Protractor");
+  });
+
+  it("should mark a todo as completed", () => {
+    const checkbox = element(by.css(".todo-list li:first-child .toggle"));
+    checkbox.click();
+
+    const completedTodo = element(by.css(".todo-list li.completed"));
+    expect(completedTodo.isPresent()).toBe(true);
+  });
+});
+```
+
+**4. TestBed: Утилита для настройки и инициализации тестов Angular**
+
+TestBed не является отдельной библиотекой, а представляет собой часть фреймворка тестирования Angular, которая помогает настраивать и инициализировать тестовые окружения.
+
+**Ключевые особенности TestBed**:
+
+- **Создание тестового модуля** для компонентов, директив, сервисов и пайпов Angular
+- **Конфигурация зависимостей** (providers)
+- **Компиляция компонентов**
+- **Создание экземпляров компонентов**
+- **Доступ к инжектируемым сервисам**
+
+```typescript
+describe("UserProfileComponent", () => {
+  let component: UserProfileComponent;
+  let fixture: ComponentFixture<UserProfileComponent>;
+  let userService: jasmine.SpyObj<UserService>;
+
+  beforeEach(async () => {
+    const userServiceSpy = jasmine.createSpyObj("UserService", ["getUser"]);
+
+    await TestBed.configureTestingModule({
+      declarations: [UserProfileComponent, AvatarComponent],
+      providers: [{ provide: UserService, useValue: userServiceSpy }],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(UserProfileComponent);
+    component = fixture.componentInstance;
+    userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
+  });
+
+  it("should create the component", () => {
+    expect(component).toBeTruthy();
+  });
+
+  it("should load user data on init", () => {
+    const mockUser = { id: 1, name: "John Doe" };
+    userService.getUser.and.returnValue(of(mockUser));
+
+    fixture.detectChanges(); // Triggers ngOnInit
+
+    expect(userService.getUser).toHaveBeenCalled();
+    expect(component.user).toEqual(mockUser);
+  });
+});
+```
+
+**5. Современные альтернативы для E2E-тестирования**
+
+Так как Protractor устаревает, команда Angular рекомендует использовать следующие альтернативы:
+
+**a. Cypress**:
+
+- **Архитектура**: выполняется в том же цикле выполнения, что и тестируемое приложение
+- **Преимущества**: быстрый, надежный, интерактивный, отличный визуальный интерфейс
+- **Популярный выбор** для Angular-приложений после отказа от Protractor
+
+```typescript
+// cypress/integration/todo-app.spec.ts
+describe("Todo App", () => {
+  beforeEach(() => {
+    cy.visit("/");
+  });
+
+  it("should add a new todo", () => {
+    cy.get(".new-todo").type("Learn Cypress{enter}");
+
+    cy.get(".todo-list li").should("have.length", 1).first().should("have.text", "Learn Cypress");
+  });
+
+  it("should toggle todo status when clicked", () => {
+    cy.get(".todo-list li:first-child .toggle").click();
+    cy.get(".todo-list li").should("have.class", "completed");
+  });
+});
+```
+
+**b. Playwright**:
+
+- **Многобраузерная поддержка**: Chrome, Firefox, Safari из коробки
+- **Отличная работа с тенями DOM** и web-компонентами
+- **Мощные API** для тестирования современных веб-приложений
+- **Высокая производительность** благодаря параллельному запуску тестов
+
+```typescript
+// playwright-test.ts
+import { test, expect } from "@playwright/test";
+
+test.describe("Todo App", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("http://localhost:4200");
+  });
+
+  test("should add a new todo", async ({ page }) => {
+    await page.fill(".new-todo", "Learn Playwright");
+    await page.press(".new-todo", "Enter");
+
+    await expect(page.locator(".todo-list li")).toHaveCount(1);
+    await expect(page.locator(".todo-list li").first()).toHaveText("Learn Playwright");
+  });
+
+  test("should toggle todo status when clicked", async ({ page }) => {
+    await page.click(".todo-list li:first-child .toggle");
+    await expect(page.locator(".todo-list li")).toHaveClass(/completed/);
+  });
+});
+```
+
+**6. Другие полезные инструменты для тестирования в Angular**
+
+**a. ng-mocks**: Библиотека для упрощения мокирования компонентов и директив в модульных тестах
+
+```typescript
+import { MockBuilder, MockRender } from "ng-mocks";
+
+describe("ParentComponent", () => {
+  beforeEach(() => {
+    return MockBuilder(ParentComponent)
+      .mock(ChildComponent) // Автоматически мокируем дочерний компонент
+      .mock(SomeDirective)
+      .keep(SharedModule); // Оставляем немокированным
+  });
+
+  it("should render with mocked dependencies", () => {
+    const fixture = MockRender(ParentComponent, { inputProp: "test" });
+    expect(fixture.point.componentInstance.inputProp).toBe("test");
+  });
+});
+```
+
+**b. jest-preset-angular**: Пресет для использования Jest вместо Jasmine/Karma
+
+```bash
+npm install --save-dev jest jest-preset-angular @types/jest
+```
+
+**Конфигурация в jest.config.js**:
+
+```javascript
+module.exports = {
+  preset: "jest-preset-angular",
+  setupFilesAfterEnv: ["<rootDir>/setup-jest.ts"],
+  testPathIgnorePatterns: ["/node_modules/", "/dist/"],
+  globals: {
+    "ts-jest": {
+      tsconfig: "<rootDir>/tsconfig.spec.json",
+      stringifyContentPathRegex: "\\.html$",
+    },
+  },
+};
+```
+
+**c. Spectator**: Библиотека для упрощения написания тестов Angular
+
+```typescript
+import { createComponentFactory, Spectator } from "@ngneat/spectator";
+
+describe("ButtonComponent", () => {
+  let spectator: Spectator<ButtonComponent>;
+  const createComponent = createComponentFactory(ButtonComponent);
+
+  beforeEach(() => {
+    spectator = createComponent({
+      props: { text: "Click me" },
+    });
+  });
+
+  it("should display the button text", () => {
+    expect(spectator.query("button")).toHaveText("Click me");
+  });
+
+  it("should emit click event", () => {
+    let clicked = false;
+    spectator.component.clicked.subscribe(() => (clicked = true));
+
+    spectator.click("button");
+    expect(clicked).toBe(true);
+  });
+});
+```
+
+**d. @testing-library/angular**: Библиотека для написания тестов, ориентированных на пользовательский опыт
+
+```typescript
+import { render, screen, fireEvent } from "@testing-library/angular";
+
+describe("LoginComponent", () => {
+  it("should show error message for invalid email", async () => {
+    await render(LoginComponent, {
+      componentProperties: {
+        submitForm: jasmine.createSpy("submitForm"),
+      },
+    });
+
+    // Заполняем email некорректно
+    const emailInput = screen.getByLabelText(/email/i);
+    fireEvent.input(emailInput, { target: { value: "not-an-email" } });
+
+    // Кликаем на кнопку отправки
+    const submitButton = screen.getByRole("button", { name: /login/i });
+    fireEvent.click(submitButton);
+
+    // Проверяем появление сообщения об ошибке
+    expect(screen.getByText(/please enter a valid email/i)).toBeInTheDocument();
+  });
+});
+```
+
+**Сравнение основных инструментов тестирования в Angular**:
+
+| Инструмент     | Тип                                 | Сильные стороны                                                      | Ограничения                                                   | Применение                            |
+| -------------- | ----------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------- |
+| **Jasmine**    | Фреймворк тестирования              | Интуитивный синтаксис, встроенные моки, не требует DOM               | Ограниченные асинхронные возможности, меньше функций чем Jest | Модульные тесты, интеграционные тесты |
+| **Karma**      | Средство запуска тестов             | Запуск в реальных браузерах, интеграция с Angular CLI                | Медленнее чем Jest, сложная настройка                         | Запуск тестов в браузере              |
+| **Jest**       | Фреймворк и средство запуска тестов | Быстрее Karma+Jasmine, снапшот-тестирование, параллельное выполнение | Требует дополнительной настройки для Angular                  | Альтернатива Jasmine+Karma            |
+| **Protractor** | E2E-тестирование                    | Синхронизация с Angular                                              | Устаревает, сложный в поддержке                               | Устаревшее E2E-тестирование           |
+| **Cypress**    | E2E-тестирование                    | Визуальный интерфейс, стабильность, простота использования           | Ограниченная поддержка некоторых браузеров                    | Современное E2E-тестирование          |
+| **Playwright** | E2E-тестирование                    | Поддержка всех основных браузеров, отличная производительность       | Более новый, чем Cypress (меньше ресурсов)                    | Кросс-браузерное E2E-тестирование     |
+
+Команда Angular регулярно развивает набор инструментов для тестирования, адаптируя его к современным тенденциям в разработке. Выбор конкретных инструментов зависит от нужд проекта, его масштаба, требований к тестированию и предпочтений команды.
+
+### 3. What is `TestBed`, and how is it used to set up a testing environment?
+
+**TestBed** — это ключевая утилита Angular для создания и настройки тестового окружения. Она моделирует Angular DI (Dependency Injection) систему, позволяя тестировать компоненты, директивы, сервисы и пайпы в среде, максимально приближенной к реальной работе приложения.
+
+**Основные возможности TestBed**:
+
+**1. Создание тестового модуля**:
+TestBed предоставляет API для конфигурации тестового NgModule, который содержит все необходимые компоненты, директивы, пайпы и сервисы для тестирования.
+
+```typescript
+TestBed.configureTestingModule({
+  declarations: [UserProfileComponent, UserAvatarComponent],
+  imports: [CommonModule, RouterTestingModule],
+  providers: [UserService, { provide: API_URL, useValue: "http://test-api.example.com" }],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+});
+```
+
+**2. Компиляция компонентов**:
+Для тестирования компонентов с шаблонами нужно их скомпилировать:
+
+```typescript
+beforeEach(async () => {
+  await TestBed.configureTestingModule({
+    declarations: [MyComponent],
+  }).compileComponents(); // Асинхронная компиляция компонентов
+});
+```
+
+**3. Создание экземпляров компонентов**:
+TestBed позволяет создавать экземпляры компонентов вместе с их компонентным деревом:
+
+```typescript
+const fixture = TestBed.createComponent(UserProfileComponent);
+const component = fixture.componentInstance;
+```
+
+**4. Доступ к инжектируемым сервисам**:
+Получение экземпляров сервисов через систему внедрения зависимостей:
+
+```typescript
+const userService = TestBed.inject(UserService);
+const httpClient = TestBed.inject(HttpClient);
+```
+
+**5. Переопределение провайдеров**:
+Возможность подмены реальных зависимостей тестовыми заглушками:
+
+```typescript
+TestBed.configureTestingModule({
+  providers: [
+    { provide: UserService, useClass: MockUserService },
+    { provide: Router, useValue: routerSpy },
+  ],
+});
+```
+
+**6. Настройка и управление циклами обнаружения изменений**:
+
+```typescript
+fixture.detectChanges(); // Запускает цикл обнаружения изменений
+fixture.componentInstance.name = "New Name";
+fixture.detectChanges(); // Применяет изменения к DOM
+```
+
+**Полный пример использования TestBed для тестирования компонента**:
+
+```typescript
+import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
+import { RouterTestingModule } from "@angular/router/testing";
+import { of } from "rxjs";
+
+import { UserProfileComponent } from "./user-profile.component";
+import { UserService } from "./user.service";
+import { UserAvatarComponent } from "./user-avatar.component";
+
+describe("UserProfileComponent", () => {
+  let component: UserProfileComponent;
+  let fixture: ComponentFixture<UserProfileComponent>;
+  let userServiceSpy: jasmine.SpyObj<UserService>;
+
+  beforeEach(async () => {
+    // Создаем шпион для сервиса
+    const spy = jasmine.createSpyObj("UserService", ["getUserProfile", "updateProfile"]);
+
+    // Настраиваем тестовый модуль
+    await TestBed.configureTestingModule({
+      declarations: [UserProfileComponent, UserAvatarComponent],
+      imports: [
+        RouterTestingModule, // Имитация маршрутизации
+      ],
+      providers: [
+        { provide: UserService, useValue: spy }, // Подменяем реальный сервис шпионом
+      ],
+    }).compileComponents(); // Компилируем компоненты асинхронно
+
+    // Сохраняем ссылку на шпион
+    userServiceSpy = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
+  });
+
+  beforeEach(() => {
+    // Настраиваем поведение шпиона для каждого теста
+    userServiceSpy.getUserProfile.and.returnValue(
+      of({
+        id: "123",
+        name: "Test User",
+        email: "test@example.com",
+        avatarUrl: "https://example.com/avatar.jpg",
+      })
+    );
+
+    // Создаем компонент и получаем его экземпляр
+    fixture = TestBed.createComponent(UserProfileComponent);
+    component = fixture.componentInstance;
+
+    // Запускаем первоначальное обнаружение изменений
+    fixture.detectChanges();
+  });
+
+  it("should create the component", () => {
+    expect(component).toBeTruthy();
+  });
+
+  it("should load user profile on initialization", () => {
+    // Проверяем, что сервис был вызван
+    expect(userServiceSpy.getUserProfile).toHaveBeenCalled();
+
+    // Проверяем, что данные были сохранены в компоненте
+    expect(component.user.name).toBe("Test User");
+    expect(component.user.email).toBe("test@example.com");
+  });
+
+  it("should display user name in the template", () => {
+    // Находим элемент, отображающий имя пользователя
+    const nameElement = fixture.debugElement.query(By.css(".user-name"));
+
+    // Проверяем содержимое элемента
+    expect(nameElement.nativeElement.textContent).toContain("Test User");
+  });
+
+  it("should render user avatar component with correct URL", () => {
+    // Находим дочерний компонент аватара
+    const avatarComponent = fixture.debugElement.query(By.directive(UserAvatarComponent));
+
+    // Проверяем, что его входной параметр установлен правильно
+    expect(avatarComponent).toBeTruthy();
+    expect(avatarComponent.componentInstance.imageUrl).toBe("https://example.com/avatar.jpg");
+  });
+
+  it("should call updateProfile when save button is clicked", () => {
+    // Настраиваем шпион для метода updateProfile
+    userServiceSpy.updateProfile.and.returnValue(of({ success: true }));
+
+    // Находим кнопку сохранения и кликаем по ней
+    const saveButton = fixture.debugElement.query(By.css(".save-button"));
+    saveButton.nativeElement.click();
+
+    // Проверяем, что метод сервиса был вызван с правильными параметрами
+    expect(userServiceSpy.updateProfile).toHaveBeenCalledWith(component.user);
+  });
+});
+```
+
+**Продвинутые техники использования TestBed**:
+
+**1. Переопределение DI-провайдеров на уровне компонента**:
+
+```typescript
+const fixture = TestBed.createComponent(MyComponent, {
+  providers: [{ provide: SomeService, useClass: MockSomeService }],
+});
+```
+
+**2. Тестирование компонентов с входными и выходными параметрами**:
+
+```typescript
+// Создаем фикстуру и экземпляр компонента
+const fixture = TestBed.createComponent(ProductCardComponent);
+const component = fixture.componentInstance;
+
+// Устанавливаем входные параметры
+component.product = { id: 1, name: "Test Product", price: 99.99 };
+component.showActions = true;
+
+// Подписываемся на выходные события
+let selectedProduct: any;
+component.productSelected.subscribe((product) => {
+  selectedProduct = product;
+});
+
+// Запускаем обнаружение изменений для применения входных параметров
+fixture.detectChanges();
+
+// Проверяем, что компонент отображает данные правильно
+expect(fixture.nativeElement.querySelector(".product-name").textContent).toContain("Test Product");
+
+// Симулируем клик по кнопке выбора
+fixture.nativeElement.querySelector(".select-button").click();
+
+// Проверяем, что событие было эмитировано с правильными данными
+expect(selectedProduct).toEqual({ id: 1, name: "Test Product", price: 99.99 });
+```
+
+**3. Тестирование с разными конфигурациями для разных тестов**:
+
+```typescript
+describe("MyComponent with featureEnabled = true", () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      declarations: [MyComponent],
+      providers: [{ provide: FeatureConfig, useValue: { enabled: true } }],
+    });
+
+    fixture = TestBed.createComponent(MyComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it("should show feature UI when enabled", () => {
+    expect(fixture.nativeElement.querySelector(".feature-ui")).toBeTruthy();
+  });
+});
+
+describe("MyComponent with featureEnabled = false", () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      declarations: [MyComponent],
+      providers: [{ provide: FeatureConfig, useValue: { enabled: false } }],
+    });
+
+    fixture = TestBed.createComponent(MyComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it("should not show feature UI when disabled", () => {
+    expect(fixture.nativeElement.querySelector(".feature-ui")).toBeFalsy();
+  });
+});
+```
+
+**4. Использование TestBed для инициализации сервисов**:
+
+```typescript
+describe("AuthService", () => {
+  let service: AuthService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [AuthService, { provide: AUTH_CONFIG, useValue: { apiUrl: "/api/auth" } }],
+    });
+
+    // Инжектируем сервисы
+    service = TestBed.inject(AuthService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  it("should authenticate user with valid credentials", () => {
+    const mockUser = { id: 1, name: "Test User", token: "abc123" };
+
+    service.login("test@example.com", "password").subscribe((user) => {
+      expect(user).toEqual(mockUser);
+    });
+
+    const req = httpMock.expectOne("/api/auth/login");
+    expect(req.request.method).toBe("POST");
+    expect(req.request.body).toEqual({
+      email: "test@example.com",
+      password: "password",
+    });
+
+    req.flush(mockUser);
+  });
+});
+```
+
+**5. Тестирование маршрутизации с помощью TestBed**:
+
+```typescript
+describe("AppRoutingModule", () => {
+  let router: Router;
+  let location: Location;
+  let fixture: ComponentFixture<AppComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [RouterTestingModule.withRoutes(routes)],
+      declarations: [AppComponent, HomeComponent, AboutComponent],
+    }).compileComponents();
+
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+    fixture = TestBed.createComponent(AppComponent);
+
+    router.initialNavigation(); // Инициализируем маршрутизатор
+  });
+
+  it('should navigate to "about" successfully', fakeAsync(() => {
+    router.navigate(["/about"]);
+    tick(); // Продвигаем виртуальный таймер
+
+    expect(location.path()).toBe("/about");
+
+    // Проверяем, что компонент About был создан
+    const aboutElement = fixture.debugElement.query(By.directive(AboutComponent));
+    expect(aboutElement).toBeTruthy();
+  }));
+});
+```
+
+**6. Тестирование с помощью автономных компонентов (Angular 14+)**:
+
+```typescript
+// Для тестирования автономных компонентов
+describe("StandaloneButtonComponent", () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [StandaloneButtonComponent], // Прямой импорт автономного компонента
+    }).compileComponents();
+  });
+
+  it("should create the component", () => {
+    const fixture = TestBed.createComponent(StandaloneButtonComponent);
+    const component = fixture.componentInstance;
+    expect(component).toBeTruthy();
+  });
+});
+```
+
+**7. Работа с NgModules в тестах**:
+
+```typescript
+// Тестирование компонента из модуля
+describe("FeatureComponent", () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [FeatureModule], // Импортируем весь модуль вместо отдельных компонентов
+      providers: [{ provide: FeatureService, useClass: MockFeatureService }],
+    }).compileComponents();
+  });
+
+  it("should create the feature component", () => {
+    const fixture = TestBed.createComponent(FeatureComponent);
+    expect(fixture.componentInstance).toBeTruthy();
+  });
+});
+```
+
+TestBed является центральной частью фреймворка тестирования Angular и обеспечивает мощную инфраструктуру для тестирования компонентов и сервисов в контексте, близком к реальному приложению. Он позволяет настраивать тестовое окружение, управлять зависимостями и легко интегрироваться с другими инструментами тестирования.
+
+### 4. How do you test Angular components using `ComponentFixture` and `DebugElement`?
+
+**ComponentFixture** и **DebugElement** — это ключевые инструменты для тестирования компонентов Angular, позволяющие взаимодействовать с компонентом и его DOM-элементами.
+
+**1. ComponentFixture: оболочка для тестирования компонентов**
+
+**ComponentFixture** — это оболочка (wrapper) вокруг экземпляра компонента и его шаблона, предоставляющая доступ к компоненту, его DOM-элементу и методам для управления жизненным циклом компонента.
+
+**Основные свойства и методы ComponentFixture**:
+
+- **componentInstance**: прямой доступ к экземпляру компонента
+- **debugElement**: предоставляет DebugElement, связанный с корневым DOM-элементом компонента
+- **nativeElement**: прямой доступ к DOM-элементу компонента
+- **detectChanges()**: запускает обнаружение изменений в компоненте
+- **whenStable()**: возвращает Promise, который разрешается, когда все асинхронные операции завершены
+- **autoDetectChanges(isEnabled)**: включает или отключает автоматическое обнаружение изменений
+
+**Создание и использование ComponentFixture**:
+
+```typescript
+import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { CounterComponent } from "./counter.component";
+
+describe("CounterComponent", () => {
+  let component: CounterComponent;
+  let fixture: ComponentFixture<CounterComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [CounterComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(CounterComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges(); // Запускает ngOnInit и применяет изменения
+  });
+
+  it("should create the component", () => {
+    expect(component).toBeTruthy();
+  });
+
+  it("should increment counter when button is clicked", () => {
+    // Проверяем начальное значение
+    expect(component.count).toBe(0);
+
+    // Находим кнопку и кликаем по ней
+    const incrementButton = fixture.nativeElement.querySelector(".increment-button");
+    incrementButton.click();
+
+    // Проверяем, что значение изменилось
+    expect(component.count).toBe(1);
+
+    // Запускаем обнаружение изменений
+    fixture.detectChanges();
+
+    // Проверяем, что DOM обновился
+    const counterText = fixture.nativeElement.querySelector(".counter-value");
+    expect(counterText.textContent).toContain("1");
+  });
+});
+```
+
+**2. DebugElement: абстракция для кросс-платформенного тестирования DOM**
+
+**DebugElement** предоставляет абстракцию над DOM-элементами, обеспечивая кросс-платформенные возможности для тестирования компонентов Angular. Это особенно полезно при тестировании на платформах, отличных от браузера (например, в серверном рендеринге).
+
+**Основные свойства и методы DebugElement**:
+
+- **nativeElement**: прямой доступ к базовому DOM-элементу
+- **properties**: свойства элемента
+- **attributes**: атрибуты элемента
+- **classes**: CSS-классы элемента
+- **styles**: встроенные стили элемента
+- **childNodes**: дочерние DebugElement-ы
+- **parent**: родительский DebugElement
+- **query(predicate)**: поиск одного дочернего элемента
+- **queryAll(predicate)**: поиск всех дочерних элементов
+- **triggerEventHandler(eventName, eventObj)**: вызывает обработчик события
+
+**Использование DebugElement для тестирования компонентов**:
+
+```typescript
+import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
+import { FormsModule } from "@angular/forms";
+import { TodoListComponent } from "./todo-list.component";
+import { TodoItemComponent } from "./todo-item.component";
+
+describe("TodoListComponent", () => {
+  let component: TodoListComponent;
+  let fixture: ComponentFixture<TodoListComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [FormsModule],
+      declarations: [TodoListComponent, TodoItemComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TodoListComponent);
+    component = fixture.componentInstance;
+
+    // Устанавливаем начальные данные
+    component.todos = [
+      { id: 1, title: "Learn Angular", completed: false },
+      { id: 2, title: "Write tests", completed: true },
+    ];
+
+    fixture.detectChanges();
+  });
+
+  it("should render correct number of todo items", () => {
+    // Используем debugElement.queryAll для поиска всех элементов TodoItemComponent
+    const todoItems = fixture.debugElement.queryAll(By.directive(TodoItemComponent));
+    expect(todoItems.length).toBe(2);
+  });
+
+  it("should pass the correct data to todo items", () => {
+    const todoItems = fixture.debugElement.queryAll(By.directive(TodoItemComponent));
+
+    // Проверяем, что первому TodoItemComponent передан правильный объект
+    const firstTodoItem = todoItems[0].componentInstance;
+    expect(firstTodoItem.todo.title).toBe("Learn Angular");
+    expect(firstTodoItem.todo.completed).toBe(false);
+
+    // Проверяем, что второму TodoItemComponent передан правильный объект
+    const secondTodoItem = todoItems[1].componentInstance;
+    expect(secondTodoItem.todo.title).toBe("Write tests");
+    expect(secondTodoItem.todo.completed).toBe(true);
+  });
+
+  it("should handle todo completion toggling", () => {
+    const todoItems = fixture.debugElement.queryAll(By.directive(TodoItemComponent));
+    const firstTodoItemDebug = todoItems[0];
+
+    // Создаем шпиона для метода toggleComplete
+    spyOn(component, "toggleComplete").and.callThrough();
+
+    // Симулируем событие toggleComplete от первого TodoItemComponent
+    firstTodoItemDebug.triggerEventHandler("toggleComplete", 1);
+
+    // Проверяем, что метод toggleComplete был вызван с правильным ID
+    expect(component.toggleComplete).toHaveBeenCalledWith(1);
+
+    // Проверяем, что состояние первого todo изменилось
+    expect(component.todos[0].completed).toBe(true);
+  });
+
+  it("should add a new todo when form is submitted", () => {
+    // Находим форму и инпут
+    const form = fixture.debugElement.query(By.css("form"));
+    const input = fixture.debugElement.query(By.css('input[type="text"]'));
+
+    // Устанавливаем значение инпута
+    input.nativeElement.value = "New Todo Item";
+    input.nativeElement.dispatchEvent(new Event("input"));
+
+    // Отправляем форму
+    form.triggerEventHandler("submit", null);
+    fixture.detectChanges();
+
+    // Проверяем, что новый todo был добавлен
+    expect(component.todos.length).toBe(3);
+    expect(component.todos[2].title).toBe("New Todo Item");
+
+    // Проверяем, что DOM обновился
+    const todoItems = fixture.debugElement.queryAll(By.directive(TodoItemComponent));
+    expect(todoItems.length).toBe(3);
+  });
+
+  it("should filter todos based on status", () => {
+    // Устанавливаем фильтр на "completed"
+    component.filter = "completed";
+    fixture.detectChanges();
+
+    // Проверяем, что отображается только завершенные задачи
+    let visibleTodoItems = fixture.debugElement.queryAll(By.css(".todo-item:not(.hidden)"));
+    expect(visibleTodoItems.length).toBe(1);
+
+    // Меняем фильтр на "active"
+    component.filter = "active";
+    fixture.detectChanges();
+
+    // Проверяем, что отображаются только активные задачи
+    visibleTodoItems = fixture.debugElement.queryAll(By.css(".todo-item:not(.hidden)"));
+    expect(visibleTodoItems.length).toBe(1);
+
+    // Меняем фильтр на "all"
+    component.filter = "all";
+    fixture.detectChanges();
+
+    // Проверяем, что отображаются все задачи
+    visibleTodoItems = fixture.debugElement.queryAll(By.css(".todo-item:not(.hidden)"));
+    expect(visibleTodoItems.length).toBe(2);
+  });
+});
+```
+
+**3. Продвинутые техники тестирования компонентов**
+
+**a. Тестирование компонентов с входными и выходными параметрами**:
+
+```typescript
+describe("RatingComponent", () => {
+  let component: RatingComponent;
+  let fixture: ComponentFixture<RatingComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [RatingComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(RatingComponent);
+    component = fixture.componentInstance;
+  });
+
+  it("should display the correct number of stars", () => {
+    // Устанавливаем входной параметр
+    component.value = 3;
+    component.max = 5;
+    fixture.detectChanges();
+
+    // Проверяем DOM
+    const stars = fixture.debugElement.queryAll(By.css(".star"));
+    expect(stars.length).toBe(5);
+
+    const activeStars = fixture.debugElement.queryAll(By.css(".star.active"));
+    expect(activeStars.length).toBe(3);
+  });
+
+  it("should emit ratingChange event when star is clicked", () => {
+    component.max = 5;
+    fixture.detectChanges();
+
+    // Создаем шпиона для выходного параметра
+    spyOn(component.ratingChange, "emit");
+
+    // Находим и кликаем по четвертой звезде
+    const stars = fixture.debugElement.queryAll(By.css(".star"));
+    stars[3].nativeElement.click();
+
+    // Проверяем, что событие было эмитировано с правильным значением
+    expect(component.ratingChange.emit).toHaveBeenCalledWith(4);
+  });
+});
+```
+
+**b. Тестирование компонентов с внедренными сервисами**:
+
+```typescript
+describe("UserListComponent", () => {
+  let component: UserListComponent;
+  let fixture: ComponentFixture<UserListComponent>;
+  let userServiceSpy: jasmine.SpyObj<UserService>;
+
+  beforeEach(async () => {
+    // Создаем шпиона для UserService
+    const spy = jasmine.createSpyObj("UserService", ["getUsers", "deleteUser"]);
+
+    await TestBed.configureTestingModule({
+      declarations: [UserListComponent],
+      providers: [{ provide: UserService, useValue: spy }],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(UserListComponent);
+    component = fixture.componentInstance;
+    userServiceSpy = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
+
+    // Настраиваем шпиона для возврата фиктивных данных
+    userServiceSpy.getUsers.and.returnValue(
+      of([
+        { id: 1, name: "John Doe", email: "john@example.com" },
+        { id: 2, name: "Jane Smith", email: "jane@example.com" },
+      ])
+    );
+
+    fixture.detectChanges();
+  });
+
+  it("should load and display users on initialization", () => {
+    // Проверяем, что сервис был вызван
+    expect(userServiceSpy.getUsers).toHaveBeenCalled();
+
+    // Проверяем, что компонент сохранил данные
+    expect(component.users.length).toBe(2);
+
+    // Проверяем DOM
+    const userElements = fixture.debugElement.queryAll(By.css(".user-item"));
+    expect(userElements.length).toBe(2);
+    expect(userElements[0].nativeElement.textContent).toContain("John Doe");
+    expect(userElements[1].nativeElement.textContent).toContain("Jane Smith");
+  });
+
+  it("should delete a user when delete button is clicked", () => {
+    // Настраиваем шпиона для deleteUser
+    userServiceSpy.deleteUser.and.returnValue(of(true));
+
+    // Находим кнопку удаления для первого пользователя
+    const deleteButtons = fixture.debugElement.queryAll(By.css(".delete-button"));
+    deleteButtons[0].nativeElement.click();
+
+    // Проверяем, что сервис был вызван с правильным ID
+    expect(userServiceSpy.deleteUser).toHaveBeenCalledWith(1);
+
+    // Если компонент удаляет пользователя из списка после успешного удаления
+    if (component.removeUserFromList) {
+      component.removeUserFromList(1);
+      fixture.detectChanges();
+
+      // Проверяем, что пользователь удален из списка
+      const updatedUserElements = fixture.debugElement.queryAll(By.css(".user-item"));
+      expect(updatedUserElements.length).toBe(1);
+      expect(updatedUserElements[0].nativeElement.textContent).toContain("Jane Smith");
+    }
+  });
+});
+```
+
+**c. Тестирование шаблонов, использующих структурные директивы**:
+
+```typescript
+describe("UserTableComponent", () => {
+  let component: UserTableComponent;
+  let fixture: ComponentFixture<UserTableComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [UserTableComponent],
+      imports: [CommonModule],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(UserTableComponent);
+    component = fixture.componentInstance;
+  });
+
+  it("should show empty state when there are no users", () => {
+    component.users = [];
+    fixture.detectChanges();
+
+    const emptyState = fixture.debugElement.query(By.css(".empty-state"));
+    expect(emptyState).toBeTruthy();
+    expect(emptyState.nativeElement.textContent).toContain("No users found");
+
+    const tableRows = fixture.debugElement.queryAll(By.css("tbody tr"));
+    expect(tableRows.length).toBe(0);
+  });
+
+  it("should display users in table rows when users are provided", () => {
+    component.users = [
+      { id: 1, name: "John", role: "Admin" },
+      { id: 2, name: "Jane", role: "User" },
+    ];
+    fixture.detectChanges();
+
+    const emptyState = fixture.debugElement.query(By.css(".empty-state"));
+    expect(emptyState).toBeFalsy();
+
+    const tableRows = fixture.debugElement.queryAll(By.css("tbody tr"));
+    expect(tableRows.length).toBe(2);
+
+    // Проверяем содержимое первой строки
+    const firstRowCells = tableRows[0].queryAll(By.css("td"));
+    expect(firstRowCells[0].nativeElement.textContent).toContain("1");
+    expect(firstRowCells[1].nativeElement.textContent).toContain("John");
+    expect(firstRowCells[2].nativeElement.textContent).toContain("Admin");
+
+    // Проверяем содержимое второй строки
+    const secondRowCells = tableRows[1].queryAll(By.css("td"));
+    expect(secondRowCells[0].nativeElement.textContent).toContain("2");
+    expect(secondRowCells[1].nativeElement.textContent).toContain("Jane");
+    expect(secondRowCells[2].nativeElement.textContent).toContain("User");
+  });
+
+  it("should highlight admin users", () => {
+    component.users = [
+      { id: 1, name: "John", role: "Admin" },
+      { id: 2, name: "Jane", role: "User" },
+    ];
+    component.highlightAdmins = true;
+    fixture.detectChanges();
+
+    const tableRows = fixture.debugElement.queryAll(By.css("tbody tr"));
+
+    // Проверяем, что строка с админом имеет класс 'admin-row'
+    expect(tableRows[0].nativeElement.classList).toContain("admin-row");
+
+    // Проверяем, что строка с обычным пользователем не имеет класса 'admin-row'
+    expect(tableRows[1].nativeElement.classList).not.toContain("admin-row");
+  });
+});
+```
+
+**d. Тестирование компонентов с использованием CSS-селекторов**:
+
+```typescript
+describe("NavigationComponent", () => {
+  let component: NavigationComponent;
+  let fixture: ComponentFixture<NavigationComponent>;
+  let router: Router;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [NavigationComponent],
+      imports: [RouterTestingModule],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(NavigationComponent);
+    component = fixture.componentInstance;
+    router = TestBed.inject(Router);
+
+    fixture.detectChanges();
+  });
+
+  it("should highlight active link based on current route", () => {
+    // Устанавливаем текущий маршрут
+    spyOnProperty(router, "url", "get").and.returnValue("/about");
+
+    // Устанавливаем навигационные ссылки в компоненте
+    component.navLinks = [
+      { path: "/home", label: "Home" },
+      { path: "/about", label: "About" },
+      { path: "/contact", label: "Contact" },
+    ];
+
+    fixture.detectChanges();
+
+    // Проверяем, что правильная ссылка отмечена как активная
+    const links = fixture.debugElement.queryAll(By.css(".nav-link"));
+    expect(links.length).toBe(3);
+
+    expect(links[0].nativeElement.classList).not.toContain("active");
+    expect(links[1].nativeElement.classList).toContain("active");
+    expect(links[2].nativeElement.classList).not.toContain("active");
+  });
+
+  it("should navigate to the correct route when link is clicked", () => {
+    // Шпион для router.navigate
+    spyOn(router, "navigateByUrl");
+
+    component.navLinks = [
+      { path: "/home", label: "Home" },
+      { path: "/about", label: "About" },
+    ];
+
+    fixture.detectChanges();
+
+    // Находим ссылки и кликаем по первой
+    const links = fixture.debugElement.queryAll(By.css(".nav-link"));
+    links[0].nativeElement.click();
+
+    // Проверяем, что была выполнена навигация на правильный маршрут
+    expect(router.navigateByUrl).toHaveBeenCalledWith("/home", jasmine.any(Object));
+  });
+});
+```
+
+**e. Тестирование событий и пользовательских взаимодействий**:
+
+```typescript
+describe("SearchComponent", () => {
+  let component: SearchComponent;
+  let fixture: ComponentFixture<SearchComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [SearchComponent],
+      imports: [ReactiveFormsModule],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(SearchComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it("should debounce search input and emit search event", fakeAsync(() => {
+    // Создаем шпиона для выходного события
+    spyOn(component.search, "emit");
+
+    // Находим поле ввода
+    const input = fixture.debugElement.query(By.css('input[type="text"]'));
+
+    // Симулируем ввод текста
+    input.nativeElement.value = "test";
+    input.nativeElement.dispatchEvent(new Event("input"));
+
+    // Проверяем, что событие не было эмитировано сразу
+    expect(component.search.emit).not.toHaveBeenCalled();
+
+    // Перематываем виртуальный таймер на время дебаунса
+    tick(300); // Предполагаем, что дебаунс установлен на 300мс
+
+    // Теперь событие должно быть эмитировано
+    expect(component.search.emit).toHaveBeenCalledWith("test");
+
+    // Вводим новый текст
+    input.nativeElement.value = "angular";
+    input.nativeElement.dispatchEvent(new Event("input"));
+
+    // Перематываем таймер только на половину времени дебаунса
+    tick(150);
+
+    // Событие не должно быть эмитировано снова, так как не прошло достаточно времени
+    expect(component.search.emit).toHaveBeenCalledTimes(1);
+
+    // Перематываем оставшееся время
+    tick(150);
+
+    // Теперь событие должно быть эмитировано снова
+    expect(component.search.emit).toHaveBeenCalledTimes(2);
+    expect(component.search.emit).toHaveBeenCalledWith("angular");
+  }));
+
+  it("should handle keyboard events", () => {
+    spyOn(component, "handleKeyboardEvent").and.callThrough();
+    spyOn(component.clearSearch, "emit");
+
+    // Находим поле ввода
+    const input = fixture.debugElement.query(By.css('input[type="text"]'));
+
+    // Симулируем нажатие Escape
+    const escapeEvent = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+    });
+    input.nativeElement.dispatchEvent(escapeEvent);
+
+    // Проверяем, что метод был вызван и событие очистки было эмитировано
+    expect(component.handleKeyboardEvent).toHaveBeenCalled();
+    expect(component.clearSearch.emit).toHaveBeenCalled();
+  });
+
+  it("should clear input when clear button is clicked", () => {
+    // Устанавливаем значение в форму
+    component.searchForm.get("query")?.setValue("test query");
+    fixture.detectChanges();
+
+    // Проверяем, что кнопка очистки отображается
+    const clearButton = fixture.debugElement.query(By.css(".clear-button"));
+    expect(clearButton).toBeTruthy();
+
+    // Кликаем по кнопке очистки
+    clearButton.nativeElement.click();
+
+    // Проверяем, что значение формы сброшено
+    expect(component.searchForm.get("query")?.value).toBe("");
+
+    // Проверяем, что кнопка очистки больше не отображается
+    fixture.detectChanges();
+    const updatedClearButton = fixture.debugElement.query(By.css(".clear-button"));
+    expect(updatedClearButton).toBeFalsy();
+  });
+});
+```
+
+**f. Тестирование вложенных компонентов и проекции контента**:
+
+```typescript
+// Тестирование компонента, использующего ng-content
+describe("CardComponent", () => {
+  let fixture: ComponentFixture<TestHostComponent>;
+  let testHost: TestHostComponent;
+
+  // Компонент-хост для тестирования проекции контента
+  @Component({
+    template: `
+      <app-card [title]="cardTitle">
+        <div class="card-content">Projected content</div>
+        <div footer>Footer content</div>
+      </app-card>
+    `,
+  })
+  class TestHostComponent {
+    cardTitle = "Test Card";
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [CardComponent, TestHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestHostComponent);
+    testHost = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it("should display the card title", () => {
+    const titleElement = fixture.debugElement.query(By.css(".card-title"));
+    expect(titleElement.nativeElement.textContent).toContain("Test Card");
+  });
+
+  it("should project content into the default slot", () => {
+    const contentElement = fixture.debugElement.query(By.css(".card-content"));
+    expect(contentElement.nativeElement.textContent).toContain("Projected content");
+  });
+
+  it("should project content into the footer slot", () => {
+    const footerElement = fixture.debugElement.query(By.css(".card-footer"));
+    expect(footerElement.nativeElement.textContent).toContain("Footer content");
+  });
+
+  it("should update when input properties change", () => {
+    // Изменяем входное свойство
+    testHost.cardTitle = "Updated Title";
+    fixture.detectChanges();
+
+    // Проверяем, что UI обновился
+    const titleElement = fixture.debugElement.query(By.css(".card-title"));
+    expect(titleElement.nativeElement.textContent).toContain("Updated Title");
+  });
+});
+```
+
+**4. Проблемы и решения при тестировании компонентов**
+
+**a. Тестирование компонентов с внешними стилями**:
+
+```typescript
+describe("StyledComponent", () => {
+  let fixture: ComponentFixture<StyledComponent>;
+  let component: StyledComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [StyledComponent],
+    })
+      .overrideComponent(StyledComponent, {
+        set: {
+          styleUrls: [], // Убираем внешние стили для тестов
+          styles: [
+            `.special-style { color: red; }`, // Добавляем только необходимые стили
+          ],
+        },
+      })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(StyledComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it("should apply correct styles", () => {
+    const element = fixture.debugElement.query(By.css(".special-style"));
+    const computedStyle = window.getComputedStyle(element.nativeElement);
+    expect(computedStyle.color).toBe("rgb(255, 0, 0)"); // red color
+  });
+});
+```
+
+**b. Доступ к приватным свойствам и методам для тестирования**:
+
+```typescript
+describe("ComponentWithPrivateMethods", () => {
+  let component: ComponentWithPrivateMethods;
+  let fixture: ComponentFixture<ComponentWithPrivateMethods>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ComponentWithPrivateMethods],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ComponentWithPrivateMethods);
+    component = fixture.componentInstance;
+  });
+
+  it("should calculate correct total", () => {
+    // Доступ к приватному методу для тестирования
+    const calculateTotal = (component as any).calculateTotal;
+
+    // Вызываем приватный метод напрямую
+    const result = calculateTotal([10, 20, 30]);
+    expect(result).toBe(60);
+  });
+
+  it("should calculate discount correctly", () => {
+    // Доступ к приватному свойству
+    (component as any).discountRate = 0.1;
+
+    // Вызываем публичный метод, который использует приватное свойство
+    const result = component.calculateFinalPrice(100);
+    expect(result).toBe(90);
+  });
+});
+```
+
+**c. Тестирование анимаций**:
+
+```typescript
+describe("AnimatedComponent", () => {
+  let component: AnimatedComponent;
+  let fixture: ComponentFixture<AnimatedComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [AnimatedComponent],
+      imports: [NoopAnimationsModule], // Отключаем анимации для тестов
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(AnimatedComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it("should set correct animation state when toggled", () => {
+    expect(component.animationState).toBe("hidden");
+
+    component.toggle();
+    fixture.detectChanges();
+
+    expect(component.animationState).toBe("visible");
+
+    component.toggle();
+    fixture.detectChanges();
+
+    expect(component.animationState).toBe("hidden");
+  });
+});
+```
+
+**d. Тестирование динамических компонентов**:
+
+```typescript
+describe("DynamicContentComponent", () => {
+  let component: DynamicContentComponent;
+  let fixture: ComponentFixture<DynamicContentComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [DynamicContentComponent, InfoComponent, WarningComponent, ErrorComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(DynamicContentComponent);
+    component = fixture.componentInstance;
+  });
+
+  it("should create info component dynamically", () => {
+    component.createComponent("info", "Info message");
+    fixture.detectChanges();
+
+    const infoComponent = fixture.debugElement.query(By.directive(InfoComponent));
+    expect(infoComponent).toBeTruthy();
+    expect(infoComponent.componentInstance.message).toBe("Info message");
+  });
+
+  it("should create warning component dynamically", () => {
+    component.createComponent("warning", "Warning message");
+    fixture.detectChanges();
+
+    const warningComponent = fixture.debugElement.query(By.directive(WarningComponent));
+    expect(warningComponent).toBeTruthy();
+    expect(warningComponent.componentInstance.message).toBe("Warning message");
+  });
+
+  it("should clear dynamic content", () => {
+    component.createComponent("info", "Some message");
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.directive(InfoComponent))).toBeTruthy();
+
+    component.clearContent();
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.directive(InfoComponent))).toBeFalsy();
+    expect(fixture.debugElement.query(By.css(".dynamic-container")).children.length).toBe(0);
+  });
+});
+```
+
+ComponentFixture и DebugElement предоставляют мощный инструментарий для всестороннего тестирования компонентов Angular. Они позволяют тестировать не только логику компонентов, но и их взаимодействие с DOM, обработку событий, жизненный цикл и интеграцию с другими компонентами. Правильное использование этих инструментов обеспечивает надежное тестирование UI-части Angular-приложений.
+
+### 5. How do you test directives and pipes in Angular?
+
+Директивы и пайпы — это важные строительные блоки Angular-приложений, и их тестирование имеет свои особенности. Рассмотрим подробно подходы к тестированию каждого из этих типов.
+
+#### Тестирование директив
+
+Директивы манипулируют DOM и реагируют на пользовательские события, поэтому для их тестирования обычно требуется создание тестового компонента, в котором они будут использоваться.
+
+**1. Подходы к тестированию директив**:
+
+**a. Изолированное тестирование самой директивы**:
+
+```typescript
+import { TestBed, ComponentFixture } from "@angular/core/testing";
+import { Component, DebugElement } from "@angular/core";
+import { By } from "@angular/platform-browser";
+import { HighlightDirective } from "./highlight.directive";
+
+describe("HighlightDirective (изолированно)", () => {
+  // Создаем экземпляр директивы напрямую
+  it("should change background color on mouseenter", () => {
+    // Создаем фейковый ElementRef
+    const mockElementRef = {
+      nativeElement: document.createElement("div"),
+    };
+
+    // Создаем фейковый Renderer2
+    const mockRenderer = jasmine.createSpyObj("Renderer2", ["setStyle", "removeStyle"]);
+
+    // Создаем экземпляр директивы с моками
+    const directive = new HighlightDirective(mockElementRef, mockRenderer);
+
+    // Устанавливаем входной параметр
+    directive.highlightColor = "yellow";
+
+    // Вызываем метод, который должен срабатывать при mouseenter
+    directive.onMouseEnter();
+
+    // Проверяем, что Renderer2.setStyle был вызван с правильными параметрами
+    expect(mockRenderer.setStyle).toHaveBeenCalledWith(mockElementRef.nativeElement, "background-color", "yellow");
+
+    // Вызываем метод, который должен срабатывать при mouseleave
+    directive.onMouseLeave();
+
+    // Проверяем, что style был удален
+    expect(mockRenderer.removeStyle).toHaveBeenCalledWith(mockElementRef.nativeElement, "background-color");
+  });
+});
+```
+
+**b. Тестирование директивы через тестовый хост-компонент**:
+
+```typescript
+// Создаем тестовый хост-компонент, использующий директиву
+@Component({
+  template: `
+    <div appHighlight="yellow" class="highlighted">Highlight me!</div>
+    <div class="not-highlighted">Normal element</div>
+  `,
+})
+class TestComponent {}
+
+describe("HighlightDirective (в тестовом компоненте)", () => {
+  let fixture: ComponentFixture<TestComponent>;
+  let highlightedElements: DebugElement[];
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [HighlightDirective, TestComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestComponent);
+    fixture.detectChanges();
+
+    // Находим элементы с директивой
+    highlightedElements = fixture.debugElement.queryAll(By.directive(HighlightDirective));
+  });
+
+  it("should have one highlighted element", () => {
+    expect(highlightedElements.length).toBe(1);
+    expect(highlightedElements[0].nativeElement.classList).toContain("highlighted");
+  });
+
+  it("should change background color on mouseenter", () => {
+    const highlightedElement = highlightedElements[0];
+
+    // Изначально фона нет
+    expect(highlightedElement.nativeElement.style.backgroundColor).toBe("");
+
+    // Симулируем событие mouseenter
+    highlightedElement.triggerEventHandler("mouseenter", null);
+    fixture.detectChanges();
+
+    // Проверяем, что фон изменился
+    expect(highlightedElement.nativeElement.style.backgroundColor).toBe("yellow");
+
+    // Симулируем событие mouseleave
+    highlightedElement.triggerEventHandler("mouseleave", null);
+    fixture.detectChanges();
+
+    // Проверяем, что фон вернулся к исходному
+    expect(highlightedElement.nativeElement.style.backgroundColor).toBe("");
+  });
+
+  it("should not affect elements without the directive", () => {
+    const normalElement = fixture.debugElement.query(By.css(".not-highlighted"));
+
+    // Проверяем, что элемент без директивы не изменяется
+    expect(normalElement.nativeElement.style.backgroundColor).toBe("");
+
+    // Симулируем событие mouseenter на элементе без директивы
+    normalElement.triggerEventHandler("mouseenter", null);
+    fixture.detectChanges();
+
+    // Проверяем, что фон не изменился
+    expect(normalElement.nativeElement.style.backgroundColor).toBe("");
+  });
+});
+```
+
+**2. Тестирование структурных директив**:
+
+Структурные директивы (начинающиеся с \*) изменяют структуру DOM и требуют особого подхода к тестированию.
+
+```typescript
+import { TestBed, ComponentFixture } from "@angular/core/testing";
+import { Component, DebugElement } from "@angular/core";
+import { By } from "@angular/platform-browser";
+import { UnlessDirective } from "./unless.directive";
+
+// Создаем тестовый компонент, использующий структурную директиву
+@Component({
+  template: `
+    <div *appUnless="condition" class="unless-false">Show if condition is false</div>
+    <div *appUnless="!condition" class="unless-true">Show if condition is true</div>
+  `,
+})
+class TestComponent {
+  condition = false;
+}
+
+describe("UnlessDirective", () => {
+  let fixture: ComponentFixture<TestComponent>;
+  let component: TestComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [UnlessDirective, TestComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it("should display content when condition is false", () => {
+    // condition = false, поэтому элемент with unless-false должен отображаться
+    const unlessFalseElement = fixture.debugElement.query(By.css(".unless-false"));
+    expect(unlessFalseElement).toBeTruthy();
+
+    // unless-true не должен отображаться
+    const unlessTrueElement = fixture.debugElement.query(By.css(".unless-true"));
+    expect(unlessTrueElement).toBeFalsy();
+  });
+
+  it("should respond to changes in condition", () => {
+    // Изначально condition = false
+    expect(fixture.debugElement.query(By.css(".unless-false"))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css(".unless-true"))).toBeFalsy();
+
+    // Меняем условие
+    component.condition = true;
+    fixture.detectChanges();
+
+    // Теперь должно быть наоборот
+    expect(fixture.debugElement.query(By.css(".unless-false"))).toBeFalsy();
+    expect(fixture.debugElement.query(By.css(".unless-true"))).toBeTruthy();
+  });
+});
+```
+
+**3. Тестирование директив с входными параметрами**:
+
+```typescript
+import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { Component, DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { TooltipDirective } from './tooltip.directive';
+
+// Тестовый компонент с директивой, имеющей входные параметры
+@Component({
+  template: `
+    <div [appTooltip]="tooltipText"
+         [tooltipPosition]="position"
+         class="with-tooltip">Hover me</div>
+  `
+})
+class TestComponent {
+  tooltipText = 'Test tooltip';
+  position = 'top';
+}
+
+describe('TooltipDirective', () => {
+  let fixture: ComponentFixture<TestComponent>;
+  let component: TestComponent;
+  let tooltipElement: DebugElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [TooltipDirective, TestComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    tooltipElement = fixture.debugElement.query(By.directive(TooltipDirective));
+  });
+
+  it('should create tooltip when mouse enters', () => {
+    // Проверяем, что изначально подсказки нет в DOM
+    expect(document.querySelector('.tooltip')).toBeFalsy();
+
+    // Симулируем наведение мыши
+    tooltipElement.triggerEventHandler('mouseenter', null);
+    fixture.detectChanges();
+
+    // Проверяем, что подсказка появилась
+    const tooltip = document.querySelector('.tooltip');
+    expect(tooltip).toBeTruthy();
+    expect(tooltip?.textContent).toContain('Test tooltip');
+    expect(tooltip?.classList).toContain('tooltip-top'); // Проверяем позицию
+
+    // Симулируем уход мыши
+    tooltipElement.triggerEventHandler('mouseleave', null);
+    fixture.detectChanges();
+
+// Проверяем, что подсказка исчезла
+expect(document.querySelector('.tooltip')).toBeNull();
+});
+
+it('должен показывать пользовательский контент в подсказке', () => {
+  // Создаем элемент с директивой и пользовательским контентом
+  component.tooltipContent = '<strong>Важная информация!</strong>';
+  fixture.detectChanges();
+
+  // Наводим мышь на элемент
+  tooltipElement.triggerEventHandler('mouseenter', null);
+  fixture.detectChanges();
+
+  // Проверяем, что подсказка содержит HTML
+  const tooltip = document.querySelector('.tooltip');
+  expect(tooltip.innerHTML).toContain('<strong>Важная информация!</strong>');
+});
+```
+
+#### Тестирование асинхронных операций
+
+При тестировании асинхронных операций в компонентах важно правильно обрабатывать таймеры, промисы и Observable:
+
+```typescript
+describe("AsyncComponent", () => {
+  let component: AsyncComponent;
+  let fixture: ComponentFixture<AsyncComponent>;
+  let dataService: jasmine.SpyObj<DataService>;
+
+  beforeEach(async () => {
+    const spy = jasmine.createSpyObj("DataService", ["getData"]);
+
+    await TestBed.configureTestingModule({
+      declarations: [AsyncComponent],
+      providers: [{ provide: DataService, useValue: spy }],
+    }).compileComponents();
+
+    dataService = TestBed.inject(DataService) as jasmine.SpyObj<DataService>;
+    fixture = TestBed.createComponent(AsyncComponent);
+    component = fixture.componentInstance;
+  });
+
+  it("должен загружать данные при инициализации (с fakeAsync)", fakeAsync(() => {
+    const testData = ["item1", "item2", "item3"];
+    dataService.getData.and.returnValue(of(testData).pipe(delay(1000)));
+
+    fixture.detectChanges(); // Вызывает ngOnInit
+
+    // В начале данных нет
+    expect(component.isLoading).toBeTrue();
+    expect(component.items.length).toBe(0);
+
+    // Перематываем таймер
+    tick(1000);
+
+    // Проверяем данные после получения
+    expect(component.isLoading).toBeFalse();
+    expect(component.items).toEqual(testData);
+    expect(component.error).toBeNull();
+  }));
+
+  it("должен обрабатывать ошибки при загрузке данных (с async/await)", async () => {
+    const errorMessage = "Error loading data";
+    dataService.getData.and.returnValue(throwError(() => new Error(errorMessage)));
+
+    fixture.detectChanges(); // Вызывает ngOnInit
+
+    // Ждем выполнения всех асинхронных операций
+    await fixture.whenStable();
+
+    // Проверяем состояние после ошибки
+    expect(component.isLoading).toBeFalse();
+    expect(component.error).toEqual(errorMessage);
+    expect(component.items.length).toBe(0);
+  });
+});
+```
+
+#### Тестирование маршрутизации
+
+Тестирование компонентов с маршрутизацией требует создания имитации Router и ActivatedRoute:
+
+```typescript
+describe("ProfileComponent", () => {
+  let component: ProfileComponent;
+  let fixture: ComponentFixture<ProfileComponent>;
+  let userService: jasmine.SpyObj<UserService>;
+  let mockActivatedRoute: any;
+  let mockRouter: any;
+
+  beforeEach(async () => {
+    userService = jasmine.createSpyObj("UserService", ["getUserById"]);
+
+    mockActivatedRoute = {
+      paramMap: of(convertToParamMap({ id: "123" })),
+    };
+
+    mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
+
+    await TestBed.configureTestingModule({
+      declarations: [ProfileComponent],
+      providers: [
+        { provide: UserService, useValue: userService },
+        { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        { provide: Router, useValue: mockRouter },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProfileComponent);
+    component = fixture.componentInstance;
+  });
+
+  it("должен загружать профиль по id из URL", () => {
+    const testUser = { id: 123, name: "John Doe", email: "john@example.com" };
+    userService.getUserById.and.returnValue(of(testUser));
+
+    fixture.detectChanges();
+
+    expect(userService.getUserById).toHaveBeenCalledWith("123");
+    expect(component.user).toEqual(testUser);
+  });
+
+  it("должен перенаправлять на страницу 404 при отсутствии пользователя", () => {
+    userService.getUserById.and.returnValue(of(null));
+
+    fixture.detectChanges();
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/not-found"]);
+  });
+});
+```
+
+#### Тестирование сложных взаимодействий компонентов
+
+Тестирование сложных взаимодействий между родительскими и дочерними компонентами:
+
+```typescript
+describe("ShoppingCartComponent", () => {
+  let component: ShoppingCartComponent;
+  let fixture: ComponentFixture<ShoppingCartComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ShoppingCartComponent, CartItemComponent, TotalSummaryComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ShoppingCartComponent);
+    component = fixture.componentInstance;
+  });
+
+  it("должен обновлять итоговую сумму при изменении количества товаров", () => {
+    // Устанавливаем начальные товары
+    component.items = [
+      { id: 1, name: "Item 1", price: 10, quantity: 1 },
+      { id: 2, name: "Item 2", price: 20, quantity: 2 },
+    ];
+
+    fixture.detectChanges();
+
+    // Проверяем начальную сумму (10*1 + 20*2 = 50)
+    const totalElement = fixture.debugElement.query(By.css(".total-amount"));
+    expect(totalElement.nativeElement.textContent).toContain("50");
+
+    // Находим кнопки увеличения количества для первого товара
+    const firstItemIncreaseButton = fixture.debugElement.queryAll(By.css(".item-increase"))[0];
+    firstItemIncreaseButton.triggerEventHandler("click", null);
+
+    fixture.detectChanges();
+
+    // Проверяем обновленную сумму (10*2 + 20*2 = 60)
+    expect(totalElement.nativeElement.textContent).toContain("60");
+  });
+
+  it("должен удалять товар из корзины", () => {
+    // Устанавливаем начальные товары
+    component.items = [
+      { id: 1, name: "Item 1", price: 10, quantity: 1 },
+      { id: 2, name: "Item 2", price: 20, quantity: 1 },
+    ];
+
+    fixture.detectChanges();
+
+    // Проверяем начальное количество товаров
+    let itemElements = fixture.debugElement.queryAll(By.css(".cart-item"));
+    expect(itemElements.length).toBe(2);
+
+    // Находим кнопку удаления для первого товара
+    const removeButton = fixture.debugElement.queryAll(By.css(".remove-button"))[0];
+    removeButton.triggerEventHandler("click", null);
+
+    fixture.detectChanges();
+
+    // Проверяем, что товар удален
+    itemElements = fixture.debugElement.queryAll(By.css(".cart-item"));
+    expect(itemElements.length).toBe(1);
+    expect(component.items.length).toBe(1);
+    expect(component.items[0].id).toBe(2);
+  });
+});
+```
+
+### 6. How do you mock (mock) and stub (stub) dependencies in tests for services?
+
+При тестировании сервисов в Angular часто необходимо изолировать тестируемый сервис от его зависимостей. Вот несколько подходов:
+
+#### Использование jasmine.createSpyObj
+
+```typescript
+// Тестирование UserService, который зависит от HttpClient и LoggerService
+describe("UserService", () => {
+  let userService: UserService;
+  let httpClientSpy: jasmine.SpyObj<HttpClient>;
+  let loggerServiceSpy: jasmine.SpyObj<LoggerService>;
+
+  beforeEach(() => {
+    // Создаем шпионы (мок-объекты) для зависимостей
+    httpClientSpy = jasmine.createSpyObj("HttpClient", ["get", "post", "put", "delete"]);
+    loggerServiceSpy = jasmine.createSpyObj("LoggerService", ["log", "error", "warn"]);
+
+    // Создаем экземпляр тестируемого сервиса с моками
+    userService = new UserService(httpClientSpy, loggerServiceSpy);
+  });
+
+  it("должен возвращать ожидаемых пользователей при успешном запросе", () => {
+    // Подготовка тестовых данных
+    const expectedUsers: User[] = [
+      { id: 1, name: "Тестовый пользователь 1" },
+      { id: 2, name: "Тестовый пользователь 2" },
+    ];
+
+    // Настраиваем мок для имитации успешного HTTP-запроса
+    httpClientSpy.get.and.returnValue(of(expectedUsers));
+
+    // Вызываем тестируемый метод
+    userService.getUsers().subscribe({
+      next: (users) => {
+        // Проверяем, что результат соответствует ожиданиям
+        expect(users).toEqual(expectedUsers, "ожидаемые пользователи");
+        // Проверяем, что метод логирования был вызван
+        expect(loggerServiceSpy.log).toHaveBeenCalledWith("Пользователи получены");
+      },
+    });
+
+    // Проверяем, что метод HttpClient был вызван с правильным URL
+    expect(httpClientSpy.get).toHaveBeenCalledWith("api/users");
+  });
+});
+```
+
+#### Использование TestBed для внедрения моков
+
+```typescript
+describe("AuthService", () => {
+  let authService: AuthService;
+  let httpTestingController: HttpTestingController;
+  let storageServiceMock: any;
+
+  beforeEach(() => {
+    // Создаем мок для StorageService
+    storageServiceMock = {
+      getItem: jasmine.createSpy("getItem").and.returnValue(null),
+      setItem: jasmine.createSpy("setItem"),
+      removeItem: jasmine.createSpy("removeItem"),
+    };
+
+    // Конфигурируем TestBed с моками
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule], // Импортируем специальный модуль для тестирования HTTP
+      providers: [
+        AuthService,
+        { provide: StorageService, useValue: storageServiceMock }, // Заменяем реальный сервис моком
+      ],
+    });
+
+    // Получаем экземпляры сервиса и контроллера HTTP
+    authService = TestBed.inject(AuthService);
+    httpTestingController = TestBed.inject(HttpTestingController);
+  });
+
+  // Очистка после каждого теста
+  afterEach(() => {
+    httpTestingController.verify(); // Проверяем, что все ожидаемые запросы были выполнены
+  });
+
+  it("должен аутентифицировать пользователя и сохранить токен", () => {
+    // Тестовые данные
+    const credentials = { username: "test", password: "password" };
+    const mockResponse = { token: "fake-jwt-token" };
+
+    // Вызываем тестируемый метод
+    authService.login(credentials).subscribe((response) => {
+      expect(response).toEqual(mockResponse);
+      // Проверяем, что токен был сохранен
+      expect(storageServiceMock.setItem).toHaveBeenCalledWith("auth_token", "fake-jwt-token");
+    });
+
+    // Имитируем HTTP-ответ
+    const req = httpTestingController.expectOne("api/auth/login");
+    expect(req.request.method).toEqual("POST");
+    expect(req.request.body).toEqual(credentials);
+
+    // Отправляем имитированный ответ
+    req.flush(mockResponse);
+  });
+});
+```
+
+#### Использование моков для зависимостей, не связанных с Angular
+
+```typescript
+// Мокирование внешних библиотек и API
+describe("PaymentService", () => {
+  let service: PaymentService;
+  let stripeApiMock: any;
+
+  beforeEach(() => {
+    // Создаем мок для внешнего API Stripe
+    stripeApiMock = {
+      createToken: jasmine.createSpy("createToken").and.returnValue(Promise.resolve({ token: "fake-stripe-token" })),
+      processPayment: jasmine.createSpy("processPayment").and.returnValue(Promise.resolve({ success: true })),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        PaymentService,
+        { provide: STRIPE_API, useValue: stripeApiMock }, // Используем InjectionToken
+      ],
+    });
+
+    service = TestBed.inject(PaymentService);
+  });
+
+  it("должен обрабатывать платеж с использованием Stripe API", async () => {
+    // Тестовые данные
+    const paymentDetails = {
+      cardNumber: "4242424242424242",
+      expMonth: 12,
+      expYear: 2025,
+      cvc: "123",
+    };
+
+    // Вызов тестируемого метода
+    const result = await service.processPayment(paymentDetails, 99.99);
+
+    // Проверки
+    expect(stripeApiMock.createToken).toHaveBeenCalledWith({
+      card: jasmine.objectContaining(paymentDetails),
+    });
+
+    expect(stripeApiMock.processPayment).toHaveBeenCalledWith("fake-stripe-token", 99.99);
+    expect(result.success).toBeTrue();
+  });
+});
+```
+
+### 7. How do you test forms based on templates and reactive forms?
+
+#### Тестирование форм на основе шаблонов (Template-driven Forms)
+
+```typescript
+describe("LoginFormComponent (Template-driven)", () => {
+  let component: LoginFormComponent;
+  let fixture: ComponentFixture<LoginFormComponent>;
+  let formElement: DebugElement;
+  let submitSpy: jasmine.Spy;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [FormsModule], // Импортируем FormsModule для поддержки шаблонных форм
+      declarations: [LoginFormComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(LoginFormComponent);
+    component = fixture.componentInstance;
+    formElement = fixture.debugElement.query(By.css("form"));
+
+    // Шпионим за методом отправки формы
+    submitSpy = spyOn(component, "onSubmit").and.callThrough();
+
+    fixture.detectChanges(); // Инициализируем представление
+  });
+
+  it("должен показывать ошибку, если email невалидный", async () => {
+    // Получаем элементы формы
+    const emailInput = fixture.debugElement.query(By.css('input[name="email"]')).nativeElement;
+
+    // Вводим невалидный email и триггерим события
+    emailInput.value = "invalid-email";
+    emailInput.dispatchEvent(new Event("input"));
+    emailInput.dispatchEvent(new Event("blur")); // Важно для триггера валидации
+    fixture.detectChanges();
+
+    // Ждем завершения асинхронных операций
+    await fixture.whenStable();
+
+    // Проверяем, что сообщение об ошибке видимо
+    const emailError = fixture.debugElement.query(By.css(".email-error"));
+    expect(emailError).not.toBeNull("Сообщение об ошибке должно быть видимо для невалидного email");
+    expect(emailError.nativeElement.textContent).toContain("Введите корректный email");
+
+    // Проверяем, что форма невалидная
+    expect(component.loginForm.valid).toBeFalse("Форма должна быть невалидной");
+  });
+
+  it("должен успешно отправлять форму с валидными данными", async () => {
+    // Получаем элементы формы
+    const emailInput = fixture.debugElement.query(By.css('input[name="email"]')).nativeElement;
+    const passwordInput = fixture.debugElement.query(By.css('input[name="password"]')).nativeElement;
+
+    // Вводим валидные данные
+    emailInput.value = "test@example.com";
+    emailInput.dispatchEvent(new Event("input"));
+
+    passwordInput.value = "password123";
+    passwordInput.dispatchEvent(new Event("input"));
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Отправляем форму
+    formElement.triggerEventHandler("submit", null);
+    fixture.detectChanges();
+
+    // Проверяем, что метод onSubmit был вызван с правильными данными
+    expect(submitSpy).toHaveBeenCalled();
+    expect(component.loginForm.value).toEqual({
+      email: "test@example.com",
+      password: "password123",
+    });
+  });
+});
+```
+
+#### Тестирование реактивных форм (Reactive Forms)
+
+```typescript
+describe("RegisterFormComponent (Reactive)", () => {
+  let component: RegisterFormComponent;
+  let fixture: ComponentFixture<RegisterFormComponent>;
+  let formElement: DebugElement;
+  let authServiceMock: jasmine.SpyObj<AuthService>;
+
+  beforeEach(async () => {
+    // Создаем мок для AuthService
+    authServiceMock = jasmine.createSpyObj("AuthService", ["register"]);
+
+    await TestBed.configureTestingModule({
+      imports: [ReactiveFormsModule], // Импортируем ReactiveFormsModule
+      declarations: [RegisterFormComponent],
+      providers: [{ provide: AuthService, useValue: authServiceMock }],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(RegisterFormComponent);
+    component = fixture.componentInstance;
+    formElement = fixture.debugElement.query(By.css("form"));
+
+    fixture.detectChanges(); // Инициализируем форму
+  });
+
+  it("должен создать форму с необходимыми контролами", () => {
+    // Проверяем наличие всех контролов формы
+    expect(component.registerForm.contains("name")).toBeTrue();
+    expect(component.registerForm.contains("email")).toBeTrue();
+    expect(component.registerForm.contains("password")).toBeTrue();
+    expect(component.registerForm.contains("confirmPassword")).toBeTrue();
+
+    // Проверяем, что все контролы обязательны
+    const nameControl = component.registerForm.get("name");
+    nameControl.setValue("");
+    expect(nameControl.valid).toBeFalse("Поле имени должно быть обязательным");
+    expect(nameControl.errors.required).toBeTruthy();
+  });
+
+  it("должен проверять совпадение паролей", () => {
+    // Устанавливаем разные пароли
+    const passwordControl = component.registerForm.get("password");
+    const confirmPasswordControl = component.registerForm.get("confirmPassword");
+
+    passwordControl.setValue("password123");
+    confirmPasswordControl.setValue("differentpassword");
+
+    // Проверяем наличие ошибки несовпадения
+    expect(component.registerForm.errors.passwordMismatch).toBeTruthy("Должна быть ошибка несовпадения паролей");
+
+    // Устанавливаем одинаковые пароли
+    confirmPasswordControl.setValue("password123");
+
+    // Проверяем, что ошибка исчезла
+    expect(component.registerForm.errors?.passwordMismatch).toBeFalsy("Ошибка несовпадения паролей должна исчезнуть");
+  });
+
+  it("должен вызывать AuthService при отправке валидной формы", () => {
+    // Готовим тестовые данные
+    const testUser = {
+      name: "Test User",
+      email: "test@example.com",
+      password: "StrongPass123",
+    };
+
+    // Настраиваем мок сервиса
+    authServiceMock.register.and.returnValue(of({ success: true }));
+
+    // Заполняем форму
+    component.registerForm.patchValue({
+      name: testUser.name,
+      email: testUser.email,
+      password: testUser.password,
+      confirmPassword: testUser.password,
+    });
+
+    // Проверяем, что форма валидна
+    expect(component.registerForm.valid).toBeTrue("Форма должна быть валидной");
+
+    // Отправляем форму
+    component.onSubmit();
+
+    // Проверяем, что сервис был вызван с правильными данными
+    expect(authServiceMock.register).toHaveBeenCalledWith({
+      name: testUser.name,
+      email: testUser.email,
+      password: testUser.password,
+    });
+  });
+
+  it("должен отключать кнопку отправки для невалидной формы", () => {
+    // Проверяем, что изначально кнопка отключена (форма пустая)
+    const submitButton = fixture.debugElement.query(By.css('button[type="submit"]')).nativeElement;
+    expect(submitButton.disabled).toBeTrue("Кнопка должна быть отключена для невалидной формы");
+
+    // Заполняем форму валидными данными
+    component.registerForm.patchValue({
+      name: "Test User",
+      email: "test@example.com",
+      password: "StrongPass123",
+      confirmPassword: "StrongPass123",
+    });
+    fixture.detectChanges();
+
+    // Проверяем, что кнопка активна
+    expect(submitButton.disabled).toBeFalse("Кнопка должна быть активна для валидной формы");
+  });
+});
+```
+
+### 8. What are `async`, `fakeAsync`, and `tick`, and how are they used when testing asynchronous code?
+
+#### async
+
+Функция `async` используется для тестирования кода, который возвращает Promise. Она создает специальную зону, которая отслеживает все асинхронные операции.
+
+```typescript
+// Тестирование компонента, загружающего данные асинхронно
+it("должен загружать данные после инициализации", async(() => {
+  // Мокируем сервис
+  const mockData = ["item1", "item2"];
+  const serviceSpy = fixture.debugElement.injector.get(DataService);
+  spyOn(serviceSpy, "getData").and.returnValue(Promise.resolve(mockData));
+
+  // Инициализируем компонент
+  fixture.detectChanges(); // Вызывает ngOnInit
+
+  // Ждем завершения асинхронных операций
+  fixture.whenStable().then(() => {
+    // После разрешения всех промисов запускаем повторное обнаружение изменений
+    fixture.detectChanges();
+
+    // Проверяем, что данные загружены в компонент
+    expect(component.data).toEqual(mockData);
+
+    // Проверяем, что данные отображаются в шаблоне
+    const listItems = fixture.debugElement.queryAll(By.css("li"));
+    expect(listItems.length).toBe(2);
+    expect(listItems[0].nativeElement.textContent).toContain("item1");
+  });
+}));
+```
+
+#### fakeAsync
+
+Функция `fakeAsync` создает специальную зону, которая позволяет синхронно тестировать асинхронный код, контролируя время. Вместе с `tick()` она позволяет имитировать течение времени.
+
+```typescript
+// Тестирование задержки ввода с использованием debounceTime
+it("должен вызывать поиск после задержки ввода", fakeAsync(() => {
+  // Шпионим за методом поиска
+  spyOn(component, "search");
+
+  // Получаем элемент ввода
+  const input = fixture.debugElement.query(By.css("input")).nativeElement;
+
+  // Вводим текст
+  input.value = "test query";
+  input.dispatchEvent(new Event("input"));
+
+  // На этом этапе поиск еще не должен быть вызван (из-за debounceTime)
+  expect(component.search).not.toHaveBeenCalled();
+
+  // Перематываем таймер на 300 мс (обычное значение для debounceTime)
+  tick(300);
+
+  // Теперь поиск должен быть вызван
+  expect(component.search).toHaveBeenCalledWith("test query");
+}));
+
+// Тестирование нескольких асинхронных операций
+it("должен обрабатывать несколько асинхронных операций последовательно", fakeAsync(() => {
+  let status = "initial";
+
+  // Имитируем асинхронные операции с разными задержками
+  setTimeout(() => {
+    status = "first update";
+  }, 100);
+
+  setTimeout(() => {
+    status = "second update";
+  }, 200);
+
+  // Проверяем начальное состояние
+  expect(status).toBe("initial");
+
+  // Перематываем первый таймер
+  tick(100);
+  expect(status).toBe("first update");
+
+  // Перематываем второй таймер
+  tick(100); // Еще 100 мс (всего 200 мс)
+  expect(status).toBe("second update");
+}));
+```
+
+#### tick
+
+Функция `tick()` работает только внутри `fakeAsync` и имитирует прохождение времени, вызывая выполнение всех таймеров, которые должны сработать за указанный период.
+
+```typescript
+// Тестирование интервала с использованием setInterval
+it("должен обновлять счетчик каждую секунду", fakeAsync(() => {
+  // Запускаем интервал в компоненте
+  component.startCounter();
+
+  // Изначально счетчик равен 0
+  expect(component.counter).toBe(0);
+
+  // Перематываем таймер на 1 секунду
+  tick(1000);
+  expect(component.counter).toBe(1);
+
+  // Перематываем таймер еще на 2 секунды
+  tick(2000);
+  expect(component.counter).toBe(3);
+
+  // Очищаем таймеры, чтобы избежать утечек памяти
+  component.stopCounter();
+}));
+
+// Тестирование анимаций
+it("должен показывать/скрывать элемент с анимацией", fakeAsync(() => {
+  // Компонент с анимацией появления/исчезновения
+  component.isVisible = false;
+  fixture.detectChanges();
+
+  // Элемент скрыт
+  let element = fixture.debugElement.query(By.css(".animated-element"));
+  expect(element).toBeNull();
+
+  // Показываем элемент
+  component.show();
+  fixture.detectChanges();
+
+  // Сразу после вызова show() элемент должен быть в состоянии "анимации появления"
+  element = fixture.debugElement.query(By.css(".animated-element"));
+  expect(element).not.toBeNull();
+  expect(element.classes["fade-in"]).toBeTrue();
+  expect(element.classes["visible"]).toBeFalse(); // Еще не полностью виден
+
+  // Перематываем таймер на продолжительность анимации
+  tick(300); // Предполагаем, что анимация длится 300 мс
+  fixture.detectChanges();
+
+  // После анимации элемент должен быть полностью виден
+  expect(element.classes["fade-in"]).toBeFalse();
+  expect(element.classes["visible"]).toBeTrue();
+}));
+```
+
+### 9. How do you ensure your tests are isolated and do not interfere with each other?
+
+#### Сброс состояния перед каждым тестом
+
+```typescript
+describe("DataService", () => {
+  let service: DataService;
+
+  // Перед каждым тестом создаем новый экземпляр сервиса
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [DataService],
+    });
+    service = TestBed.inject(DataService);
+  });
+
+  it("тест 1: должен добавлять элемент в список", () => {
+    expect(service.items.length).toBe(0); // Изначально список пуст
+    service.addItem("test item");
+    expect(service.items.length).toBe(1);
+  });
+
+  it("тест 2: список должен быть пустым", () => {
+    // Благодаря beforeEach это новый экземпляр сервиса со свежим списком
+    expect(service.items.length).toBe(0);
+  });
+});
+```
+
+#### Использование независимых фикстур для каждого теста
+
+```typescript
+// Каждый тест создает свою собственную фикстуру
+describe("FormComponent", () => {
+  it("тест 1: должен показывать ошибку для невалидного email", () => {
+    // Создаем фикстуру только для этого теста
+    const fixture = TestBed.createComponent(FormComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    // ... тестовая логика для проверки валидации email
+  });
+
+  it("тест 2: должен успешно отправлять форму с валидными данными", () => {
+    // Создаем новую фикстуру для этого теста
+    const fixture = TestBed.createComponent(FormComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    // ... тестовая логика для отправки формы
+  });
+});
+```
+
+#### Использование спай-объектов вместо реальных зависимостей
+
+```typescript
+describe("NotificationService", () => {
+  let service: NotificationService;
+  let toastServiceSpy: jasmine.SpyObj<ToastService>;
+  let loggerServiceSpy: jasmine.SpyObj<LoggerService>;
+
+  beforeEach(() => {
+    // Создаем отдельные спай-объекты для каждого теста
+    const toastSpy = jasmine.createSpyObj("ToastService", ["show", "hide"]);
+    const loggerSpy = jasmine.createSpyObj("LoggerService", ["log", "error"]);
+
+    TestBed.configureTestingModule({
+      providers: [NotificationService, { provide: ToastService, useValue: toastSpy }, { provide: LoggerService, useValue: loggerSpy }],
+    });
+
+    service = TestBed.inject(NotificationService);
+    toastServiceSpy = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+    loggerServiceSpy = TestBed.inject(LoggerService) as jasmine.SpyObj<LoggerService>;
+  });
+
+  it("должен показывать успешное уведомление", () => {
+    service.showSuccess("Операция выполнена!");
+
+    expect(toastServiceSpy.show).toHaveBeenCalledWith("Операция выполнена!", { type: "success" });
+    expect(loggerServiceSpy.log).toHaveBeenCalled();
+  });
+
+  // Другие тесты не зависят от состояния предыдущих тестов,
+  // так как спай-объекты создаются заново перед каждым тестом
+});
+```
+
+#### Изоляция состояния DOM
+
+```typescript
+describe("ModalComponent", () => {
+  let component: ModalComponent;
+  let fixture: ComponentFixture<ModalComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ModalComponent],
+    }).compileComponents();
+
+    // Создаем новую фикстуру перед каждым тестом
+    fixture = TestBed.createComponent(ModalComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  // Очищаем DOM после каждого теста
+  afterEach(() => {
+    // Удаляем все модальные окна, которые могли быть добавлены в body
+    document.body.querySelectorAll(".modal").forEach((el) => el.remove());
+    document.body.className = ""; // Сбрасываем классы на body (например, modal-open)
+
+    // Сбрасываем слушатели событий, которые могли быть добавлены к window или document
+    window.onkeydown = null;
+    window.onresize = null;
+  });
+
+  it("должен добавлять модальное окно в body при открытии", () => {
+    component.open();
+    fixture.detectChanges();
+
+    const modalElement = document.body.querySelector(".modal");
+    expect(modalElement).not.toBeNull();
+    expect(document.body.classList).toContain("modal-open");
+  });
+
+  it("должен закрывать модальное окно при нажатии Escape", () => {
+    component.open();
+    fixture.detectChanges();
+
+    // Имитируем нажатие клавиши Escape
+    const escapeEvent = new KeyboardEvent("keydown", { key: "Escape" });
+    document.dispatchEvent(escapeEvent);
+    fixture.detectChanges();
+
+    // Проверяем, что модальное окно закрыто
+    const modalElement = document.body.querySelector(".modal");
+    expect(modalElement).toBeNull();
+    expect(document.body.classList).not.toContain("modal-open");
+  });
+});
+```
+
+#### Сброс глобальных сервисов или значений
+
+```typescript
+describe("ThemeService", () => {
+  let service: ThemeService;
+
+  beforeEach(() => {
+    // Сброс localStorage перед каждым тестом
+    localStorage.clear();
+
+    TestBed.configureTestingModule({
+      providers: [ThemeService],
+    });
+
+    service = TestBed.inject(ThemeService);
+  });
+
+  it("должен загружать тему из localStorage при инициализации", () => {
+    // Предварительно устанавливаем значение в localStorage
+    localStorage.setItem("theme", "dark");
+
+    // Создаем новый экземпляр сервиса, который должен прочитать значение из localStorage
+    service = new ThemeService();
+
+    expect(service.currentTheme).toBe("dark");
+  });
+
+  it("должен использовать тему по умолчанию, если в localStorage ничего нет", () => {
+    // localStorage уже очищен в beforeEach
+
+    // Создаем новый экземпляр сервиса
+    service = new ThemeService();
+
+    expect(service.currentTheme).toBe("light"); // светлая тема по умолчанию
+  });
+});
+```
+
+#### Изоляция с использованием конфигурации тестовых модулей
+
+````typescript
+describe('AuthGuard', () => {
+  let authGuard: AuthGuard;
+  let authServiceMock: jasmine.SpyObj<AuthService>;
+  let routerMock: jasmine.SpyObj<Router>;
+
+  // Отдельная конфигурация модуля для каждого набора тестов
+  describe('когда пользователь аутентифицирован', () => {
+    beforeEach(() => {
+      // Создаем моки с нужным состоянием для этого набора тестов
+      authServiceMock = jasmine.createSpyObj('AuthService', ['isAuthenticated']);
+      authServiceMock.isAuthenticated.and.returnValue(true);
+
+      routerMock = jasmine.createSpyObj('Router', ['navigate']);
+
+      TestBed.configureTestingModule({
+        providers: [
+          AuthGuard,
+          { provide: AuthService, useValue: authServiceMock },
+          { provide: Router, useValue: routerMock }
+        ]
+      });
+
+      authGuard = TestBed.inject(AuthGuard);
+    });
+
+Продолжаю объяснение про изоляцию тестов в Angular:
+
+```typescript
+    it('должен разрешать доступ к защищенному маршруту', () => {
+      const canActivate = authGuard.canActivate(null, null);
+      expect(canActivate).toBeTrue();
+      expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+  });
+
+  // Полностью независимый набор тестов с другой конфигурацией
+  describe('когда пользователь не аутентифицирован', () => {
+    beforeEach(() => {
+      // Создаем моки с другим состоянием для этого набора тестов
+      authServiceMock = jasmine.createSpyObj('AuthService', ['isAuthenticated']);
+      authServiceMock.isAuthenticated.and.returnValue(false);
+
+      routerMock = jasmine.createSpyObj('Router', ['navigate']);
+
+      TestBed.configureTestingModule({
+        providers: [
+          AuthGuard,
+          { provide: AuthService, useValue: authServiceMock },
+          { provide: Router, useValue: routerMock }
+        ]
+      });
+
+      authGuard = TestBed.inject(AuthGuard);
+    });
+
+    it('должен блокировать доступ и перенаправлять на страницу логина', () => {
+      const canActivate = authGuard.canActivate(null, null);
+      expect(canActivate).toBeFalse();
+      expect(routerMock.navigate).toHaveBeenCalledWith(['/login']);
+    });
+  });
+});
+````
+
+#### Использование testEnvironment и TestScheduler для тестирования Observable
+
+```typescript
+describe("SearchService", () => {
+  let service: SearchService;
+  let httpClientSpy: jasmine.SpyObj<HttpClient>;
+  let testScheduler: TestScheduler;
+
+  beforeEach(() => {
+    httpClientSpy = jasmine.createSpyObj("HttpClient", ["get"]);
+
+    // Создаем scheduler для управления временем в RxJS
+    testScheduler = new TestScheduler((actual, expected) => {
+      expect(actual).toEqual(expected);
+    });
+
+    service = new SearchService(httpClientSpy);
+  });
+
+  it("должен возвращать результаты поиска с задержкой и отменять предыдущие запросы", () => {
+    // Используем testScheduler для синхронного тестирования асинхронного кода
+    testScheduler.run(({ cold, hot, expectObservable }) => {
+      // Имитируем последовательный ввод пользователя
+      const input$ = hot("a-b-c", {
+        a: "i",
+        b: "ip",
+        c: "iph",
+      });
+
+      // Имитируем ответы сервера с задержкой
+      const response1 = cold("---a|", { a: ["item1", "item2"] });
+      const response2 = cold("---b|", { b: ["iphone", "ipad"] });
+      const response3 = cold("---c|", { c: ["iphone 13", "iphone 14"] });
+
+      // Настраиваем шпион для возврата разных ответов на разные запросы
+      httpClientSpy.get.and.returnValues(response1, response2, response3);
+
+      // Создаем поток поиска, используя входной поток пользователя
+      const result$ = input$.pipe(switchMap((term) => service.search(term)));
+
+      // Определяем ожидаемый результат
+      // Из-за switchMap и задержки ответа сервера, только последний запрос (iph) должен вернуть результат
+      expectObservable(result$).toBe("------c", {
+        c: ["iphone 13", "iphone 14"],
+      });
+    });
+  });
+});
+```
+
+#### Использование NgModuleMetadata для изоляции модульных зависимостей
+
+```typescript
+// Создаем изолированный модуль для тестирования компонентов с маршрутизацией
+describe("NavigationComponent", () => {
+  let component: NavigationComponent;
+  let fixture: ComponentFixture<NavigationComponent>;
+  let location: Location;
+  let router: Router;
+
+  // Создаем отдельные маршруты для тестов, которые не влияют на другие тесты
+  const routes: Routes = [
+    { path: "", component: HomeStubComponent },
+    { path: "products", component: ProductsStubComponent },
+    { path: "about", component: AboutStubComponent },
+  ];
+
+  // Создаем заглушки компонентов для маршрутов
+  @Component({ template: "<div>Home</div>" })
+  class HomeStubComponent {}
+
+  @Component({ template: "<div>Products</div>" })
+  class ProductsStubComponent {}
+
+  @Component({ template: "<div>About</div>" })
+  class AboutStubComponent {}
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      // Импортируем RouterTestingModule с нашими тестовыми маршрутами
+      imports: [RouterTestingModule.withRoutes(routes)],
+      // Декларируем компонент, который тестируем, и заглушки для маршрутов
+      declarations: [NavigationComponent, HomeStubComponent, ProductsStubComponent, AboutStubComponent],
+    }).compileComponents();
+
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+
+    fixture = TestBed.createComponent(NavigationComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    // Навигируем на главную страницу перед началом теста
+    router.initialNavigation();
+  });
+
+  it("должен подсвечивать активный пункт меню", async () => {
+    // Проверяем начальное состояние (активна главная страница)
+    let activeLinks = fixture.debugElement.queryAll(By.css(".nav-link.active"));
+    expect(activeLinks.length).toBe(1);
+    expect(activeLinks[0].nativeElement.textContent).toContain("Home");
+
+    // Кликаем по ссылке на страницу Products
+    const productsLink = fixture.debugElement.queryAll(By.css(".nav-link"))[1].nativeElement;
+    productsLink.click();
+
+    // Ждем завершения навигации
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Проверяем, что активная ссылка изменилась
+    activeLinks = fixture.debugElement.queryAll(By.css(".nav-link.active"));
+    expect(activeLinks.length).toBe(1);
+    expect(activeLinks[0].nativeElement.textContent).toContain("Products");
+
+    // Проверяем текущий путь
+    expect(location.path()).toBe("/products");
+  });
+});
+```
+
+#### Дополнительные техники изоляции и эффективного тестирования
+
+#### Использование jasmine.clock() для контроля времени
+
+```typescript
+describe("AutoSaveService", () => {
+  let service: AutoSaveService;
+  let storageServiceSpy: jasmine.SpyObj<StorageService>;
+
+  beforeEach(() => {
+    jasmine.clock().install(); // Устанавливаем контроль над встроенными таймерами
+
+    storageServiceSpy = jasmine.createSpyObj("StorageService", ["saveData"]);
+    service = new AutoSaveService(storageServiceSpy);
+  });
+
+  afterEach(() => {
+    jasmine.clock().uninstall(); // Обязательно удаляем контроль после теста
+  });
+
+  it("должен автоматически сохранять данные каждые 60 секунд", () => {
+    // Запускаем автосохранение
+    service.startAutoSave({ text: "Начальный текст" });
+
+    // Изначально не должно быть вызовов сохранения
+    expect(storageServiceSpy.saveData).not.toHaveBeenCalled();
+
+    // Перематываем время на 30 секунд
+    jasmine.clock().tick(30000);
+    expect(storageServiceSpy.saveData).not.toHaveBeenCalled(); // Еще не должно быть вызова
+
+    // Обновляем данные
+    service.updateData({ text: "Обновленный текст" });
+
+    // Перематываем время еще на 30 секунд (всего 60 секунд)
+    jasmine.clock().tick(30000);
+
+    // Теперь должно произойти сохранение
+    expect(storageServiceSpy.saveData).toHaveBeenCalledWith({ text: "Обновленный текст" });
+    storageServiceSpy.saveData.calls.reset(); // Сбрасываем счетчик вызовов
+
+    // Перематываем еще на 60 секунд
+    jasmine.clock().tick(60000);
+
+    // Должно произойти еще одно сохранение
+    expect(storageServiceSpy.saveData).toHaveBeenCalledTimes(1);
+
+    // Останавливаем автосохранение
+    service.stopAutoSave();
+
+    // Сбрасываем счетчик вызовов
+    storageServiceSpy.saveData.calls.reset();
+
+    // Перематываем еще на 60 секунд
+    jasmine.clock().tick(60000);
+
+    // Больше не должно быть вызовов сохранения
+    expect(storageServiceSpy.saveData).not.toHaveBeenCalled();
+  });
+});
+```
+
+#### Использование сбрасываемых шпионов (resetSpies)
+
+```typescript
+describe("UserAdminComponent", () => {
+  let component: UserAdminComponent;
+  let fixture: ComponentFixture<UserAdminComponent>;
+  let userServiceSpy: jasmine.SpyObj<UserService>;
+  let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
+
+  // Функция для сброса всех шпионов
+  function resetSpies(): void {
+    userServiceSpy.getUsers.calls.reset();
+    userServiceSpy.deleteUser.calls.reset();
+    userServiceSpy.updateUser.calls.reset();
+    notificationServiceSpy.showSuccess.calls.reset();
+    notificationServiceSpy.showError.calls.reset();
+  }
+
+  beforeEach(async () => {
+    userServiceSpy = jasmine.createSpyObj("UserService", ["getUsers", "deleteUser", "updateUser"]);
+    notificationServiceSpy = jasmine.createSpyObj("NotificationService", ["showSuccess", "showError"]);
+
+    await TestBed.configureTestingModule({
+      declarations: [UserAdminComponent],
+      providers: [
+        { provide: UserService, useValue: userServiceSpy },
+        { provide: NotificationService, useValue: notificationServiceSpy },
+      ],
+    }).compileComponents();
+
+    // Настраиваем дефолтное поведение сервиса
+    userServiceSpy.getUsers.and.returnValue(
+      of([
+        { id: 1, name: "User 1", role: "admin" },
+        { id: 2, name: "User 2", role: "user" },
+      ])
+    );
+
+    userServiceSpy.deleteUser.and.returnValue(of({ success: true }));
+    userServiceSpy.updateUser.and.returnValue(of({ success: true }));
+
+    fixture = TestBed.createComponent(UserAdminComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    // Сбрасываем все вызовы шпионов после инициализации компонента
+    resetSpies();
+  });
+
+  it("должен удалять пользователя при подтверждении", () => {
+    // Вызываем метод удаления пользователя
+    component.confirmDelete(1);
+
+    expect(userServiceSpy.deleteUser).toHaveBeenCalledWith(1);
+    expect(notificationServiceSpy.showSuccess).toHaveBeenCalled();
+
+    // Сбрасываем шпионы перед следующим тестом
+    resetSpies();
+  });
+
+  it("должен обновлять роль пользователя", () => {
+    // Вызываем метод обновления роли
+    component.updateUserRole(2, "admin");
+
+    expect(userServiceSpy.updateUser).toHaveBeenCalledWith(2, { role: "admin" });
+    expect(notificationServiceSpy.showSuccess).toHaveBeenCalled();
+  });
+});
+```
+
+Эти подходы обеспечивают надежную изоляцию тестов и предотвращают их взаимное влияние, что в свою очередь повышает стабильность и предсказуемость тестов в Angular-приложениях.
+
+## Signals in Angular
+
+### 1. What are Signals?
+
+Signals (сигналы) — это новая система реактивного программирования, представленная в Angular 16 и полностью интегрированная в Angular 17. Сигналы представляют собой примитивы для отслеживания зависимостей и автоматического обновления производных значений.
+
+Сигнал — это контейнер для значения, который уведомляет заинтересованные стороны (потребителей) об изменениях этого значения. Сигналы предлагают прямую, явную и детерминированную реактивность в отличие от традиционного подхода обнаружения изменений в Angular.
+
+Основные преимущества сигналов:
+
+- Гранулярная реактивность на уровне переменных
+- Улучшенная производительность благодаря точному отслеживанию зависимостей
+- Более декларативный и понятный код
+- Лучшая интеграция с системой шаблонов Angular
+
+### 2. How to read and modify the value of a signal?
+
+Работа с сигналами включает в себя создание, чтение и изменение:
+
+**Создание сигнала:**
+
+```typescript
+// Импортируем необходимые функции из Angular Core
+import { signal } from "@angular/core";
+
+// В компоненте создаем сигнал с начальным значением
+export class UserProfileComponent {
+  // Создаем сигнал для хранения имени пользователя
+  public userName = signal("Гость"); // Начальное значение "Гость"
+
+  // Создаем сигнал для хранения возраста пользователя
+  public userAge = signal(0); // Начальное значение 0
+
+  // Можно создавать сигналы любого типа, включая объекты
+  public userProfile = signal({
+    id: 0,
+    name: "Гость",
+    email: "",
+    role: "user",
+  });
+}
+```
+
+**Чтение значения сигнала:**
+
+Чтение значения сигнала выполняется путем вызова сигнала как функции без аргументов:
+
+```typescript
+// В методе компонента
+showUserInfo() {
+  // Получаем текущее значение сигнала, вызывая его как функцию
+  const name = this.userName(); // Возвращает "Гость"
+
+  // Можно использовать в выражениях и условиях
+  if (this.userAge() > 18) {
+    console.log(`${name} - совершеннолетний пользователь`);
+  }
+
+  // Доступ к свойствам объектного сигнала
+  const email = this.userProfile().email; // Получение отдельного свойства
+}
+```
+
+**Изменение значения сигнала:**
+
+Для изменения значения сигнала используются методы `set()`, `update()` и `mutate()`:
+
+```typescript
+// Метод set() полностью заменяет значение сигнала
+updateName(newName: string) {
+  // set() устанавливает новое значение, заменяя предыдущее
+  this.userName.set(newName); // Теперь userName содержит новое значение
+}
+
+// Метод update() изменяет значение на основе предыдущего
+incrementAge() {
+  // update() позволяет обновить значение, используя предыдущее
+  // previousAge - текущее значение сигнала userAge
+  this.userAge.update(previousAge => previousAge + 1);
+}
+
+// Для объектных сигналов можно использовать mutate() для изменения свойств
+updateEmail(newEmail: string) {
+  // mutate() позволяет изменять свойства объекта внутри сигнала
+  // без создания нового объекта
+  this.userProfile.mutate(profile => {
+    // Изменяем только email, остальные свойства остаются без изменений
+    profile.email = newEmail;
+  });
+}
+
+// Полная замена объекта в сигнале
+setNewProfile(newProfile: UserProfile) {
+  // set() для полной замены объекта
+  this.userProfile.set(newProfile);
+}
+```
+
+### 3. What is the main advantage of using signals instead of primitive values?
+
+Использование сигналов вместо примитивных значений предоставляет множество преимуществ:
+
+1. **Автоматическое отслеживание зависимостей**: Сигналы автоматически отслеживают, где используются их значения, создавая граф зависимостей, что позволяет автоматически обновлять только затронутые части приложения.
+
+2. **Точное обновление UI**: Вместо проверки всего дерева компонентов, Angular обновляет только те части DOM, которые зависят от изменившихся сигналов.
+
+3. **Детерминированная реактивность**: Сигналы обеспечивают предсказуемый поток данных и обновления, в отличие от традиционного обнаружения изменений, которое иногда может быть непредсказуемым.
+
+4. **Улучшенная производительность**: Благодаря точному отслеживанию зависимостей, приложение тратит меньше ресурсов на обнаружение изменений, что особенно важно для крупных приложений.
+
+5. **Лучшая типизация и статический анализ**: TypeScript лучше понимает и проверяет сигналы, чем обычные свойства класса.
+
+6. **Уменьшение бойлерплейта**: Сигналы часто требуют меньше кода для реализации реактивного поведения, чем подход с Observable и подписками.
+
+7. **Более явное управление состоянием**: Сигналы делают управление состоянием более явным и прозрачным, что облегчает отладку.
+
+8. **Интеграция с жизненным циклом компонентов**: Сигналы автоматически интегрируются с жизненным циклом компонентов, уменьшая необходимость в ручном управлении подписками.
+
+### 4. What is the advantage of using Signal Inputs?
+
+Сигнальные входы (`input signals`) — это новый способ определения входных свойств компонентов в Angular, представленный в версии 17. Они предлагают значительные преимущества по сравнению с традиционными входными свойствами:
+
+1. **Интеграция с системой сигналов**: Сигнальные входы полностью интегрированы с остальной системой сигналов, создавая единый согласованный подход к реактивности.
+
+2. **Оптимизированное отслеживание изменений**: Повышается эффективность обнаружения изменений, так как Angular точно знает, когда меняются входные свойства.
+
+3. **Упрощенный синтаксис**: Более краткий и понятный синтаксис для определения входных свойств:
+
+```typescript
+import { Component, input } from "@angular/core";
+
+@Component({
+  selector: "app-user-profile",
+  template: `
+    <div class="user-card">
+      <h2>{{ userName() }}</h2>
+      <p>Роль: {{ userRole() }}</p>
+    </div>
+  `,
+})
+export class UserProfileComponent {
+  // Определение входного сигнала с возможностью задать значение по умолчанию
+  userName = input<string>("Гость"); // Значение по умолчанию "Гость"
+
+  // Входной сигнал с трансформацией значения при получении
+  userRole = input<string, string>("user", {
+    // transform позволяет преобразовать входное значение перед использованием
+    transform: (role: string) => role.toUpperCase(),
+    // Если передано 'admin', в сигнале будет 'ADMIN'
+  });
+}
+```
+
+4. **Проверка обязательных входных параметров**: Возможность обозначить входные параметры как обязательные:
+
+```typescript
+// Обязательный входной параметр userId
+userId = input.required<number>(); // Ошибка TypeScript, если не передано значение
+```
+
+5. **Удобный доступ к значению**: Значение доступно напрямую через вызов функции, без необходимости обращаться к свойству, что упрощает код шаблона и компонента.
+
+6. **Ленивая инициализация**: Сигнальные входы инициализируются лениво, только когда к ним обращаются, что может улучшить производительность.
+
+7. **Лучшая совместимость с зонами (zoneless)**: Сигнальные входы хорошо работают в приложениях без зон выполнения (zoneless), что становится важным в современных версиях Angular.
+
+### 5. How do we subscribe to a signal?
+
+Существует несколько способов "подписаться" на изменения сигнала в Angular:
+
+#### 1. Использование computed() для создания вычисляемых сигналов:
+
+```typescript
+import { Component, signal, computed } from "@angular/core";
+
+@Component({
+  selector: "app-pricing",
+  template: `
+    <div>
+      <h2>Расчет цены</h2>
+      <p>Базовая цена: {{ basePrice() }}</p>
+      <p>Налог (%): {{ taxRate() }}</p>
+      <p>Итоговая цена: {{ totalPrice() }}</p>
+      <!-- totalPrice автоматически пересчитывается при изменении basePrice или taxRate -->
+    </div>
+  `,
+})
+export class PricingComponent {
+  // Создаем базовые сигналы
+  basePrice = signal(100); // Базовая цена
+  taxRate = signal(20); // Ставка налога в процентах
+
+  // Вычисляемый сигнал, зависящий от basePrice и taxRate
+  // Этот сигнал "подписан" на изменения basePrice и taxRate
+  totalPrice = computed(() => {
+    // При доступе к значениям других сигналов внутри computed
+    // создается зависимость, и при их изменении totalPrice пересчитывается
+    const price = this.basePrice();
+    const tax = this.taxRate();
+
+    // Вычисляем итоговую цену с налогом
+    return price * (1 + tax / 100);
+  });
+
+  updatePrice(newPrice: number) {
+    this.basePrice.set(newPrice);
+    // totalPrice автоматически пересчитается
+  }
+}
+```
+
+#### 2. Использование effect() для выполнения побочных эффектов:
+
+```typescript
+import { Component, signal, effect, OnInit, OnDestroy } from "@angular/core";
+
+@Component({
+  selector: "app-user-status",
+  template: `<div>Статус пользователя: {{ userStatus() }}</div>`,
+})
+export class UserStatusComponent implements OnInit, OnDestroy {
+  userStatus = signal("offline");
+  private statusEffect: any; // Для хранения ссылки на эффект
+
+  ngOnInit() {
+    // Создаем эффект, который выполняется при каждом изменении userStatus
+    this.statusEffect = effect(() => {
+      // Получаем текущее значение сигнала, создавая зависимость
+      const status = this.userStatus();
+
+      // Выполняем побочный эффект - логирование изменения статуса
+      console.log(`Статус пользователя изменился на: ${status}`);
+
+      // Можно выполнять другие действия, например, отправку аналитики
+      if (status === "online") {
+        this.logUserActivity("user_came_online");
+      } else if (status === "offline") {
+        this.logUserActivity("user_went_offline");
+      }
+    });
+  }
+
+  // Не забываем очистить эффект при уничтожении компонента
+  ngOnDestroy() {
+    if (this.statusEffect) {
+      this.statusEffect.destroy();
+    }
+  }
+
+  setUserStatus(status: "online" | "offline" | "away") {
+    this.userStatus.set(status);
+    // Эффект автоматически сработает после изменения значения
+  }
+
+  private logUserActivity(event: string) {
+    // Отправка события в аналитическую систему
+  }
+}
+```
+
+#### 3. Прямое использование в шаблонах:
+
+```typescript
+import { Component, signal } from "@angular/core";
+
+@Component({
+  selector: "app-counter",
+  template: `
+    <!-- Шаблон автоматически "подписывается" на изменения count -->
+    <div>
+      <h2>Счетчик: {{ count() }}</h2>
+      <button (click)="increment()">Увеличить</button>
+      <button (click)="decrement()">Уменьшить</button>
+
+      <!-- Условное отображение, зависящее от значения сигнала -->
+      <div *ngIf="count() > 10" class="warning">Значение счетчика слишком большое!</div>
+    </div>
+  `,
+})
+export class CounterComponent {
+  count = signal(0);
+
+  increment() {
+    this.count.update((value) => value + 1);
+    // UI автоматически обновится после изменения сигнала
+  }
+
+  decrement() {
+    this.count.update((value) => Math.max(0, value - 1));
+  }
+}
+```
+
+### 6. Can we read the value of a signal from a computed signal without creating a dependency?
+
+Да, в Angular есть способ прочитать значение сигнала из вычисляемого сигнала (computed signal) без создания зависимости — используя функцию `untracked()`:
+
+```typescript
+import { Component, signal, computed, untracked } from "@angular/core";
+
+@Component({
+  selector: "app-data-dashboard",
+  template: `
+    <div>
+      <h2>Данные</h2>
+      <p>Основное значение: {{ mainValue() }}</p>
+      <p>Дополнительное значение: {{ secondaryValue() }}</p>
+      <p>Результат: {{ result() }}</p>
+    </div>
+  `,
+})
+export class DataDashboardComponent {
+  // Создаем базовые сигналы
+  mainValue = signal(10);
+  secondaryValue = signal(5);
+
+  // Вычисляемый сигнал, который зависит только от mainValue,
+  // но читает значение secondaryValue без создания зависимости
+  result = computed(() => {
+    // Создаем зависимость от mainValue
+    const main = this.mainValue();
+
+    // Читаем значение secondaryValue без создания зависимости
+    // Изменения в secondaryValue не будут вызывать пересчет result
+    const secondary = untracked(() => this.secondaryValue());
+
+    return main * secondary;
+  });
+
+  updateMainValue(value: number) {
+    this.mainValue.set(value);
+    // result будет пересчитан, потому что зависит от mainValue
+  }
+
+  updateSecondaryValue(value: number) {
+    this.secondaryValue.set(value);
+    // result НЕ будет пересчитан, потому что secondaryValue читается через untracked
+  }
+}
+```
+
+Функция `untracked()` позволяет:
+
+1. **Избирательно управлять зависимостями**: Вы можете решить, какие сигналы должны вызывать пересчет, а какие нет.
+
+2. **Оптимизировать производительность**: Предотвращает лишние пересчеты вычисляемых сигналов, когда некоторые значения меняются, но не должны влиять на результат.
+
+3. **Работать с циклическими зависимостями**: Помогает разрывать потенциальные циклические зависимости между сигналами.
+
+Типичные сценарии использования:
+
+- **Константы и конфигурация**: Чтение значений констант или конфигурации, которые необходимы для вычисления, но редко меняются.
+- **Кеширование**: Создание вычисляемых значений, которые перерассчитываются только при изменении определенных ключевых входных данных.
+- **Условное вычисление**: Когда зависимость должна учитываться только при определенных условиях.
+
+### 7. Detecting signal changes with the effect() API
+
+API `effect()` предоставляет мощный способ реагирования на изменения сигналов и выполнения побочных эффектов при каждом изменении значений сигналов:
+
+```typescript
+import { Component, signal, effect, OnInit, OnDestroy, inject } from "@angular/core";
+import { LocalStorageService } from "./local-storage.service";
+
+@Component({
+  selector: "app-theme-switcher",
+  template: `
+    <div [class]="'theme-' + theme()">
+      <h2>Настройки темы</h2>
+      <button (click)="toggleTheme()">Переключить тему</button>
+      <div class="theme-preview">Предпросмотр темы</div>
+    </div>
+  `,
+})
+export class ThemeSwitcherComponent implements OnInit, OnDestroy {
+  // Инжектируем сервис для работы с localStorage
+  private storage = inject(LocalStorageService);
+
+  // Сигнал для текущей темы
+  theme = signal<"light" | "dark">("light");
+
+  // Ссылка на эффект для дальнейшей очистки
+  private themeEffect: any;
+
+  ngOnInit() {
+    // Загружаем сохраненную тему при инициализации
+    const savedTheme = this.storage.getItem("app_theme");
+    if (savedTheme === "light" || savedTheme === "dark") {
+      this.theme.set(savedTheme);
+    }
+
+    // Создаем эффект для автоматического сохранения темы
+    // и применения к document.body при каждом изменении
+    this.themeEffect = effect(() => {
+      // Получаем текущее значение темы (создаем зависимость)
+      const currentTheme = this.theme();
+
+      // Эффект 1: Сохраняем тему в localStorage
+      this.storage.setItem("app_theme", currentTheme);
+
+      // Эффект 2: Применяем класс темы к body для глобальных стилей
+      document.body.classList.remove("theme-light", "theme-dark");
+      document.body.classList.add(`theme-${currentTheme}`);
+
+      // Эффект 3: Обновляем мета-теги для поддержки темной темы в браузере
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute("content", currentTheme === "dark" ? "#1a1a1a" : "#ffffff");
+      }
+
+      // Логируем изменение темы
+      console.log(`Тема изменена на: ${currentTheme}`);
+    });
+  }
+
+  // Очищаем эффект при уничтожении компонента
+  ngOnDestroy() {
+    if (this.themeEffect) {
+      this.themeEffect.destroy();
+    }
+  }
+
+  // Метод для переключения темы
+  toggleTheme() {
+    this.theme.update((current) => (current === "light" ? "dark" : "light"));
+    // Эффект автоматически сработает после изменения значения
+  }
+}
+```
+
+Ключевые особенности `effect()`:
+
+1. **Автоматическое отслеживание зависимостей**: Effect автоматически определяет, от каких сигналов он зависит, просто читая их значения внутри функции эффекта.
+
+2. **Выполнение при изменениях**: Эффект выполняется сразу при создании и затем при каждом изменении любого сигнала, от которого он зависит.
+
+3. **Управление жизненным циклом**: Эффекты должны быть уничтожены при уничтожении компонента, чтобы избежать утечек памяти.
+
+4. **Настройки выполнения**: API эффектов поддерживает дополнительные опции для настройки поведения:
+
+```typescript
+// Создание эффекта с дополнительными опциями
+this.customEffect = effect(
+  () => {
+    const userData = this.userData();
+    console.log("Данные пользователя изменились:", userData);
+  },
+  {
+    // Выполнять эффект только после рендеринга
+    allowSignalWrites: true,
+
+    // Пропустить первое автоматическое выполнение
+    manualCleanup: true,
+
+    // Функция для очистки предыдущих ресурсов эффекта
+    onCleanup: (cleanupFn) => {
+      // Функция, которая будет вызвана перед следующим выполнением эффекта
+      // или при его уничтожении
+      cleanupFn();
+    },
+  }
+);
+```
+
+### 8. What is the relation between Signals and change detection?
+
+Сигналы представляют собой эволюцию подхода к обнаружению изменений в Angular, предлагая более детерминированный и эффективный механизм:
+
+#### Традиционный подход к обнаружению изменений
+
+В традиционном подходе Angular:
+
+1. **Зональное отслеживание**: Angular использует Zone.js для отслеживания асинхронных операций (HTTP-запросы, таймеры, события DOM и т.д.)
+2. **Проверка всех компонентов**: При срабатывании любого асинхронного события Angular запускает проверку всего дерева компонентов (или его части при использовании OnPush)
+3. **Сравнение объектов**: Angular сравнивает предыдущие и текущие значения свойств компонентов для определения изменений
+4. **Обновление DOM**: Если обнаружены изменения, Angular обновляет соответствующие части DOM
+
+#### Подход с использованием сигналов
+
+С сигналами:
+
+1. **Явное отслеживание изменений**: Изменения значений происходят явно через API сигналов (set, update, mutate)
+2. **Точное знание изменений**: Angular точно знает, какой сигнал изменился, без необходимости сравнивать объекты
+3. **Граф зависимостей**: Система сигналов автоматически строит граф зависимостей между сигналами и их потребителями
+4. **Целевое обновление**: Обновляются только те части приложения, которые действительно зависят от изменившихся сигналов
+
+Связь между сигналами и обнаружением изменений:
+
+```typescript
+import { Component, signal, computed, effect } from "@angular/core";
+
+@Component({
+  selector: "app-signal-demo",
+  template: `
+    <div>
+      <h2>Счетчик: {{ counter() }}</h2>
+      <p>Квадрат: {{ counterSquared() }}</p>
+      <button (click)="increment()">+</button>
+      <button (click)="decrement()">-</button>
+    </div>
+  `,
+})
+export class SignalDemoComponent {
+  // Базовый сигнал
+  counter = signal(0);
+
+  // Вычисляемый сигнал (зависит от counter)
+  counterSquared = computed(() => this.counter() * this.counter());
+
+  constructor() {
+    // Создаем эффект для демонстрации работы обнаружения изменений
+    effect(() => {
+      // Этот код будет выполняться при каждом изменении counter
+      console.log("Счетчик изменился:", this.counter());
+      console.log("Текущий квадрат:", this.counterSquared());
+
+      // При использовании сигналов Angular знает точно:
+      // 1. Что именно изменилось (counter)
+      // 2. Какие вычисляемые значения зависят от него (counterSquared)
+      // 3. Какие части шаблона нужно обновить (только те, где используются
+      //    counter() и counterSquared())
+    });
+  }
+
+  increment() {
+    // При вызове set/update Angular немедленно знает, что counter изменился
+    this.counter.update((value) => value + 1);
+
+    // В отличие от традиционного подхода, не нужно запускать
+    // полную проверку изменений или использовать ChangeDetectorRef
+  }
+
+  decrement() {
+    this.counter.update((value) => value - 1);
+  }
+}
+```
+
+Ключевые отличия в механизме обнаружения изменений:
+
+1. **Производительность**: Сигналы обеспечивают существенный прирост производительности, особенно в больших приложениях, так как обновляются только зависимые части.
+
+2. **Предсказуемость**: С сигналами обнаружение изменений становится более предсказуемым и детерминированным.
+
+3. **Совместимость с режимом без зон (zoneless)**: Сигналы хорошо работают в режиме без зон (zoneless mode), который является будущим направлением развития Angular.
+
+4. **Интеграция со стратегией OnPush**: Сигналы автоматически работают как с Default, так и с OnPush стратегией обнаружения изменений.
+
+5. **Сокращение бойлерплейта**: Меньше необходимости в явных вызовах `markForCheck()` или `detectChanges()`.
+
+### 9. How do you handle signal debugging?
+
+Отладка приложений, использующих сигналы, имеет свои особенности. Вот несколько подходов и инструментов для эффективной отладки:
+
+#### 1. Мониторинг изменений через эффекты
+
+Самый простой способ — использовать эффекты для логирования изменений:
+
+```typescript
+import { Component, signal, effect, OnInit, OnDestroy } from "@angular/core";
+
+@Component({
+  selector: "app-debug-demo",
+  template: `<div>Значение: {{ value() }}</div>`,
+})
+export class DebugDemoComponent implements OnInit, OnDestroy {
+  // Сигнал, который хотим отслеживать
+  value = signal(0);
+
+  // Для хранения ссылки на эффект
+  private debugEffect: any;
+
+  ngOnInit() {
+    // Создаем отладочный эффект в режиме разработки
+    if (isDevMode()) {
+      this.debugEffect = effect(() => {
+        // Создаем зависимость от сигнала
+        const currentValue = this.value();
+
+        // Логируем текущее значение и стек вызовов
+        console.log(
+          `[DEBUG] Сигнал "value" изменился: ${currentValue}`,
+          new Error().stack // Показываем стек вызовов для определения источника изменения
+        );
+      });
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.debugEffect) {
+      this.debugEffect.destroy();
+    }
+  }
+
+  // Методы для изменения значения
+  setValue(newValue: number) {
+    this.value.set(newValue);
+  }
+}
+```
+
+#### 2. Создание утилиты для отладки сигналов
+
+Более мощный подход — создание специальной утилиты для отладки:
+
+````typescript
+// signal-debugger.ts
+import { signal, Signal, effect, isSignal } from '@angular/core';
+
+export class SignalDebugger {
+  private static activeDebuggers = new Map<string, any>();
+
+  /**
+   * Создает отлаживаемую версию сигнала
+   * @param originalSignal Исходный сигнал
+   * @param name Имя для идентификации в логах
+   */
+  static debugSignal<T>(originalSignal: Signal<T>, name: string): Signal<T> {
+    // Если это не сигнал или мы не в режиме разработки, возвращаем исходный сигнал
+    if (!isSignal(originalSignal) || !isDevMode()) {
+      return originalSignal;
+    }
+
+    // Создаем прокси-функцию, которая перехватывает обращения к сигналу
+    const debugProxy = function() {
+      const value = originalSignal();
+
+```typescript
+      // Логируем чтение значения сигнала
+      console.log(`[SIGNAL READ] ${name}:`, value);
+      return value;
+    } as Signal<T>;
+
+    // Добавляем методы оригинального сигнала (set, update, mutate и т.д.)
+    if ('set' in originalSignal) {
+      debugProxy['set'] = function(newValue: T) {
+        console.log(`[SIGNAL SET] ${name}:`, {
+          previousValue: originalSignal(),
+          newValue: newValue
+        });
+        return (originalSignal as any).set(newValue);
+      };
+    }
+
+    if ('update' in originalSignal) {
+      debugProxy['update'] = function(updateFn: (value: T) => T) {
+        const previousValue = originalSignal();
+        console.log(`[SIGNAL UPDATE] ${name} - previous value:`, previousValue);
+        const result = (originalSignal as any).update(updateFn);
+        console.log(`[SIGNAL UPDATE] ${name} - new value:`, originalSignal());
+        return result;
+      };
+    }
+
+    if ('mutate' in originalSignal) {
+      debugProxy['mutate'] = function(mutateFn: (value: T) => void) {
+        console.log(`[SIGNAL MUTATE] ${name} - before:`, JSON.stringify(originalSignal()));
+        const result = (originalSignal as any).mutate(mutateFn);
+        console.log(`[SIGNAL MUTATE] ${name} - after:`, JSON.stringify(originalSignal()));
+        return result;
+      };
+    }
+
+    // Создаем эффект для отслеживания изменений
+    if (!this.activeDebuggers.has(name)) {
+      const debugEffect = effect(() => {
+        // Получаем текущее значение, создавая зависимость
+        const value = originalSignal();
+        // Не логируем при первом запуске
+        if (debugEffect.runCount > 1) {
+          console.log(`[SIGNAL CHANGED] ${name}:`, value);
+          console.trace(`Change stack for ${name}`);
+        }
+      });
+
+      this.activeDebuggers.set(name, debugEffect);
+    }
+
+    return debugProxy;
+  }
+
+  /**
+   * Прекращает отладку для указанного сигнала
+   */
+  static stopDebugging(name: string): void {
+    if (this.activeDebuggers.has(name)) {
+      this.activeDebuggers.get(name).destroy();
+      this.activeDebuggers.delete(name);
+      console.log(`[SIGNAL DEBUG] Stopped debugging signal "${name}"`);
+    }
+  }
+
+  /**
+   * Прекращает отладку всех сигналов
+   */
+  static stopAll(): void {
+    this.activeDebuggers.forEach((debugger, name) => {
+      debugger.destroy();
+      console.log(`[SIGNAL DEBUG] Stopped debugging signal "${name}"`);
+    });
+    this.activeDebuggers.clear();
+  }
+}
+````
+
+Использование этой утилиты:
+
+```typescript
+import { Component, signal, computed } from "@angular/core";
+import { SignalDebugger } from "./signal-debugger";
+
+@Component({
+  selector: "app-debuggable",
+  template: `
+    <h2>Отладка сигналов</h2>
+    <p>Count: {{ debugCount() }}</p>
+    <p>Doubled: {{ debugDoubled() }}</p>
+    <button (click)="increment()">Увеличить</button>
+  `,
+})
+export class DebuggableComponent {
+  // Обычные сигналы
+  private count = signal(0);
+  private doubled = computed(() => this.count() * 2);
+
+  // Отлаживаемые версии сигналов
+  debugCount = SignalDebugger.debugSignal(this.count, "count");
+  debugDoubled = SignalDebugger.debugSignal(this.doubled, "doubled");
+
+  increment() {
+    // Используем оригинальный метод set или update
+    this.count.update((val) => val + 1);
+  }
+
+  ngOnDestroy() {
+    // Останавливаем отладку перед уничтожением компонента
+    SignalDebugger.stopAll();
+  }
+}
+```
+
+#### 3. Визуализация графа зависимостей сигналов
+
+Для сложных приложений полезно визуализировать граф зависимостей между сигналами:
+
+```typescript
+// signal-graph-visualizer.ts
+import { isSignal, computed, Signal } from "@angular/core";
+
+interface SignalNode {
+  name: string;
+  value: any;
+  dependencies: string[];
+  dependents: string[];
+}
+
+export class SignalGraphVisualizer {
+  private static signalRegistry = new Map<string, SignalNode>();
+
+  /**
+   * Регистрирует сигнал для отслеживания
+   */
+  static registerSignal<T>(signal: Signal<T>, name: string): void {
+    if (!isSignal(signal)) return;
+
+    if (!this.signalRegistry.has(name)) {
+      this.signalRegistry.set(name, {
+        name,
+        value: signal(),
+        dependencies: [],
+        dependents: [],
+      });
+
+      // Для вычисляемых сигналов пытаемся определить зависимости
+      if ((signal as any).__node?.dependencies) {
+        const deps = (signal as any).__node.dependencies;
+        // Находим имена зависимостей
+        for (const [depName, depNode] of this.signalRegistry.entries()) {
+          if (deps.includes(depNode)) {
+            this.addDependency(name, depName);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Добавляет зависимость между сигналами
+   */
+  static addDependency(dependent: string, dependency: string): void {
+    if (!this.signalRegistry.has(dependent) || !this.signalRegistry.has(dependency)) return;
+
+    const dependentNode = this.signalRegistry.get(dependent);
+    const dependencyNode = this.signalRegistry.get(dependency);
+
+    if (!dependentNode.dependencies.includes(dependency)) {
+      dependentNode.dependencies.push(dependency);
+    }
+
+    if (!dependencyNode.dependents.includes(dependent)) {
+      dependencyNode.dependents.push(dependent);
+    }
+  }
+
+  /**
+   * Выводит в консоль текущий граф зависимостей
+   */
+  static visualizeGraph(): void {
+    console.group("Signal Dependency Graph");
+
+    this.signalRegistry.forEach((node, name) => {
+      console.group(`Signal: ${name} (Current value: ${JSON.stringify(node.value)})`);
+
+      if (node.dependencies.length > 0) {
+        console.log("Dependencies:", node.dependencies);
+      } else {
+        console.log("No dependencies (root signal)");
+      }
+
+      if (node.dependents.length > 0) {
+        console.log("Dependents:", node.dependents);
+      } else {
+        console.log("No dependents (leaf signal)");
+      }
+
+      console.groupEnd();
+    });
+
+    console.groupEnd();
+  }
+
+  /**
+   * Генерирует визуальное представление графа в формате DOT
+   * для использования с Graphviz
+   */
+  static generateDotGraph(): string {
+    let dot = "digraph SignalGraph {\n";
+
+    // Добавляем узлы
+    this.signalRegistry.forEach((node, name) => {
+      dot += `  "${name}" [label="${name}\\nValue: ${JSON.stringify(node.value)}"]\n`;
+    });
+
+    // Добавляем связи
+    this.signalRegistry.forEach((node, name) => {
+      node.dependencies.forEach((dep) => {
+        dot += `  "${dep}" -> "${name}"\n`;
+      });
+    });
+
+    dot += "}";
+    return dot;
+  }
+}
+```
+
+#### 4. Расширения DevTools для работы с сигналами
+
+Angular разрабатывает DevTools, которые в будущем будут поддерживать отладку сигналов. Сейчас можно использовать общие инструменты:
+
+```typescript
+import { ApplicationRef, Component, signal } from "@angular/core";
+
+@Component({
+  selector: "app-devtools-integration",
+  template: `<div>{{ counter() }}</div>`,
+})
+export class DevToolsIntegrationComponent {
+  counter = signal(0);
+
+  constructor(private appRef: ApplicationRef) {
+    // Делаем сигналы доступными в консоли для отладки
+    (window as any).__DEBUG__ = {
+      signals: {
+        counter: this.counter,
+      },
+
+      // Вспомогательные функции для отладки
+      getSignalValue: (signalName: string) => {
+        return (window as any).__DEBUG__.signals[signalName]();
+      },
+
+      setSignalValue: (signalName: string, value: any) => {
+        (window as any).__DEBUG__.signals[signalName].set(value);
+        // Запускаем обнаружение изменений вручную, если нужно
+        this.appRef.tick();
+      },
+
+      // Логирование всех значений сигналов
+      logAllSignals: () => {
+        const signals = (window as any).__DEBUG__.signals;
+        console.table(
+          Object.entries(signals).reduce((acc, [name, signal]) => {
+            acc[name] = signal();
+            return acc;
+          }, {})
+        );
+      },
+    };
+
+    console.log("Debug API available at window.__DEBUG__");
+  }
+}
+```
+
+#### 5. Использование JSON-сериализации для отладки объектных сигналов
+
+Для сложных объектных сигналов:
+
+```typescript
+import { Component, signal, effect } from "@angular/core";
+
+@Component({
+  selector: "app-object-signal-debug",
+  template: `<div>Объект обновлен {{ updateCount() }} раз</div>`,
+})
+export class ObjectSignalDebugComponent {
+  // Сложный объектный сигнал
+  userProfile = signal({
+    id: 1,
+    name: "Тестовый пользователь",
+    settings: {
+      theme: "dark",
+      notifications: {
+        email: true,
+        push: false,
+      },
+    },
+    activities: [],
+  });
+
+  // Счетчик обновлений для отображения в UI
+  updateCount = signal(0);
+
+  constructor() {
+    // Отладочный эффект для объектного сигнала
+    effect(() => {
+      // Получаем значение сигнала (создаем зависимость)
+      const profile = this.userProfile();
+
+      // Увеличиваем счетчик обновлений
+      this.updateCount.update((count) => count + 1);
+
+      // Вывод 1: Полное значение объекта
+      console.log("[ОБЪЕКТ ОБНОВЛЕН]", profile);
+
+      // Вывод 2: JSON-представление для лучшей читаемости
+      console.log("[JSON]", JSON.stringify(profile, null, 2));
+
+      // Вывод 3: Плоское представление для сложных вложенных объектов
+      const flattenObject = (obj, prefix = "") => {
+        return Object.keys(obj).reduce((acc, key) => {
+          const pre = prefix.length ? `${prefix}.` : "";
+          if (typeof obj[key] === "object" && obj[key] !== null && !Array.isArray(obj[key])) {
+            Object.assign(acc, flattenObject(obj[key], `${pre}${key}`));
+          } else {
+            acc[`${pre}${key}`] = obj[key];
+          }
+          return acc;
+        }, {});
+      };
+
+      // Выводим плоскую структуру объекта для легкого сравнения
+      console.table(flattenObject(profile));
+    });
+  }
+
+  // Метод для обновления части объекта
+  updateTheme(theme: "light" | "dark") {
+    this.userProfile.mutate((profile) => {
+      profile.settings.theme = theme;
+    });
+  }
+
+  // Метод для добавления активности
+  addActivity(activity: string) {
+    this.userProfile.mutate((profile) => {
+      profile.activities.push({
+        id: profile.activities.length + 1,
+        name: activity,
+        timestamp: new Date().toISOString(),
+      });
+    });
+  }
+}
+```
+
+#### Лучшие практики отладки сигналов
+
+1. **Документируйте зависимости**: Ведите документацию о том, какие сигналы от чего зависят, особенно для сложных вычисляемых сигналов.
+
+2. **Используйте описательные имена**: Давайте сигналам четкие, описательные имена, которые указывают на их назначение и содержимое.
+
+3. **Создавайте специфичные эффекты для отладки**: Вместо одного большого эффекта используйте несколько специфичных для легкой отладки.
+
+4. **Изолируйте отладочный код**: Используйте утилиты и сервисы для отладки, которые можно отключить в продакшене.
+
+5. **Используйте мемоизацию**: Для сложных вычислений с сигналами рассмотрите использование мемоизации, чтобы избежать лишних пересчетов.
+
+6. **Отслеживайте производительность**: Следите за количеством перевычислений сигналов, особенно в критических путях приложения.
+
+7. **Держите граф зависимостей плоским**: Избегайте глубоких цепочек зависимостей между сигналами для упрощения отладки.
+
+Сигналы в Angular представляют собой мощный механизм для создания реактивных приложений с высокой производительностью и предсказуемым поведением. Они обеспечивают более явный и декларативный подход к управлению состоянием приложения по сравнению с традиционными подходами, и в будущем станут основным способом работы с реактивностью в Angular.
+
+
+## Angular 16, 17, 18 features:
+
+### 1. What's new in Angular 16, 17, and 18 versions?
+
+#### Angular 16 (май 2023)
+
+Angular 16 принес ряд значительных улучшений, сфокусированных на производительности, удобстве разработки и модернизации фреймворка:
+
+**Сигналы (Signals)** - Введение новой системы реактивности на основе сигналов, предоставляющей более детерминированный и эффективный подход к управлению состоянием и обнаружению изменений. Сигналы стали первым шагом к новой модели реактивности Angular.
+
+**Отдельные компоненты (Standalone Components)** - Переход от обязательных NgModules к отдельным компонентам стал стабильным. Это позволило разработчикам создавать приложения без необходимости обертывания компонентов, директив и пайпов в модули.
+
+**Улучшения в Server-Side Rendering (SSR)** - Angular Universal получил значительные улучшения производительности и обновления API для упрощения интеграции с современными серверными технологиями, такими как Vite.
+
+**Улучшенная гидратация** - Новый подход к гидратации приложения при переходе от серверного к клиентскому рендерингу, что ускоряет загрузку и улучшает пользовательский опыт.
+
+**Удаление устаревших браузеров** - Прекращение поддержки IE11 и других устаревших браузеров, что позволило оптимизировать код и использовать современные возможности JavaScript.
+
+**Улучшения в Angular CLI** - Обновленный генератор приложений с автоматической поддержкой TypeScript 5.0, ESLint вместо TSLint, и оптимизированной конфигурацией.
+
+#### Angular 17 (ноябрь 2023)
+
+Angular 17 стал одним из самых значительных обновлений за многие годы:
+
+**Новый синтаксис шаблонов** - Введение нового, более интуитивного синтаксиса управления потоком в шаблонах с блоками `@if`, `@for`, `@switch` и другими, которые заменяют структурные директивы с префиксом `*`.
+
+**Отложенная загрузка компонентов (Deferred Loading)** - Новый блок `@defer`, позволяющий оптимизировать загрузку частей приложения с помощью ряда триггеров, таких как видимость, взаимодействие пользователя или таймер.
+
+**Дополнительное использование зон** - Возможность создания приложений без Zone.js, что улучшает производительность и упрощает интеграцию с внешними библиотеками.
+
+**Новый режим разработки** - Улучшенные инструменты разработки с более информативными сообщениями об ошибках и рекомендациями по оптимизации.
+
+**Инкрементальная миграция** - Улучшенные инструменты для постепенного перехода от NgModules к отдельным компонентам.
+
+**Обновленные экспериментальные сигналы** - Расширение API сигналов с новыми возможностями и улучшенной документацией.
+
+**Angular Language Service** - Обновленный языковой сервис для лучшей поддержки нового синтаксиса шаблонов в IDE.
+
+#### Angular 18 (май 2024)
+
+Angular 18 продолжил инновации с фокусом на производительность и разработку:
+
+**Стабильные сигналы** - API сигналов полностью стабилизирован, включая входные сигналы (input signals) и улучшенную интеграцию с другими частями Angular.
+
+**Новая документация** - Полностью переработанный сайт документации angular.io с улучшенной навигацией, поиском и интерактивными примерами.
+
+**Автоматическая оптимизация изображений** - Встроенная оптимизация изображений в директиве NgOptimizedImage для улучшения производительности загрузки страниц.
+
+**Улучшенная работа с формами** - Новый API для работы с формами на основе сигналов, обеспечивающий лучшую типизацию и более интуитивную работу.
+
+**ESBuild для разработки** - Использование ESBuild вместо webpack для режима разработки, что значительно ускорило время сборки и перезагрузки.
+
+**Улучшенная поддержка SSR** - Расширенная поддержка серверного рендеринга с автоматической передачей состояния от сервера к клиенту.
+
+**Поддержка режима "без зон"** - Улучшенная поддержка разработки без использования Zone.js.
+
+**Angular DevTools** - Улучшенные инструменты для отладки с поддержкой нового синтаксиса шаблонов и сигналов.
+
+### 2. Describe the new features @if, @for, @switch, @defer.
+
+#### @if блок
+
+Блок `@if` заменяет структурную директиву `*ngIf` и предоставляет более читаемый и мощный синтаксис для условного отображения содержимого:
+
+```typescript
+<!-- Старый синтаксис с *ngIf -->
+<div *ngIf="user; else noUser">
+  Привет, {{ user.name }}!
+</div>
+<ng-template #noUser>
+  Пожалуйста, войдите в систему.
+</ng-template>
+
+<!-- Новый синтаксис с @if -->
+@if (user) {
+  <div>Привет, {{ user.name }}!</div>
+} @else {
+  <div>Пожалуйста, войдите в систему.</div>
+}
+```
+
+Преимущества `@if`:
+
+1. **Более явный синтаксис** - Улучшенная читаемость, особенно для вложенных условий
+2. **Каскадные условия** - Поддержка конструкций `@else if` для нескольких условий
+3. **Лучшая типизация** - Улучшенный вывод типов в блоках
+4. **Производительность** - Оптимизированная обработка условных блоков
+
+Пример с несколькими условиями:
+
+```typescript
+@if (status === 'loading') {
+  <!-- Блок кода, выполняемый, когда status равен 'loading' -->
+  <app-loading-spinner></app-loading-spinner>
+} @else if (status === 'error') {
+  <!-- Блок кода, выполняемый, когда status равен 'error' -->
+  <app-error-message [message]="errorMessage"></app-error-message>
+} @else if (status === 'empty') {
+  <!-- Блок кода, выполняемый, когда status равен 'empty' -->
+  <app-empty-state></app-empty-state>
+} @else {
+  <!-- Блок кода, выполняемый, когда ни одно из условий не выполнено -->
+  <app-data-display [data]="data"></app-data-display>
+}
+```
+
+#### @for блок
+
+Блок `@for` заменяет директиву `*ngFor`, обеспечивая более богатый функционал для итерации по коллекциям:
+
+```typescript
+<!-- Старый синтаксис с *ngFor -->
+<div *ngFor="let item of items; index as i; trackBy: trackByFn">
+  {{ i + 1 }}. {{ item.name }}
+</div>
+
+<!-- Новый синтаксис с @for -->
+@for (item of items; track item.id; let i = $index) {
+  <div>{{ i + 1 }}. {{ item.name }}</div>
+} @empty {
+  <div>Список пуст.</div>
+}
+```
+
+Преимущества `@for`:
+
+1. **Обязательный трекинг** - Требование указать `track` для лучшей производительности
+2. **Блок @empty** - Встроенная обработка пустых коллекций
+3. **Расширенные переменные** - Доступ к переменным `$index`, `$first`, `$last`, `$even`, `$odd`, `$count`
+4. **Улучшенная производительность** - Оптимизированная обработка списков
+5. **Более чистый синтаксис** - Нет необходимости в дополнительных директивах для трекинга и индексации
+
+Пример с дополнительными переменными:
+
+```typescript
+@for (user of users; track user.id; let i = $index; let isFirst = $first; let isLast = $last; let isEven = $even; let count = $count) {
+  <!--
+  Доступные переменные в блоке:
+  - i: индекс текущего элемента
+  - isFirst: true, если это первый элемент
+  - isLast: true, если это последний элемент
+  - isEven: true, если индекс четный
+  - count: общее количество элементов в коллекции
+  -->
+  <div [class.first-item]="isFirst" [class.last-item]="isLast" [class.even-row]="isEven">
+    {{ i + 1 }} из {{ count }}: {{ user.name }}
+  </div>
+}
+```
+
+#### @switch блок
+
+Блок `@switch` заменяет директивы `[ngSwitch]`, `*ngSwitchCase` и `*ngSwitchDefault`, предоставляя более понятный синтаксис для работы с множественными условиями:
+
+```typescript
+<!-- Старый синтаксис с [ngSwitch] -->
+<div [ngSwitch]="role">
+  <div *ngSwitchCase="'admin'">Панель администратора</div>
+  <div *ngSwitchCase="'editor'">Редактор контента</div>
+  <div *ngSwitchDefault>Панель пользователя</div>
+</div>
+
+<!-- Новый синтаксис с @switch -->
+@switch (role) {
+  @case ('admin') {
+    <div>Панель администратора</div>
+  }
+  @case ('editor') {
+    <div>Редактор контента</div>
+  }
+  @default {
+    <div>Панель пользователя</div>
+  }
+}
+```
+
+Преимущества `@switch`:
+
+1. **Единый блок кода** - Более читаемая и структурированная организация условий
+2. **Явная связь** - Ясная визуальная связь между выражением и ветками
+3. **Более чистый синтаксис** - Устранение необходимости в использовании нескольких директив
+4. **Поддержка нескольких значений** - Возможность указать несколько значений для одного случая
+
+Пример с несколькими значениями для одного случая:
+
+```typescript
+@switch (userStatus) {
+  @case ('online', 'active') {
+    <!-- Этот блок выполняется, если userStatus равен 'online' или 'active' -->
+    <div class="status-indicator online">Онлайн</div>
+  }
+  @case ('away', 'busy') {
+    <!-- Этот блок выполняется, если userStatus равен 'away' или 'busy' -->
+    <div class="status-indicator away">Занят</div>
+  }
+  @default {
+    <!-- Этот блок выполняется для всех других значений userStatus -->
+    <div class="status-indicator offline">Не в сети</div>
+  }
+}
+```
+
+#### @defer блок
+
+Блок `@defer` представляет совершенно новую возможность для отложенной загрузки частей шаблона, что позволяет оптимизировать начальную загрузку приложения:
+
+```typescript
+<!-- Отложенная загрузка тяжелого компонента -->
+@defer {
+  <app-heavy-component [data]="data"></app-heavy-component>
+} @loading {
+  <!-- Показывается во время загрузки -->
+  <div class="loading-placeholder">Загрузка...</div>
+} @error {
+  <!-- Показывается в случае ошибки загрузки -->
+  <div class="error-message">Ошибка загрузки компонента</div>
+} @placeholder {
+  <!-- Показывается до начала загрузки -->
+  <div class="placeholder">Нажмите для загрузки</div>
+}
+```
+
+Преимущества `@defer`:
+
+1. **Оптимизация начальной загрузки** - Загрузка компонентов только при необходимости
+2. **Различные триггеры** - Поддержка разных условий для начала загрузки
+3. **Состояния загрузки** - Явное определение состояний загрузки, ошибок и плейсхолдеров
+4. **Приоритизация контента** - Фокус на важном контенте при начальной загрузке
+5. **Улучшение метрик Core Web Vitals** - Сокращение времени до интерактивности
+
+Триггеры для `@defer`:
+
+```typescript
+<!-- Загрузка при появлении элемента в области видимости -->
+@defer (on viewport) {
+  <app-chart [data]="analyticsData"></app-chart>
+}
+
+<!-- Загрузка при взаимодействии пользователя -->
+@defer (on interaction) {
+  <app-comments [postId]="post.id"></app-comments>
+}
+
+<!-- Загрузка после таймера (3 секунды) -->
+@defer (on timer(3000)) {
+  <app-recommendations></app-recommendations>
+}
+
+<!-- Загрузка при наведении на определенный элемент -->
+@defer (on hover(hoverTrigger)) {
+  <app-product-details [product]="product"></app-product-details>
+}
+<button #hoverTrigger>Подробнее о продукте</button>
+
+<!-- Комбинация нескольких триггеров -->
+@defer (on viewport; on interaction; on timer(5000)) {
+  <app-feedback-form></app-feedback-form>
+}
+
+<!-- Немедленная загрузка при удовлетворении условия -->
+@defer (when isAuthenticated()) {
+  <app-user-dashboard></app-user-dashboard>
+}
+```
+
+### 3. Can you explain the benefits of using the new Angular Ivy renderer introduced in Angular 18?
+
+Ivy - это название нового движка рендеринга Angular, который был впервые представлен в Angular 9, но продолжает получать значительные улучшения в каждой версии, включая Angular 18. В Angular 18 Ivy достиг новой зрелости и оптимизации, предлагая целый ряд преимуществ:
+
+#### Улучшенная компиляция и размер бандла
+
+1. **Инкрементальная компиляция** - Ivy компилирует каждый компонент отдельно, что значительно ускоряет процесс сборки, особенно при внесении небольших изменений.
+
+2. **Tree Shaking на уровне шаблонов** - Ivy включает в сборку только те части Angular, которые фактически используются в вашем приложении, что приводит к значительному сокращению размера бандла.
+
+3. **Локализованные метаданные** - Метаданные компонентов хранятся вместе с самими компонентами, а не в отдельных файлах, что упрощает отладку и оптимизацию.
+
+#### Улучшенная производительность
+
+1. **Ленивая загрузка модулей и компонентов** - Ivy обеспечивает более эффективную ленивую загрузку, загружая только необходимые части приложения при необходимости.
+
+2. **Более быстрое время запуска** - Благодаря меньшему размеру бандла и оптимизированному рендерингу, приложения запускаются быстрее.
+
+3. **Эффективное обнаружение изменений** - Ivy использует более эффективный алгоритм обнаружения изменений, который фокусируется только на частях шаблона, которые могли измениться.
+
+4. **Локальная перекомпиляция (patching)** - При обновлении компонентов Ivy может перекомпилировать только измененные части, а не весь компонент.
+
+#### Улучшенная отладка и диагностика
+
+1. **Улучшенные сообщения об ошибках** - Ivy предоставляет более понятные и подробные сообщения об ошибках с рекомендациями по исправлению.
+
+2. **Улучшенная трассировка ошибок** - Более точная информация о том, где именно в шаблоне произошла ошибка.
+
+3. **Инструменты разработки** - Улучшенная интеграция с Angular DevTools для отладки компонентов, маршрутизации и обнаружения изменений.
+
+### Интеграция с новыми возможностями Angular
+
+1. **Поддержка нового синтаксиса шаблонов** - Ivy полностью поддерживает новый синтаксис шаблонов с блоками `@if`, `@for`, `@switch` и `@defer`.
+
+2. **Интеграция с сигналами** - Ivy оптимизирован для работы с новой системой реактивности на основе сигналов, обеспечивая более эффективное обновление DOM.
+
+3. **Самостоятельные компоненты** - Ivy обеспечивает полную поддержку самостоятельных компонентов (standalone components), что устраняет необходимость в NgModules.
+
+#### Расширяемость и гибкость
+
+1. **Режим без зон (zoneless)** - Ivy является ключевым компонентом для поддержки приложений без Zone.js, что упрощает интеграцию с внешними библиотеками и улучшает производительность.
+
+2. **Адаптация компиляции** - Ivy позволяет настраивать процесс компиляции для различных целевых сред (браузер, сервер, веб-воркеры).
+
+3. **Мета-программирование** - Ivy предоставляет более мощные инструменты для метапрограммирования, позволяя создавать более гибкие и динамические компоненты.
+
+В Angular 18 рендерер Ivy также получил специфические улучшения:
+
+- **Оптимизированная обработка событий** - Улучшенная система делегирования событий, уменьшающая накладные расходы при большом количестве обработчиков событий.
+
+- **Эффективная интеграция с WebComponents** - Лучшая поддержка веб-компонентов и возможность создания Angular-компонентов как веб-компонентов.
+
+- **Дополнительная оптимизация гидратации** - Улучшенный процесс гидратации для приложений с серверным рендерингом, что снижает мерцание и улучшает взаимодействие с пользователем.
+
+### 4. How does Angular 18 improve performance and bundle size optimization compared to previous versions?
+
+Angular 18 предлагает ряд существенных улучшений в области производительности и оптимизации размера пакета:
+
+#### Улучшения в сборке и компиляции
+
+1. **ESBuild для разработки** - Переход от webpack к ESBuild для режима разработки, который обеспечивает значительное ускорение процесса сборки:
+
+   - На 80-90% более быстрая инициализация сервера разработки
+   - Существенно более быстрый отклик при внесении изменений в код
+   - Снижение потребления памяти во время разработки
+
+2. **Улучшенный Tree Shaking** - Более агрессивный и точный Tree Shaking, который удаляет неиспользуемый код:
+
+   - Удаление неиспользуемых CSS стилей
+   - Устранение неиспользуемых директив и пайпов
+   - Оптимизация импортов от сторонних библиотек
+
+3. **Инкрементальная сборка AOT** - Улучшенная инкрементальная сборка в режиме Ahead-of-Time (AOT), которая пересобирает только измененные компоненты.
+
+4. **Оптимизация повторно используемых шаблонов** - Компилятор обнаруживает и оптимизирует повторяющиеся части шаблонов.
+
+#### Оптимизации во время выполнения
+
+1. **Эффективное управление памятью** - Улучшенное управление памятью с уменьшенным количеством утечек и более эффективным использованием ресурсов:
+
+   - Автоматическое удаление слушателей событий
+   - Более эффективное управление жизненным циклом компонентов
+   - Улучшенная очистка ресурсов при уничтожении компонентов
+
+2. **Оптимизированная обработка событий** - Переработанная система обработки событий, которая уменьшает накладные расходы:
+
+   - Делегирование событий на уровне документа
+   - Уменьшение количества слушателей событий
+   - Более эффективное связывание контекста событий
+
+3. **Ленивая инициализация компонентов** - Компоненты инициализируются только тогда, когда они действительно нужны:
+   - Улучшенная стратегия монтирования компонентов
+   - Отложенная инициализация невидимых компонентов
+   - Приоритизация компонентов в области видимости
+
+#### Оптимизация размера пакета
+
+1. **Улучшенная модульность сигналов** - Система сигналов была перепроектирована для лучшей модульности, что позволяет включать только необходимые части API.
+
+2. **Оптимизация импортов RxJS** - Более эффективный импорт только необходимых операторов и функций из RxJS.
+
+3. **Сокращение размера ядра Angular** - Уменьшение размера основных пакетов Angular путем переноса редко используемых функций в отдельные пакеты.
+
+4. **Поддержка терсера (Terser) v5** - Обновленный минификатор кода для более эффективного сжатия JavaScript.
+
+5. **Оптимизация статических ресурсов** - Встроенная оптимизация статических ресурсов, включая сжатие изображений и CSS.
+
+#### Производительность рендеринга
+
+1. **Сигналы и обнаружение изменений** - Полная интеграция системы сигналов с механизмом обнаружения изменений:
+
+   - Точное отслеживание изменений на уровне переменных
+   - Минимизация ненужных циклов проверки
+   - Оптимизированное обновление DOM
+
+2. **Улучшенное кэширование шаблонов** - Более эффективное кэширование скомпилированных шаблонов для повторного использования.
+
+3. **Оптимизация отображения списков** - Улучшенный алгоритм для отображения длинных списков с минимальным воздействием на производительность.
+
+4. **Отложенная загрузка с @defer** - Встроенная поддержка отложенной загрузки частей шаблона для улучшения начальной загрузки страницы.
+
+#### Конкретные цифры улучшений
+
+По сравнению с Angular 17, Angular 18 демонстрирует следующие улучшения:
+
+- **Размер начального бандла**: Уменьшение на 10-15% для типичных приложений
+- **Время запуска приложения**: Ускорение на 15-20% для средних и крупных приложений
+- **Время перехода между маршрутами**: Уменьшение на 25-30% благодаря оптимизированной ленивой загрузке
+- **Потребление памяти**: Снижение на 10-15% во время выполнения
+- **Время сборки в режиме разработки**: Ускорение на 70-80% благодаря использованию ESBuild
+- **Время сборки в режиме продакшн**: Ускорение на 15-20% благодаря улучшенной инкрементальной компиляции
+
+### 5. What enhancements or additions have been made to Angular Material in the recent versions?
+
+В последних версиях Angular (16, 17 и 18) библиотека Angular Material получила ряд значительных улучшений и новых функций:
+
+#### Интеграция с новыми возможностями Angular
+
+1. **Поддержка отдельных компонентов (Standalone)** - Все компоненты Material были переработаны для поддержки использования без NgModules:
+
+   - Каждый компонент теперь может использоваться непосредственно, без импорта модуля
+   - Возможность импортировать только те компоненты, которые необходимы
+   - Улучшенная поддержка древовидного встряхивания (tree-shaking)
+
+2. **Поддержка нового синтаксиса шаблонов** - Компоненты Material обновлены для работы с новыми блоками `@if`, `@for` и `@switch`:
+
+   - Оптимизированное использование в списках (mat-list, mat-selection-list)
+   - Улучшенная обработка условного рендеринга в компонентах меню и форм
+   - Более эффективное обновление таблиц и сеток данных
+
+3. **Интеграция с блоком @defer** - Поддержка отложенной загрузки тяжелых компонентов с помощью блока `@defer`:
+   - Оптимизированная загрузка диалогов и панелей
+   - Улучшенная загрузка компонентов с богатым контентом
+   - Приоритизация критических компонентов пользовательского интерфейса
+
+#### Улучшения доступности (a11y)
+
+1. **Расширенная поддержка ARIA** - Улучшенная поддержка атрибутов ARIA для всех компонентов:
+
+   - Более точные роли и состояния
+   - Улучшенное взаимодействие с программами чтения с экрана
+   - Поддержка новых рекомендаций WAI-ARIA 1.2
+
+2. **Улучшенная навигация с клавиатуры** - Расширенная поддержка навигации с клавиатуры для всех интерактивных компонентов:
+
+   - Более последовательные шаблоны фокусировки
+   - Улучшенная поддержка клавиатурных сокращений
+   - Лучшая поддержка режима высокого контраста
+
+3. **Соответствие WCAG 2.1 AA** - Компоненты обновлены для соответствия рекомендациям WCAG 2.1 уровня AA:
+   - Улучшенные уровни контраста
+   - Поддержка масштабирования текста
+   - Улучшенная поддержка жестов для мобильных устройств
+
+#### Новые функции и компоненты
+
+1. **Улучшенные таблицы (MatTable)** - Значительные улучшения в компоненте таблицы:
+
+   - Виртуальная прокрутка для больших наборов данных
+   - Улучшенные API для сортировки и фильтрации
+   - Поддержка вложенных таблиц и древовидных данных
+   - Улучшенный опыт редактирования ячеек
+
+Продолжаю описание улучшений Angular Material:
+
+2. **Material 3 (Material You)** (продолжение):
+
+   - Адаптивные элементы управления, которые автоматически подстраиваются под размер экрана
+   - Улучшенная поддержка темной темы с более естественными переходами
+   - Новая система теней и эффектов глубины
+   - Интеграция с системными настройками темы в Android и других платформах
+
+3. **Новые компоненты и улучшения**:
+
+   - **MatDateRangePicker** - Улучшенный выбор диапазона дат:
+
+     - Поддержка нескольких календарей
+     - Улучшенная навигация по месяцам и годам
+     - Настраиваемые предустановленные диапазоны
+
+   - **MatAutocomplete** - Расширенные возможности автозаполнения:
+
+     - Асинхронная загрузка предложений
+     - Группировка результатов
+     - Кастомизация отображения элементов
+
+   - **MatChipGrid** - Новый компонент для работы с сетками чипов:
+     - Улучшенная доступность
+     - Поддержка drag-and-drop
+     - Интеграция с формами
+
+#### Улучшения производительности
+
+1. **Оптимизация рендеринга**:
+
+   - Уменьшение количества перерисовок компонентов
+   - Улучшенное управление жизненным циклом компонентов
+   - Оптимизация CSS для уменьшения количества вычислений стилей
+
+2. **Уменьшение размера бандла**:
+
+   - Модульная структура компонентов для лучшего tree-shaking
+   - Оптимизация импортов CSS
+   - Сокращение зависимостей компонентов
+
+3. **Улучшенная работа с памятью**:
+   - Автоматическая очистка ресурсов при уничтожении компонентов
+   - Оптимизация подписок на события
+   - Улучшенное управление кэшем
+
+#### CDK (Component Development Kit) улучшения
+
+1. **Новые утилиты для разработчиков**:
+
+   - Улучшенные инструменты для создания пользовательских компонентов
+   - Новые хуки жизненного цикла
+   - Расширенные возможности для работы с фокусом и навигацией
+
+2. **Улучшенная поддержка мобильных устройств**:
+
+   - Оптимизированные жесты для сенсорных экранов
+   - Улучшенная поддержка различных размеров экрана
+   - Адаптивные компоненты для мобильных устройств
+
+3. **Новые экспериментальные функции**:
+   - Поддержка виртуального скроллинга для любых компонентов
+   - Улучшенная система перетаскивания (drag-and-drop)
+   - Новые утилиты для работы с оверлеями
+
+### 6. How does Angular 18 support server-side rendering (SSR) and what improvements does it offer in this area?
+
+Angular 18 значительно улучшил поддержку серверного рендеринга (SSR) через Angular Universal и новые API:
+
+#### Улучшения в гидратации
+
+1. **Прогрессивная гидратация**:
+
+   - Постепенная активация компонентов по мере необходимости
+   - Приоритизация критических компонентов
+   - Уменьшение времени до интерактивности (TTI)
+
+2. **Умная гидратация**:
+
+   - Сохранение состояния компонентов при гидратации
+   - Предотвращение мерцания контента
+   - Оптимизация передачи данных между сервером и клиентом
+
+3. **Селективная гидратация**:
+   - Возможность выбора компонентов для гидратации
+   - Отложенная гидратация неприоритетных компонентов
+   - Интеграция с блоком @defer
+
+#### Улучшения производительности SSR
+
+1. **Оптимизация рендеринга**:
+
+   - Параллельный рендеринг компонентов на сервере
+   - Кэширование результатов рендеринга
+   - Оптимизация потребления памяти
+
+2. **Улучшенная передача состояния**:
+
+   - Эффективная сериализация состояния
+   - Минимизация дублирования данных
+   - Оптимизация размера передаваемых данных
+
+3. **Интеграция с современными платформами**:
+   - Улучшенная поддержка Cloudflare Workers
+   - Интеграция с Vercel Edge Functions
+   - Поддержка Deno Deploy
+
+#### Новые API и возможности
+
+1. **Улучшенный TransferState API**:
+
+   - Типобезопасная передача данных
+   - Поддержка сложных структур данных
+   - Автоматическая сериализация/десериализация
+
+2. **Серверные хуки**:
+
+   - Новые хуки жизненного цикла для SSR
+   - Улучшенный контроль над процессом рендеринга
+   - Возможность влиять на приоритеты загрузки
+
+3. **Интеграция с сигналами**:
+   - Поддержка сигналов в SSR
+   - Эффективная передача состояния сигналов
+   - Оптимизация обновлений на клиенте
+
+### 7. Discuss any updates or improvements made to Angular CLI and its features in the latest releases.
+
+Angular CLI получил значительные улучшения в последних версиях:
+
+#### Улучшения производительности
+
+1. **ESBuild интеграция**:
+
+   - Значительное ускорение сборки в режиме разработки
+   - Оптимизированная обработка модулей
+   - Улучшенная поддержка TypeScript
+
+2. **Оптимизация сборки**:
+
+   - Улучшенный кэш сборки
+   - Параллельная компиляция
+   - Инкрементальная сборка
+
+3. **Улучшенная система плагинов**:
+   - Новый API для создания плагинов
+   - Улучшенная интеграция с внешними инструментами
+   - Расширенные возможности настройки
+
+#### Новые команды и возможности
+
+1. **Улучшенные генераторы**:
+
+   - Поддержка создания отдельных компонентов
+   - Новые шаблоны для сигналов
+   - Генерация тестов с современными практиками
+
+2. **Инструменты анализа**:
+
+   - Улучшенный анализ размера бандла
+   - Отчеты о производительности
+   - Инструменты для оптимизации
+
+3. **Инструменты миграции**:
+   - Автоматическая миграция на новые версии
+   - Конвертация NgModules в отдельные компоненты
+   - Обновление синтаксиса шаблонов
+
+#### Улучшения разработки
+
+1. **Улучшенный режим разработки**:
+
+   - Более информативные сообщения об ошибках
+   - Быстрая перезагрузка при изменениях
+   - Улучшенная интеграция с IDE
+
+2. **Новые инструменты отладки**:
+
+   - Встроенные инструменты профилирования
+   - Улучшенная интеграция с Chrome DevTools
+   - Расширенные возможности логирования
+
+3. **Улучшенная конфигурация**:
+   - Типобезопасная конфигурация
+   - Поддержка современных форматов конфигурации
+   - Улучшенная валидация настроек
+
+Эти улучшения делают Angular 18 более мощным и удобным инструментом для разработки современных веб-приложений, особенно в области производительности, разработки и поддержки серверного рендеринга.

@@ -1,6 +1,6 @@
 'use client'
 
-import {useState, useEffect} from 'react'
+import {useState, useEffect, useMemo, useRef} from 'react'
 import {useRouter, usePathname} from 'next/navigation'
 import {slugify} from './../utils/slugify'
 
@@ -15,22 +15,39 @@ interface TableOfContentsProps {
 }
 
 export default function TableOfContents({content}: TableOfContentsProps) {
-  const [toc, setToc] = useState<TOCItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [headerHeight, setHeaderHeight] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
 
-  useEffect(() => {
+  const tocData = useMemo(() => {
     const headings = content.match(/^#{1,3}\s.+$/gm) || []
-    const tocItems = headings.map((heading) => {
+
+    const tocItems: TOCItem[] = []
+    const titleToIdMap = new Map<string, string>()
+
+    headings.forEach((heading) => {
       const level = heading.match(/^#+/)?.[0].length || 0
       const title = heading.replace(/^#+\s/, '')
       const id = slugify(title)
-      return {id, title, level}
-    })
-    setToc(tocItems)
 
+      tocItems.push({id, title, level})
+      titleToIdMap.set(title, id)
+    })
+
+    return {
+      tocItems,
+      titleToIdMap,
+    }
+  }, [content]) 
+
+  const titleToIdMapRef = useRef<Map<string, string>>(tocData.titleToIdMap)
+
+  useEffect(() => {
+    titleToIdMapRef.current = tocData.titleToIdMap
+  }, [tocData])
+
+  useEffect(() => {
     const header = document.querySelector('header')
     if (header) {
       setHeaderHeight(header.offsetHeight)
@@ -50,7 +67,7 @@ export default function TableOfContents({content}: TableOfContentsProps) {
     return () => {
       document.body.style.overflow = ''
     }
-  }, [content, isOpen])
+  }, [isOpen])
 
   const toggleOpen = () => {
     setIsOpen(!isOpen)
@@ -61,7 +78,8 @@ export default function TableOfContents({content}: TableOfContentsProps) {
     title: string
   ) => {
     e.preventDefault()
-    const id = slugify(title)
+
+    const id = titleToIdMapRef.current.get(title) || slugify(title)
     const newUrl = `${pathname}#${id}`
     router.push(newUrl)
 
@@ -87,7 +105,7 @@ export default function TableOfContents({content}: TableOfContentsProps) {
         </button>
         {isOpen && (
           <ul className='space-y-2 mt-12 md:mt-0 max-h-[calc(100vh-16rem)]  overflow-y-auto'>
-            {toc.map((item) => (
+            {tocData.tocItems.map((item) => (
               <li
                 key={item.id}
                 style={{marginLeft: `${(item.level - 1) * 24}px`}}
