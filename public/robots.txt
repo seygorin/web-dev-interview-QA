@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://web-dev-interview-qa.vercel.app
+
+# Sitemaps
+Sitemap: https://web-dev-interview-qa.vercel.app/sitemap.xml

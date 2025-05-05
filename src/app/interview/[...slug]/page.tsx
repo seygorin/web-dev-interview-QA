@@ -20,6 +20,27 @@ export async function generateStaticParams() {
   return paths
 }
 
+export async function generateMetadata({params}: {params: {slug: string[]}}) {
+  const slug = params.slug[1]
+  const {title, content} = await getInterviewContent(slug)
+
+  const description = content
+    .split('\n\n')[0]
+    .replace(/[#*_`]/g, '')
+    .slice(0, 160)
+
+  return {
+    title: `${title} | Web Dev Interview Q&A`,
+    description: description,
+    openGraph: {
+      title: `${title} | Web Dev Interview Q&A`,
+      description: description,
+      type: 'article',
+      url: `https://web-dev-interview-qa.vercel.app/interview/${params.slug[0]}/${slug}`,
+    },
+  }
+}
+
 export default async function InterviewPage({
   params,
 }: {
