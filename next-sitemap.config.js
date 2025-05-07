@@ -2,8 +2,10 @@
 module.exports = {
   siteUrl: 'https://web-dev-interview-qa.vercel.app',
   generateRobotsTxt: true,
+  sitemapSize: 5000,
+  exclude: ['/404', '/500'],
+  generateIndexSitemap: false,
   robotsTxtOptions: {
-    additionalSitemaps: ['https://web-dev-interview-qa.vercel.app/sitemap.xml'],
+    policies: [{userAgent: '*', allow: '/'}],
   },
-  exclude: ['/404'],
 }
