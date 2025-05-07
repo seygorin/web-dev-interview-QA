@@ -1,3 +1,183 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-</sitemapindex>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/</loc>
+    <lastmod>2025-05-07</lastmod>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/coding-tasks</loc>
+    <lastmod>2025-05-07</lastmod>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Frontend Frameworks & Libraries -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/frontend-frameworks-libraries/react</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/frontend-frameworks-libraries/vue</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/frontend-frameworks-libraries/angular</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/frontend-frameworks-libraries/next-js</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Frontend Concepts -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/frontend-concepts/responsive-design</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/frontend-concepts/css-concepts</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/frontend-concepts/accessibility</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Web Fundamentals -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/web-fundamentals/http</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/web-fundamentals/rest-api</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/web-fundamentals/html-css</loc>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Web Technologies -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/web-technologies/web-security</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/web-technologies/caching</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/web-technologies/authentication</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Programming Languages -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/programming-lenguages/javascript</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/programming-lenguages/typescript</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/programming-lenguages/python</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Backend Technologies -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/backend-technologies/node-js</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/backend-technologies/databases</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/backend-technologies/graphql</loc>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Backend Concepts -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/backend-concepts/mvc-pattern</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/backend-concepts/api-design</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Performance -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/performance/web-performance</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/performance/optimization</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Software Design -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/software-design/design-patterns</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/software-design/solid-principles</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Data Structures & Algorithms -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/data-structures-algorithms/complexity-analysis</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/data-structures-algorithms/common-algorithms</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- DevOps & Tools -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/devops-tools/git</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/devops-tools/ci-cd</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/devops-tools/docker</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Testing -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/testing/unit-testing</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/testing/integration-testing</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/testing/end-to-end-testing</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Soft Skills -->
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/soft-skills/communication</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/soft-skills/teamwork</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://web-dev-interview-qa.vercel.app/interview/soft-skills/problem-solving</loc>
+    <priority>0.7</priority>
+  </url>
+</urlset>
