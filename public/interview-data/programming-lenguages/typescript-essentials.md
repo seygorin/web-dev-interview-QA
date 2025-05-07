@@ -2,40 +2,82 @@
 title: TypeScript Essentials
 ---
 
-## Writing efficient TypeScript using basic types, enums, interfaces, and generics:
+## Writing Efficient TypeScript Using Basic Types, Enums, Interfaces, and Generics
 
-### basic types
+### Basic Types
 
-TypeScript предоставляет статическую типизацию для JavaScript, включая базовые типы, такие как `number`, `string`, `boolean`, `array`, `tuple`, `any`, `void`, и другие.
+TypeScript расширяет JavaScript, добавляя статическую типизацию, что позволяет выявлять ошибки на этапе компиляции и делать код более предсказуемым и поддерживаемым. Основные типы в TypeScript включают:
 
-**Samples:**
-
-```typescript
-let isDone: boolean = false
-let decimal: number = 6
-let color: string = 'blue'
-let list: number[] = [1, 2, 3]
-let x: [string, number] = ['hello', 10]
-```
-
-### enums
-
-Перечисления (enums) позволяют определить набор именованных констант.
+- `number` — для всех числовых значений (целые, дробные, отрицательные, положительные).
+- `string` — для строковых данных.
+- `boolean` — для логических значений (`true` или `false`).
+- `array` — для массивов, можно указывать тип элементов.
+- `tuple` — для массивов фиксированной длины с элементами разных типов.
+- `any` — отключает проверку типов (использовать с осторожностью).
+- `void` — для функций, которые ничего не возвращают.
+- `null` и `undefined` — отдельные типы для отсутствия значения.
+- `never` — для функций, которые никогда не завершаются (например, выбрасывают ошибку).
 
 **Samples:**
 
 ```typescript
-enum Color {
-  Red,
-  Green,
-  Blue,
+let isActive: boolean = true
+let age: number = 30
+let userName: string = 'Alice'
+let scores: number[] = [10, 20, 30]
+let user: [string, number] = ['Bob', 42]
+let notSure: any = 4
+notSure = 'maybe a string instead'
+notSure = false
+
+function logMessage(message: string): void {
+  console.log(message)
 }
-let c: Color = Color.Green
 ```
 
-### type / interface, differences between them
+### Enums
 
-`type` и `interface` используются для определения пользовательских типов. `interface` можно расширять, а `type` можно использовать для создания алиасов типов.
+Перечисления (`enum`) позволяют создавать наборы именованных констант, что делает код более читаемым и защищённым от ошибок.
+
+**Samples:**
+
+```typescript
+enum Direction {
+  Up,
+  Down,
+  Left,
+  Right,
+}
+
+let move: Direction = Direction.Left
+
+// Можно явно задать значения
+enum StatusCode {
+  Success = 200,
+  NotFound = 404,
+  ServerError = 500,
+}
+
+function getStatusMessage(code: StatusCode): string {
+  switch (code) {
+    case StatusCode.Success:
+      return 'Success'
+    case StatusCode.NotFound:
+      return 'Not Found'
+    case StatusCode.ServerError:
+      return 'Server Error'
+    default:
+      return 'Unknown'
+  }
+}
+```
+
+### Type vs Interface: Differences and Use Cases
+
+В TypeScript есть два основных способа описания структуры объектов: `type` и `interface`. Оба инструмента похожи, но имеют различия и свои области применения.
+
+- `interface` — предназначен для описания структуры объектов и может быть расширен (extends) или реализован (implements) классами.
+- `type` — более универсален, может описывать не только объекты, но и объединения (union), пересечения (intersection), алиасы примитивов и т.д.
 
 **Samples:**
 
@@ -52,49 +94,70 @@ type Point = {
   y: number
 }
 
-// Расширение interface
+// Расширение интерфейса
 interface Employee extends Person {
   employeeId: number
 }
 
 // Объединение типов
 type Shape = Circle | Square
+
+// Пересечение типов
+type Admin = Person & { role: string }
 ```
 
-### using interfaces with optional properties, read-only properties, etc...
+**Когда использовать что?**
+- `interface` — если вы описываете структуру объекта, который может быть расширен или реализован классом.
+- `type` — если нужно создать алиас для примитива, объединения, пересечения или сложной структуры.
 
-Интерфейсы в TypeScript могут включать необязательные свойства, свойства только для чтения и другие спецификаторы.
+### Using Interfaces with Optional Properties, Read-Only Properties, Index Signatures
+
+Интерфейсы позволяют делать свойства необязательными (`?`), только для чтения (`readonly`), а также описывать объекты с динамическими ключами (index signatures).
 
 **Samples:**
 
 ```typescript
-interface Config {
-  color?: string
-  readonly id: number
-  [propName: string]: any
+interface UserProfile {
+  id: number
+  name: string
+  email?: string // необязательное свойство
+  readonly createdAt: Date // только для чтения
+  [key: string]: any // индексная сигнатура
 }
 
-let config: Config = {id: 1}
-config.color = 'red'
-// config.id = 2; // Ошибка: нельзя изменить readonly свойство
+let user: UserProfile = { id: 1, name: 'Alice', createdAt: new Date() }
+user.email = 'alice@example.com'
+// user.createdAt = new Date() // Ошибка: нельзя изменить readonly свойство
+user['customField'] = 123
 ```
 
-### function types
+### Function Types
 
-TypeScript позволяет определять типы функций, включая параметры и возвращаемое значение.
+TypeScript позволяет явно указывать типы для функций, их параметров и возвращаемого значения. Это помогает избежать ошибок при передаче неправильных аргументов.
 
 **Samples:**
 
 ```typescript
-type MathFunc = (x: number, y: number) => number
+type MathOperation = (a: number, b: number) => number
 
-const add: MathFunc = (x, y) => x + y
-const subtract: MathFunc = (x, y) => x - y
+const multiply: MathOperation = (a, b) => a * b
+const divide: MathOperation = (a, b) => a / b
+
+// Функция с необязательным и значением по умолчанию
+function greet(name: string, greeting: string = 'Hello'): string {
+  return `${greeting}, ${name}!`
+}
 ```
 
-// utility types (optional)
+### Utility Types (Optional)
 
-Утилитные типы в TypeScript - это предопределенные обобщенные типы, которые облегчают типовые преобразования.
+TypeScript предоставляет ряд встроенных утилитных типов, которые упрощают работу с типами:
+
+- `Partial<T>` — делает все свойства типа T необязательными.
+- `Readonly<T>` — делает все свойства только для чтения.
+- `Pick<T, K>` — выбирает только указанные свойства из типа.
+- `Omit<T, K>` — исключает указанные свойства из типа.
+- `Record<K, T>` — создает тип объекта с ключами K и значениями типа T.
 
 **Samples:**
 
@@ -102,59 +165,71 @@ const subtract: MathFunc = (x, y) => x - y
 interface Todo {
   title: string
   description: string
+  completed: boolean
 }
 
 type PartialTodo = Partial<Todo>
 type ReadonlyTodo = Readonly<Todo>
+type TodoTitle = Pick<Todo, 'title'>
+type TodoWithoutDescription = Omit<Todo, 'description'>
+type TodoMap = Record<number, Todo>
 ```
 
-### typeguards (optional)
+### Type Guards (Optional)
 
-Защитники типов (type guards) - это выражения, которые выполняют проверку типа во время выполнения.
+Type guards (защитники типов) — это специальные функции или конструкции, которые позволяют уточнить тип значения во время выполнения.
 
 **Samples:**
 
 ```typescript
-function isString(value: unknown): value is string {
-  return typeof value === 'string'
+function isNumber(value: unknown): value is number {
+  return typeof value === 'number'
 }
 
-function processValue(value: unknown) {
-  if (isString(value)) {
-    console.log(value.toUpperCase())
+function printValue(value: string | number) {
+  if (isNumber(value)) {
+    console.log('Number:', value)
+  } else {
+    console.log('String:', value)
+  }
+}
+
+// Использование операторов typeof и instanceof
+function logId(id: string | number) {
+  if (typeof id === 'string') {
+    console.log('String ID:', id)
+  } else {
+    console.log('Numeric ID:', id)
   }
 }
 ```
 
-### creating custom types
+### Creating Custom Types
 
-Пользовательские типы можно создавать с помощью ключевых слов `type` или `interface`.
+TypeScript позволяет создавать собственные типы для повышения читаемости и повторного использования кода.
 
 **Samples:**
 
 ```typescript
 type UUID = string
 
-type Result<T> =
-  | {
-      success: true
-      value: T
-    }
-  | {
-      success: false
-      error: string
-    }
+type ApiResponse<T> =
+  | { success: true; data: T }
+  | { success: false; error: string }
 
-interface Tree<T> {
+interface TreeNode<T> {
   value: T
-  left?: Tree<T>
-  right?: Tree<T>
+  left?: TreeNode<T>
+  right?: TreeNode<T>
 }
+
+// Использование пользовательских типов
+const response: ApiResponse<number> = { success: true, data: 42 }
 ```
 
-### generic types (concept)
+### Generic Types (Concept)
 
-Обобщенные типы (generics) позволяют создавать компоненты, которые могут работать с различными типами, сохраняя при этом безопасность типов.
+Обобщённые типы (generics) позволяют создавать компоненты, которые работают с разными типами данных, сохраняя при этом строгую типизацию.
 
 **Samples:**
 
@@ -163,25 +238,45 @@ function identity<T>(arg: T): T {
   return arg
 }
 
-let output = identity<string>('myString')
+let output1 = identity<string>('myString')
+let output2 = identity<number>(123)
 
-class GenericNumber<T> {
-  zeroValue: T
-  add: (x: T, y: T) => T
+// Обобщённый интерфейс
+interface Box<T> {
+  value: T
 }
 
-let myGenericNumber = new GenericNumber<number>()
-myGenericNumber.zeroValue = 0
-myGenericNumber.add = function (x, y) {
-  return x + y
+const stringBox: Box<string> = { value: 'hello' }
+const numberBox: Box<number> = { value: 100 }
+
+// Обобщённый класс
+class DataStore<T> {
+  private data: T[] = []
+  add(item: T) {
+    this.data.push(item)
+  }
+  getAll(): T[] {
+    return this.data
+  }
 }
+
+const store = new DataStore<number>()
+store.add(1)
+store.add(2)
+console.log(store.getAll()) // [1, 2]
 ```
 
-## Understanding the module system in ES6 and TypeScript.
 
-Модульная система в ES6 и TypeScript позволяет организовывать код в отдельные модули, которые можно импортировать и экспортировать.
+## Understanding the Module System in ES6 and TypeScript
 
-**Samples:**
+Модульная система позволяет разбивать код на независимые части (модули), которые можно импортировать и экспортировать. Это повышает читаемость, повторное использование и тестируемость кода.
+
+**Основные концепции:**
+- Каждый файл — отдельный модуль.
+- Экспортировать можно функции, переменные, классы, интерфейсы и т.д.
+- Импортировать можно как отдельные элементы, так и весь модуль целиком.
+
+**Примеры:**
 
 ```typescript
 // math.ts
@@ -192,12 +287,12 @@ export function add(x: number, y: number): number {
 export const PI = 3.14159
 
 // main.ts
-import {add, PI} from './math'
+import { add, PI } from './math'
 
-console.log(add(2, 3))
-console.log(PI)
+console.log(add(2, 3)) // 5
+console.log(PI)        // 3.14159
 
-// Импорт всего модуля
+// Импорт всего модуля как объекта
 import * as math from './math'
 console.log(math.add(2, 3))
 
@@ -208,4 +303,14 @@ export default function multiply(x: number, y: number): number {
 
 // Импорт экспорта по умолчанию
 import multiply from './math'
+console.log(multiply(2, 3))
 ```
+
+**Практические советы:**
+- Используйте модули для разделения логики по функциональным областям (например, utils, api, models).
+- Следите за тем, чтобы не было циклических зависимостей между модулями.
+- Используйте именованные экспорты для большей гибкости и автодополнения в редакторах кода.
+
+
+**Summary:**  
+TypeScript делает код более надёжным, понятным и масштабируемым за счёт строгой типизации, поддержки интерфейсов, обобщённых типов и модульной структуры. Используйте эти возможности для написания современного, безопасного и поддерживаемого кода.
