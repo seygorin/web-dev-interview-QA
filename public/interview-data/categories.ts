@@ -1,5 +1,13 @@
 // titles for naming categories
 export const categories = {
+	'Artificial Intelligence': {
+    folder: 'artificial-intelligence',
+    items: [
+      // 'Machine Learning', // future
+      'Prompt Engineering', // future
+      // 'AI Tools', // future
+    ],
+  },
   'Programming Languages': {
     folder: 'programming-lenguages',
     items: [
